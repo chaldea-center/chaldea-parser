@@ -92,7 +92,6 @@ MIN_APP = "1.6.7"
 class MainParser:
     def __init__(self):
         self.jp_data = MasterData(region=Region.JP)
-        # self.wiki_data = WikiData()
         self.ext_data = ExtData()
         self.base_skills: dict[int, NiceBaseSkill] = {}
         self.base_functions: dict[int, NiceBaseFunction] = {}
@@ -126,7 +125,9 @@ class MainParser:
         worker = Worker("exported_file")
 
         def _add_download_task(_url, _fp):
-            Path(_fp).write_bytes(requests.get(_url).content)
+            Path(_fp).write_bytes(
+                requests.get(_url, headers={"cache-control": "no-cache"}).content
+            )
             logger.info(f"{_fp}: update exported file from {_url}")
 
         fp_openapi = settings.atlas_export_dir / "openapi.json"
