@@ -11,7 +11,7 @@ So make sure all changes here have been token affect in distribution before `upd
 from src.config import settings
 from src.schemas.gamedata import MappingData
 from src.schemas.wiki_data import LimitedSummonBase
-from src.utils import NOT_CLOSED_TIMESTAMP
+from src.utils import NEVER_CLOSED_TIMESTAMP
 from src.utils.helper import dump_json, load_json
 
 
@@ -52,7 +52,7 @@ def _update_summons():
         for obj in load_json(settings.output_dist / "summons.json", [])
     }
     summons_base_list = list(summons_release.values())
-    summons_base_list.sort(key=lambda x: x.startTime.JP or NOT_CLOSED_TIMESTAMP)
+    summons_base_list.sort(key=lambda x: x.startTime.JP or NEVER_CLOSED_TIMESTAMP)
     dump_json(summons_base_list, wiki_folder / "summons_base.json")
 
 

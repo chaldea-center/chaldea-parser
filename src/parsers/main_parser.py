@@ -66,7 +66,7 @@ from ..schemas.wiki_data import (
     MooncellTranslation,
 )
 from ..utils import (
-    NOT_CLOSED_TIMESTAMP,
+    NEVER_CLOSED_TIMESTAMP,
     AtlasApi,
     NumDict,
     Worker,
@@ -289,8 +289,8 @@ class MainParser:
                         q
                         for q in spot.quests
                         if (
-                            q.closedAt > NOT_CLOSED_TIMESTAMP
-                            and q.afterClear == NiceQuestAfterClearType.repeatLast
+                                q.closedAt > NEVER_CLOSED_TIMESTAMP
+                                and q.afterClear == NiceQuestAfterClearType.repeatLast
                         )
                     ]
             for _quest in [q for spot in war.spots for q in spot.quests]:
@@ -301,7 +301,7 @@ class MainParser:
                     continue
                 if _quest.warId == 1002:
                     if (
-                        _quest.closedAt > NOT_CLOSED_TIMESTAMP
+                        _quest.closedAt > NEVER_CLOSED_TIMESTAMP
                         and _quest.afterClear == NiceQuestAfterClearType.repeatLast
                     ):
                         worker.add_default(_quest)
@@ -565,7 +565,7 @@ class MainParser:
         if isinstance(obj, EnemyDrop):
             exclude.update({"dropExpected", "dropVariance"})
         if isinstance(obj, NiceEventMissionCondition):
-            exclude.update({"missionTargetId", "conditionMessage"})
+            exclude.update({"missionTargetId"})
         if isinstance(obj, NiceEventMission):
             exclude.update(
                 {

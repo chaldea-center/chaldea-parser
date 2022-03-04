@@ -7,7 +7,7 @@ from .log import logger
 from .worker import Worker
 
 
-NOT_CLOSED_TIMESTAMP = 1800000000  # 1893423600
+NEVER_CLOSED_TIMESTAMP = 1800000000  # 1893423600
 
 
 AtlasApi = HttpApiUtil(
