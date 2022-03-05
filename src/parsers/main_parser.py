@@ -9,6 +9,7 @@ from typing import AnyStr, Match, TypeVar
 import orjson
 import requests
 from app.schemas.common import NiceTrait, Region, RepoInfo
+from app.schemas.enums import CLASS_NAME
 from app.schemas.gameenums import (
     NiceEventType,
     NiceGiftType,
@@ -98,6 +99,7 @@ class MainParser:
 
     @count_time
     def start(self):
+        logger.info("update_exported_files")
         self.update_exported_files()
         self.ext_data = ExtData.parse_obj(
             {
@@ -166,7 +168,7 @@ class MainParser:
 
     @staticmethod
     def load_master_data(region: Region) -> MasterData:
-        print(f"loading {region} master data")
+        logger.info(f"loading {region} master data")
         data = {}
         for k in MasterData.__fields__:
             fp = settings.atlas_export_dir / region.value / f"{k}.json"
@@ -193,7 +195,7 @@ class MainParser:
         1. add main story's free quests + daily quests' phase data to game_data.questPhases
         2. count each war's one-off questPhase's fixed drop
         """
-        print("processing quest data")
+        logger.info("processing quest data")
 
         def _get_phase_key(quest_phase: NiceQuestPhase) -> int:
             return quest_phase.id * 100 + quest_phase.phase
@@ -289,8 +291,8 @@ class MainParser:
                         q
                         for q in spot.quests
                         if (
-                                q.closedAt > NEVER_CLOSED_TIMESTAMP
-                                and q.afterClear == NiceQuestAfterClearType.repeatLast
+                            q.closedAt > NEVER_CLOSED_TIMESTAMP
+                            and q.afterClear == NiceQuestAfterClearType.repeatLast
                         )
                     ]
             for _quest in [q for spot in war.spots for q in spot.quests]:
@@ -333,6 +335,7 @@ class MainParser:
                     continue
                 worker.add_default(_quest)
         worker.wait()
+        logger.info("finished checking quests")
 
     def save_data(self):
         settings.output_wiki.mkdir(parents=True, exist_ok=True)
@@ -654,6 +657,7 @@ class MainParser:
         self.jp_data.exchangeTickets = tickets
 
     def merge_all_mappings(self):
+        logger.info("merge all mappings")
         self._merge_official_mappings(Region.CN)
         self._fix_cn_translation()
         self._merge_mc_translation()
@@ -664,15 +668,19 @@ class MainParser:
         self._merge_repo_mapping()
 
     def _merge_official_mappings(self, region: Region):
-        print(f"merging official translations from {region}")
+        logger.info(f"merging official translations from {region}")
         mappings = self.jp_data.mappingData
         jp_data = self.jp_data
         data = self.load_master_data(region)
 
         # trait
         for k, v in self.jp_data.nice_trait.items():
-            m_trait = mappings.trait.setdefault(k, MappingBase())
+            m_trait = mappings.trait.setdefault(k, MappingStr())
             m_trait.update(Region.JP, v.value, skip_exists=True)
+        # svt_class:
+        for class_id, svt_class in CLASS_NAME.items():
+            m_svt_class = mappings.svt_class.setdefault(class_id, MappingStr())
+            m_svt_class.update(Region.JP, svt_class.value, skip_exists=True)
 
         def _update_mapping(
             m: dict[_KT, MappingBase[_KV]],
@@ -844,7 +852,7 @@ class MainParser:
         del data
 
     def _merge_mc_translation(self):
-        print("merging Mooncell translations for CN")
+        logger.info("merging Mooncell translations for CN")
 
         def _update_mapping(
             m: dict[_KT, MappingBase[_KV]],
@@ -887,7 +895,7 @@ class MainParser:
         # for event in self.ext_data
 
     def _fix_cn_translation(self):
-        print("fix Chinese translations")
+        logger.info("fix Chinese translations")
         mappings = self.jp_data.mappingData
         mappings_dict: dict[str, dict] = mappings.dict()
         color_regexes = [
@@ -930,13 +938,13 @@ class MainParser:
         self.jp_data.mappingData = MappingData.parse_obj(mappings_dict)
 
     def _add_na_mapping(self):
-        print("merging Atlas translations for NA")
+        logger.info("merging Atlas translations for NA")
 
         mappings = self.jp_data.mappingData
         import app as app_lib
 
         na_folder = Path(app_lib.__file__).resolve().parent.joinpath("data/mappings/")
-        print("AA mappings path:", na_folder)
+        logger.debug(f"AA mappings path: {na_folder}")
         src_mapping: dict[str, dict[str, MappingStr]] = {
             "bgm_names.json": mappings.bgm_names,
             "cc_names.json": mappings.cc_names,
@@ -966,7 +974,7 @@ class MainParser:
         self.jp_data.mappingData = mappings
 
     def _merge_repo_mapping(self):
-        print("merging repo translations")
+        logger.info("merging repo translations")
 
         folder = settings.output_mapping
         mappings = self.jp_data.mappingData

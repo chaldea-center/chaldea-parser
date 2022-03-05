@@ -65,6 +65,7 @@ class MappingData(BaseModel):
     td_detail: dict[str, MappingStr] = {}
 
     trait: dict[int, MappingStr] = {}  # trait.id
+    svt_class: dict[int, MappingStr] = {}
 
     # additional strings
     # ce_comment: dict[int, MappingStr] = {}  # in w

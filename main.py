@@ -4,7 +4,6 @@ import warnings
 
 from src.parsers import MainParser, WikiParser, run_drop_rate_update, run_mapping_update
 
-
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # %%

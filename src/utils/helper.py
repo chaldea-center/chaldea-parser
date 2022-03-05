@@ -1,5 +1,6 @@
 import os
 import platform
+import re
 import threading
 import time
 from operator import itemgetter
@@ -166,11 +167,6 @@ def retry_decorator(retry_times=5, lapse=3):
     return decorator
 
 
-@retry_decorator(retry_times=2)
-def test():
-    raise NotImplementedError("haha")
-
-
 def count_time(func):
     """Count time wrapper"""
 
@@ -178,7 +174,9 @@ def count_time(func):
         t0 = time.time()
         res = func(*args, **kwargs)
         dt = time.time() - t0
-        logger.info(f"========= Time: {func} run for {dt:.3f} secs =========")
+        func_name = re.findall(r"<(function .*) at 0x[0-9a-f]+>", str(func))
+        func_name = func_name[0] if func_name else str(func)
+        logger.info(f"========= Time: <{func_name}> run for {dt:.3f} secs =========")
         return res
 
     return count_time_wrapper

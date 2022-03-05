@@ -14,8 +14,8 @@ class _LogFormatter(ColourizedFormatter):
 
 logger = logging.getLogger("chaldea-parser")
 _formatter = _LogFormatter(
-    fmt="{asctime} {filename} [line:{lineno:>3d}] {levelname:<5s}: {message}",
-    datefmt="%m-%d %H:%M:%S",
+    fmt="{asctime} [{filename}:{lineno:>3d}] {levelname:<5s}: {message}",
+    datefmt="%H:%M:%S",
     style="{",
     use_colors=True,
 )
