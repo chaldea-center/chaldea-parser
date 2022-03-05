@@ -211,7 +211,7 @@ python-versions = "*"
 
 [[package]]
 name = "fastapi"
-version = "0.74.1"
+version = "0.75.0"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
 category = "main"
 optional = false
@@ -278,7 +278,7 @@ develop = false
 aiofiles = "^0.8.0"
 aioredis = {version = "^2.0.1", extras = ["hiredis"]}
 asyncpg = "^0.25.0"
-fastapi = "^0.74.1"
+fastapi = "^0.75.0"
 fastapi-cache2 = "^0.1.8"
 fastapi-limiter = {git = "https://github.com/long2ice/fastapi-limiter.git", branch = "master"}
 fuzzywuzzy = "^0.18.0"
@@ -298,7 +298,7 @@ uvicorn = {version = "^0.17.5", extras = ["standard"]}
 type = "git"
 url = "https://github.com/chaldea-center/fgo-game-data-api.git"
 reference = "master"
-resolved_reference = "a3d7be37068e9a29753f9489cd631e7c8173d914"
+resolved_reference = "9ca27f6ca5be10023b874f8e9d19e4b63217d803"
 
 [[package]]
 name = "fuzzywuzzy"
@@ -434,7 +434,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "ipython"
-version = "8.1.0"
+version = "8.1.1"
 description = "IPython: Productive Interactive Computing"
 category = "dev"
 optional = false
@@ -1096,7 +1096,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "wikitextparser"
-version = "0.48.0"
+version = "0.48.1"
 description = "A simple parsing tool for MediaWiki's wikitext markup."
 category = "main"
 optional = false
@@ -1108,6 +1108,7 @@ wcwidth = "*"
 
 [package.extras]
 dev = ["path.py", "coverage", "twine"]
+test = ["pytest"]
 
 [metadata]
 lock-version = "1.1"
@@ -1237,8 +1238,8 @@ executing = [
     {file = "executing-0.8.3.tar.gz", hash = "sha256:c6554e21c6b060590a6d3be4b82fb78f8f0194d809de5ea7df1c093763311501"},
 ]
 fastapi = [
-    {file = "fastapi-0.74.1-py3-none-any.whl", hash = "sha256:b8ec8400623ef0b2ff558ebe06753b349f8e3a5dd38afea650800f2644ddba34"},
-    {file = "fastapi-0.74.1.tar.gz", hash = "sha256:b58a2c46df14f62ebe6f24a9439927539ba1959b9be55ba0e2f516a683e5b9d4"},
+    {file = "fastapi-0.75.0-py3-none-any.whl", hash = "sha256:43d12891b78fc497a50623e9c7c24640c569489f060acd9ce2c4902080487a93"},
+    {file = "fastapi-0.75.0.tar.gz", hash = "sha256:124774ce4cb3322841965f559669b233a0b8d343ea24fdd8b293253c077220d7"},
 ]
 fastapi-cache2 = [
     {file = "fastapi-cache2-0.1.8.tar.gz", hash = "sha256:e074a6dad600f9a19f0e7111f58350d6cc7c17d27a0bad1f67336d178b19387b"},
@@ -1405,8 +1406,8 @@ idna = [
     {file = "idna-3.3.tar.gz", hash = "sha256:9d643ff0a55b762d5cdb124b8eaa99c66322e2157b69160bc32796e824360e6d"},
 ]
 ipython = [
-    {file = "ipython-8.1.0-py3-none-any.whl", hash = "sha256:7bfeb6f298b2d7f3859c4f3e134082015cf34de90f89f5020e107a5a762ef6db"},
-    {file = "ipython-8.1.0.tar.gz", hash = "sha256:42c23e90b2deaae631266885de1656a517a1673d7e1db57e8eb3a4bb6cd5ce1b"},
+    {file = "ipython-8.1.1-py3-none-any.whl", hash = "sha256:6f56bfaeaa3247aa3b9cd3b8cbab3a9c0abf7428392f97b21902d12b2f42a381"},
+    {file = "ipython-8.1.1.tar.gz", hash = "sha256:8138762243c9b3a3ffcf70b37151a2a35c23d3a29f9743878c33624f4207be3d"},
 ]
 isort = [
     {file = "isort-5.10.1-py3-none-any.whl", hash = "sha256:6f62d78e2f89b4500b080fe3a81690850cd254227f27f75c3a0c491a1f351ba7"},
@@ -1986,6 +1987,6 @@ websockets = [
     {file = "websockets-10.2.tar.gz", hash = "sha256:8351c3c86b08156337b0e4ece0e3c5ec3e01fcd14e8950996832a23c99416098"},
 ]
 wikitextparser = [
-    {file = "wikitextparser-0.48.0-py3-none-any.whl", hash = "sha256:4e410116cc23da693c17b9ee9157d98bc20a0932265ab6266e42c1b3e705cd17"},
-    {file = "wikitextparser-0.48.0.tar.gz", hash = "sha256:da89675538a88e0b6fb7a6fa8ed404283ee1901c679e1ff5cea8a013e8b0f8bf"},
+    {file = "wikitextparser-0.48.1-py3-none-any.whl", hash = "sha256:f79c31d4ba821a130b0c50edcb23d9e480af7e4875f14d48626f26d4155291ac"},
+    {file = "wikitextparser-0.48.1.tar.gz", hash = "sha256:e5ca80bc3c9a0b8960f91b6d5cf42cfb9541b9c06e05c5edbadd8349968980d0"},
 ]
