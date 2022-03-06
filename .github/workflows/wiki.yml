@@ -9,7 +9,15 @@ jobs:
     runs-on: ubuntu-latest
     env:
       output_dir: 'data/'
+      cache_dir: 'cache/'
     steps:
+      - name: Get Date
+        id: get-date
+        run: |
+          /bin/date
+          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d%H%M")"
+        shell: bash
+
       - name: Checkout chaldea-parser
         uses: actions/checkout@v2
 
@@ -18,17 +26,12 @@ jobs:
         with:
           repository: chaldea-center/chaldea-data
           token: ${{ secrets.GH_PAGES_TOKEN }}
-          path: data
-
-      - name: Get Date
-        id: get-date
-        run: echo "::set-output name=date::$(/bin/date -u "+%Y%m%d%H%M")"
-        shell: bash
+          path: ${{ env.output_dir }}
 
       - name: Cache Atlas and wiki api response
         uses: actions/cache@v2
         with:
-          path: cache
+          path: ${{ env.cache_dir }}
           key: api-cache-${{ runner.os }}-${{ steps.get-date.outputs.date }}
           restore-keys: |
             api-cache-${{ runner.os }}-
@@ -63,9 +66,18 @@ jobs:
           echo "::set-output name=ref2::$(cat .git/refs/heads/main)"
           cd ..
 
-      - name: Call Atlas Parser
-        if: ${{ steps.publish-data.outputs.ref1 != steps.publish-data.outputs.ref2 }}
-        uses: peter-evans/repository-dispatch@v1
-        with:
-          token: ${{ secrets.GH_PAGES_TOKEN }}
-          event-type: wiki_updated
+      - name: run atlas parser
+        run: python main.py atlas
+
+      - name: publish data
+        run: |
+          cd data
+          git add .
+          if [ -e commit-msg.txt ]
+          then
+              git commit -F commit-msg.txt || echo "Nothing to update"
+          else
+              git commit -m "atlas parser: update data" || echo "Nothing to update"
+          fi
+          git push
+          cd ..

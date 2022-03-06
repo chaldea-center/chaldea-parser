@@ -11,7 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     env:
       output_dir: 'data/'
+      cache_dir: 'cache/'
     steps:
+      - name: Get Date
+        id: get-date
+        run: |
+          /bin/date
+          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d%H%M")"
+        shell: bash
+
       - name: Checkout chaldea-parser
         uses: actions/checkout@v2
 
@@ -20,17 +28,17 @@ jobs:
         with:
           repository: chaldea-center/chaldea-data
           token: ${{ secrets.GH_PAGES_TOKEN }}
-          path: data
+          path: ${{ env.output_dir }}
 
-      - name: Get Date
-        id: get-date
-        run: echo "::set-output name=date::$(/bin/date -u "+%Y%m%d%H%M")"
-        shell: bash
+      - name: Save payload
+        run: |
+          echo '${{ toJson(github.event.client_payload) }}' >> payload.json
+          cat payload.json
 
       - name: Cache Atlas and wiki api response
         uses: actions/cache@v2
         with:
-          path: cache
+          path: ${{ env.cache_dir }}
           key: api-cache-${{ runner.os }}-${{ steps.get-date.outputs.date }}
           restore-keys: |
             api-cache-${{ runner.os }}-
@@ -46,11 +54,6 @@ jobs:
         run: |
           pip uninstall --yes fgo-game-data-api
           pip install -r requirements.txt
-
-      - name: Save payload
-        run: |
-          echo '${{ toJson(github.event.client_payload) }}' >> payload.json
-          cat payload.json
 
       - name: run atlas parser
         run: python main.py atlas

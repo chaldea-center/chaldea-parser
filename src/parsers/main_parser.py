@@ -692,9 +692,18 @@ class MainParser:
 
     def merge_all_mappings(self):
         logger.info("merge all mappings")
+        if self.payload.regions:
+            try:
+                self.jp_data.mappingData = MappingData.parse_file(
+                    settings.output_dist / "mapping_data.json"
+                )
+            except Exception as e:
+                logger.error(f"failed to load mapping data from last build: {e}")
+                self.payload.regions.clear()
         conditions: MappingBase[bool] = MappingBase.parse_obj(
             {
-                str(region.value): not self.payload.regions or region in self.payload.regions
+                str(region.value): not self.payload.regions
+                or region in self.payload.regions
                 for region in Region.__members__.values()
             }
         )

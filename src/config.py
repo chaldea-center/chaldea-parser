@@ -10,9 +10,9 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
 
+    output_dir: str = "data/"
     cache_dir: str = "cache/"
     log_dir: str = "logs/"
-    output_dir: str = "data/"
 
     # keys
     user_mc: str = ""
