@@ -47,6 +47,10 @@ jobs:
           pip uninstall --yes fgo-game-data-api
           pip install -r requirements.txt
 
+      - name: Save payload
+        run: |
+          echo '${{ toJson(github.event.client_payload) }}' >> payload.json
+          cat payload.json
 
       - name: run atlas parser
         run: python main.py atlas

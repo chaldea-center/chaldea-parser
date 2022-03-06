@@ -4,6 +4,7 @@
 /logs
 /data
 /commit-msg.txt
+/payload.json
 
 .idea/
 .vscode/

@@ -176,3 +176,8 @@ class DataVersion(BaseModel):
     utc: str
     minimalApp: str
     files: dict[str, FileVersion] = {}
+
+
+class Payload(BaseModel):
+    regions: list[Region] = []  # from atlas
+    clearCache: bool = False

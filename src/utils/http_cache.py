@@ -8,6 +8,8 @@ from typing import Optional, Type, Union
 
 import requests
 import requests_cache
+from app.schemas.common import Region
+from app.schemas.nice import NiceQuestPhase
 from pydantic import ValidationError
 from ratelimit import limits, sleep_and_retry
 from requests import Response
@@ -148,7 +150,20 @@ class HttpApiUtil(abc.ABC):
 
         return _parse_model(response, True)
 
-    # def get_cache
+    def quest_phase(
+        self,
+        quest_id: int,
+        phase: int,
+        region=Region.JP,
+        filter_fn: FILTER_FN = None,
+        **kwargs,
+    ):
+        return self.api_model(
+            f"/nice/{region}/quest/{quest_id}/{phase}",
+            NiceQuestPhase,
+            filter_fn=filter_fn,
+            **kwargs,
+        )
 
     def full_url(self, _path: str):
         if _path.startswith(self.api_server):

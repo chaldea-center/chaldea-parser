@@ -35,7 +35,6 @@ from app.schemas.nice import (
     NiceItemAmount,
     NiceLore,
     NiceQuest,
-    NiceQuestPhase,
     NiceQuestType,
     NiceServant,
     NiceShop,
@@ -49,7 +48,13 @@ from pydantic.json import pydantic_encoder
 from requests_cache import CachedResponse
 
 from ..config import settings
-from ..schemas.common import AtlasExportFile, DataVersion, FileVersion, OpenApiInfo
+from ..schemas.common import (
+    AtlasExportFile,
+    DataVersion,
+    FileVersion,
+    OpenApiInfo,
+    Payload,
+)
 from ..schemas.const_data import ConstGameData
 from ..schemas.gamedata import (
     ExchangeTicket,
@@ -96,9 +101,15 @@ class MainParser:
         self.ext_data = ExtData()
         self.base_skills: dict[int, NiceBaseSkill] = {}
         self.base_functions: dict[int, NiceBaseFunction] = {}
+        self.atlas_updated_regions: list[Region] = []
+        self.payload: Payload = Payload.parse_obj(load_json("payload.json") or {})
+        logger.info(f"Payload: {self.payload}")
 
     @count_time
     def start(self):
+        if self.payload.clearCache:
+            logger.warning("clear all caches: exported files, api cache, wiki cache")
+            shutil.rmtree(settings.cache_dir, ignore_errors=True)
         logger.info("update_exported_files")
         self.update_exported_files()
         self.ext_data = ExtData.parse_obj(
@@ -108,7 +119,6 @@ class MainParser:
             }
         )
         self.jp_data = self.load_master_data(Region.JP)
-        self.gen_base_data()
         self.merge_all_mappings()
         if settings.skip_quests:
             logger.warning("skip checking quests data")
@@ -196,19 +206,24 @@ class MainParser:
         2. count each war's one-off questPhase's fixed drop
         """
         logger.info("processing quest data")
-
-        def _get_phase_key(quest_phase: NiceQuestPhase) -> int:
-            return quest_phase.id * 100 + quest_phase.phase
+        previous_fixed_drops: dict[int, FixedDrop] = {}
+        used_previous_count = 0
+        expire_time = time.time() - settings.quest_phase_expire * 24 * 3600
+        try:
+            if self.payload.regions:
+                previous_fixed_drops = {
+                    v["key"]: FixedDrop.parse_obj(v)
+                    for v in load_json(settings.output_dist / "fixed_drops.json", [])
+                }
+        except Exception as e:
+            logger.error(f"fail to reading fixed drop data of previous build: {e}")
 
         def _check_quest_phase_in_recent(response: CachedResponse):
             try:
                 phase_data = orjson.loads(response.content)
-                return (
-                    phase_data["openedAt"]
-                    > time.time() - settings.quest_phase_expire * 24 * 3600
-                )
-            except Exception as e:
-                print(e)
+                return phase_data["openedAt"] > expire_time
+            except Exception as _e:
+                print(_e)
                 return True
 
         def _check_one_quest(quest: NiceQuest):
@@ -216,16 +231,17 @@ class MainParser:
             last_phase = quest.phases[-1]
             last_phase_key = quest.id * 100 + last_phase
             if quest.type == NiceQuestType.free:
-                self.jp_data.cachedQuestPhases[last_phase_key] = AtlasApi.api_model(
-                    f"/nice/JP/quest/{quest.id}/{last_phase}",
-                    model=NiceQuestPhase,
+                self.jp_data.cachedQuestPhases[last_phase_key] = AtlasApi.quest_phase(
+                    quest.id,
+                    last_phase,
                     filter_fn=_check_quest_phase_in_recent,
+                    expire_after=10 * 24 * 3600,
                 )
                 return
             if quest.warId == 1002:  # 曜日クエスト
-                self.jp_data.cachedQuestPhases[last_phase_key] = AtlasApi.api_model(
-                    f"/nice/JP/quest/{quest.id}/{last_phase}",
-                    model=NiceQuestPhase,
+                self.jp_data.cachedQuestPhases[last_phase_key] = AtlasApi.quest_phase(
+                    quest.id,
+                    last_phase,
                 )
                 return
 
@@ -239,19 +255,34 @@ class MainParser:
             for phase in quest.phases:
                 if phase in quest.phasesNoBattle:
                     continue
+                phase_key = quest.id * 100 + phase
+                previous_data = previous_fixed_drops.get(phase_key)
+                quest_na = self.jp_data.cachedQuestsNA.get(quest.id)
+                if (
+                    previous_data
+                    and quest.openedAt < expire_time
+                    and (not quest_na or quest_na.openedAt < expire_time)
+                ):
+                    self.jp_data.questPhaseFixedDrops[phase_key] = previous_data.copy(
+                        deep=True
+                    )
+                    nonlocal used_previous_count
+                    used_previous_count += 1
+                    return
                 phase_data = None
                 if phase in quest.phasesWithEnemies:
-                    phase_data = AtlasApi.api_model(
-                        f"/nice/JP/quest/{quest.id}/{phase}",
-                        NiceQuestPhase,
+                    phase_data = AtlasApi.quest_phase(
+                        quest.id,
+                        phase,
                         filter_fn=_check_quest_phase_in_recent,
                     )
                 else:
                     quest_na = self.jp_data.cachedQuestsNA.get(quest.id)
                     if quest_na and phase in quest_na.phasesWithEnemies:
-                        phase_data = AtlasApi.api_model(
-                            f"/nice/NA/quest/{quest.id}/{phase}",
-                            NiceQuestPhase,
+                        phase_data = AtlasApi.quest_phase(
+                            quest.id,
+                            phase,
+                            Region.NA,
                             filter_fn=_check_quest_phase_in_recent,
                         )
                 if phase_data is None:
@@ -271,11 +302,11 @@ class MainParser:
                             drop.objectId, round(drop.dropCount / drop.runs) * drop.num
                         )
                 phase_drops.drop_negative()
-                if phase_drops:
-                    phase_key = _get_phase_key(phase_data)
-                    self.jp_data.questPhaseFixedDrops[phase_key] = FixedDrop(
-                        key=phase_key, items=phase_drops
-                    )
+                # always add even if there is nothing dropped
+                # if phase_drops:
+                self.jp_data.questPhaseFixedDrops[phase_key] = FixedDrop(
+                    key=phase_key, items=phase_drops
+                )
 
         worker = Worker("quest", func=_check_one_quest)
         _now = int(time.time()) + 60 * 24 * 3600
@@ -335,6 +366,9 @@ class MainParser:
                     continue
                 worker.add_default(_quest)
         worker.wait()
+        logger.debug(
+            f"used {used_previous_count} quest phases' fixed drop from previous build"
+        )
         logger.info("finished checking quests")
 
     def save_data(self):
@@ -346,7 +380,7 @@ class MainParser:
         data.sort()
         _now = datetime.datetime.now(datetime.timezone.utc)
 
-        print("updating wiki/events_base.json")
+        logger.info("updating wiki/events_base.json")
         wiki_event_base = {
             e["id"]: EventWBase.parse_obj(e)
             for e in load_json(settings.output_wiki / "events_base.json", [])
@@ -493,10 +527,10 @@ class MainParser:
             f_old = _last_version.files.get(k)
             if not f_old:
                 changed = True
-                print(f"[Publish] create new file {f.filename}")
+                logger.info(f"[Publish] create new file {f.filename}")
             elif f != f_old:
                 changed = True
-                print(f"[Publish] file updated {f.filename}")
+                logger.info(f"[Publish] file updated {f.filename}")
 
         if _last_version.minimalApp == cur_version.minimalApp and not changed:
             cur_version.timestamp = _last_version.timestamp
@@ -508,7 +542,7 @@ class MainParser:
         Path(settings.output_dir).joinpath("commit-msg.txt").write_text(
             f"Version({cur_version.minimalApp}, {cur_version.utc})"
         )
-        print("Updating mappings")
+        logger.info("Updating mappings")
         from .update_mapping import run_mapping_update
 
         run_mapping_update()
@@ -658,13 +692,23 @@ class MainParser:
 
     def merge_all_mappings(self):
         logger.info("merge all mappings")
-        self._merge_official_mappings(Region.CN)
-        self._fix_cn_translation()
-        self._merge_mc_translation()
-        self._merge_official_mappings(Region.NA)
-        self._add_na_mapping()
-        self._merge_official_mappings(Region.TW)
-        self._merge_official_mappings(Region.KR)
+        conditions: MappingBase[bool] = MappingBase.parse_obj(
+            {
+                str(region.value): not self.payload.regions or region in self.payload.regions
+                for region in Region.__members__.values()
+            }
+        )
+        if conditions.CN:
+            self._merge_official_mappings(Region.CN)
+            self._fix_cn_translation()
+            self._merge_mc_translation()
+        if conditions.NA:
+            self._merge_official_mappings(Region.NA)
+            self._add_na_mapping()
+        if conditions.TW:
+            self._merge_official_mappings(Region.TW)
+        if conditions.KR:
+            self._merge_official_mappings(Region.KR)
         self._merge_repo_mapping()
 
     def _merge_official_mappings(self, region: Region):
@@ -1028,12 +1072,9 @@ class MainParser:
 
     @staticmethod
     def copy_static():
+        logger.info("coping static files to dist folder")
         shutil.copytree(
             Path(__file__).resolve().parent.parent / "static",
             settings.output_dist,
             dirs_exist_ok=True,
         )
-
-    def gen_base_data(self):
-        # self.jp_data
-        ...
