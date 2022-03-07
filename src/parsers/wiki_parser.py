@@ -197,7 +197,7 @@ class WikiParser:
             for index in range(20):
                 key = "出场角色" if index == 0 else index
                 chara = params.get2(key)
-                if not chara:
+                if not chara or chara in self.unknown_chara_mapping:
                     continue
                 svt_text = MOONCELL.get_page_text(chara)
                 param_svt = parse_template(svt_text, r"^{{基础数值")
@@ -229,7 +229,7 @@ class WikiParser:
             for index in range(20):
                 key = "出场角色" if index == 0 else index
                 chara = params.get2(key)
-                if not chara:
+                if not chara or chara in self.unknown_chara_mapping:
                     continue
                 svt_text = MOONCELL.get_page_text(chara)
                 param_svt = parse_template(svt_text, r"^{{基础数值")
@@ -386,7 +386,6 @@ class WikiParser:
                 )
                 return
             params = parse_template(text, r"^{{活动信息")
-            print(params)
 
             war.titleBanner.CN = MOONCELL.get_file_url(params.get("标题图文件名cn"))
             war.titleBanner.JP = MOONCELL.get_file_url(params.get("标题图文件名jp"))

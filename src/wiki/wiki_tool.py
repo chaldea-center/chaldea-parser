@@ -108,13 +108,17 @@ class WikiTool:
         # print(f'{key}: {len(result)}')
         return result
 
+    @staticmethod
+    def _replace_https(url: str) -> str:
+        return re.sub(r"^http://", "https://", url)
+
     def get_file_url(self, name: str):
         name = self.norm_key(name)
         if not name:
             return None
         cached = self.cache.images.get(name)
         if cached and cached.get("url"):
-            return unquote(cached["url"])
+            return self._replace_https(unquote(cached["url"]))
         image = self.site.images[name]
         if not image.imageinfo:
             return None
@@ -122,7 +126,7 @@ class WikiTool:
         url = image.imageinfo["url"]
         if url:
             url = unquote(url)
-        return url
+        return self._replace_https(url)
 
     def get_cache(self, name: str) -> NoneStr:
         name = self.norm_key(name)
