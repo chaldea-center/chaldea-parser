@@ -103,7 +103,6 @@ class MainParser:
         self.ext_data = ExtData()
         self.base_skills: dict[int, NiceBaseSkill] = {}
         self.base_functions: dict[int, NiceBaseFunction] = {}
-        self.atlas_updated_regions: list[Region] = []
         self.payload: Payload = Payload.parse_obj(load_json("payload.json") or {})
         logger.info(f"Payload: {self.payload}")
 
@@ -1103,6 +1102,8 @@ class MainParser:
     @staticmethod
     def _merge_json(dest: dict, src: dict):
         for key, value in src.items():
+            if value is None:
+                continue
             if key not in dest:
                 dest[key] = value
                 continue
