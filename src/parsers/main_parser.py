@@ -978,7 +978,8 @@ class MainParser:
             cc = self.jp_data.cc_dict.get(cc_no)
             if cc:
                 _update_mapping(mappings.cc_names, cc.name, name, True, True)
-        # for event in self.ext_data
+        for name_jp, name_cn in mc_trans.event_names.items():
+            _update_mapping(mappings.event_names, name_jp, name_cn, True, True)
 
     def _fix_cn_translation(self):
         logger.info("fix Chinese translations")

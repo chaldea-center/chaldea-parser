@@ -313,6 +313,10 @@ class WikiParser:
                 )
                 return
             params = parse_template(text, r"^{{活动信息")
+            name_jp = params.get2("名称jp")
+            name_cn = params.get2("名称cn")
+            if name_jp and name_cn:
+                self.mc_translation.event_names[name_jp] = name_cn
 
             event.titleBanner.CN = MOONCELL.get_file_url(params.get("标题图文件名cn"))
             event.titleBanner.JP = MOONCELL.get_file_url(params.get("标题图文件名jp"))

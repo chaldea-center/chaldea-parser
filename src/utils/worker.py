@@ -9,7 +9,9 @@ _executor = ThreadPoolExecutor()
 
 
 class Worker:
-    def __init__(self, name: str | None = None, func: Optional[Callable] = None) -> None:
+    def __init__(
+        self, name: str | None = None, func: Optional[Callable] = None
+    ) -> None:
         self.name = name
         self.func = func
         self._tasks = []

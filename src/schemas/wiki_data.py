@@ -26,6 +26,7 @@ class MooncellTranslation(BaseModelORJson):
     td_ruby: dict[str, str] = {}
     ce_names: dict[int, str] = {}
     cc_names: dict[int, str] = {}
+    event_names: dict[str, str] = {}
 
 
 class ServantW(BaseModel):
