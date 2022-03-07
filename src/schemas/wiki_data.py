@@ -140,6 +140,7 @@ class WikiData(BaseModelORJson):
     # events and summons are stored as base
     events: dict[int, EventW] = {}
     wars: dict[int, WarW] = {}
+    fsmSvtIdMapping: dict[int, int] = {}
 
     def get_svt(self, collection_no: int):
         return self.servants.setdefault(
