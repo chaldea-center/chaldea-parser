@@ -5,8 +5,8 @@ So make sure all changes here have been token affect in distribution before `upd
 
 - output/mappings/
   update from exported files and wiki data
-- output/wiki/events_base&summons_base
-  from release/events.json and release/summons.json
+- output/wiki/summons_base
+  from release/summons.json
 """
 from src.config import settings
 from src.schemas.gamedata import MappingData
@@ -49,7 +49,7 @@ def _update_summons():
     # summons
     summons_release: dict[str, LimitedSummonBase] = {
         obj["id"]: LimitedSummonBase.parse_obj(obj)
-        for obj in load_json(settings.output_dist / "summons.json", [])
+        for obj in load_json(settings.output_dist / "summons.json") or []
     }
     summons_base_list = list(summons_release.values())
     summons_base_list.sort(key=lambda x: x.startTime.JP or NEVER_CLOSED_TIMESTAMP)

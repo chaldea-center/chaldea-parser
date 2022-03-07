@@ -128,7 +128,7 @@ def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
 def _get_quest_spot_map():
     wars: list[NiceWar] = [
         NiceWar.parse_obj(war)
-        for war in load_json(settings.atlas_export_dir / "JP/nice_war.json", [])
+        for war in load_json(settings.atlas_export_dir / "JP/nice_war.json") or []
     ]
 
     spot_map: dict[str, int] = {}

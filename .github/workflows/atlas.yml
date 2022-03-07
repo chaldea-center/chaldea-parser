@@ -31,6 +31,7 @@ jobs:
           path: ${{ env.output_dir }}
 
       - name: Save payload
+        if: ${{ github.event.client_payload }}
         run: |
           echo '${{ toJson(github.event.client_payload) }}' >> payload.json
           cat payload.json

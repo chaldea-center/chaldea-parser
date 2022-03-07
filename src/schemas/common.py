@@ -17,7 +17,7 @@ class MappingBase(GenericModel, Generic[_KV]):
     NA: Optional[_KV] = None
     KR: Optional[_KV] = None
 
-    def update(self, region: Region, value: _KV, skip_exists=False):
+    def update(self, region: Region, value: _KV | None, skip_exists=False):
         def _resolve_value(region_v):
             v = region_v or value if skip_exists else value or region_v
             if v:
@@ -33,6 +33,20 @@ class MappingBase(GenericModel, Generic[_KV]):
             self.NA = _resolve_value(self.NA)
         elif region == Region.KR:
             self.KR = _resolve_value(self.KR)
+
+    def update_from(self, other: "MappingBase[_KV]", skip_exist=True):
+        if skip_exist:
+            self.JP = self.JP or other.JP
+            self.CN = self.CN or other.CN
+            self.TW = self.TW or other.TW
+            self.NA = self.NA or other.NA
+            self.KR = self.KR or other.KR
+        else:
+            self.JP = other.JP or self.JP
+            self.CN = other.CN or self.CN
+            self.TW = other.TW or self.TW
+            self.NA = other.NA or self.NA
+            self.KR = other.KR or self.KR
 
 
 MappingStr = MappingBase[str]

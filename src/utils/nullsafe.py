@@ -5,10 +5,10 @@ T = TypeVar("T")
 
 
 class NullSafe:
-    def __getattr__(self, k: str) -> "NullSafe":
+    def __getattr__(self, k) -> "NullSafe":
         return undefined
 
-    def __getitem__(self, k: str) -> "NullSafe":
+    def __getitem__(self, k) -> "NullSafe":
         return undefined
 
     def __bool__(self):
@@ -44,7 +44,7 @@ class NullSafeProxy(Generic[T]):
     def __init__(self, o: T) -> None:
         self.__o = o
 
-    def __getitem__(self, k: str) -> Union[Any, NullSafe]:
+    def __getitem__(self, k) -> Union[Any, NullSafe]:
         try:
             val = self.__o.__getitem__(k)
             if val is None:
@@ -53,11 +53,11 @@ class NullSafeProxy(Generic[T]):
         except (KeyError, AttributeError):
             return undefined
 
-    def __getattr__(self, name: str) -> Union[Any, NullSafe]:
+    def __getattr__(self, name) -> Union[Any, NullSafe]:
         val = getattr(self.__o, name, undefined)
         return undefined if val is None else val
 
-    def __setattr__(self, name: str, value: Any) -> None:
+    def __setattr__(self, name, value: Any) -> None:
         if name == "_NullSafeProxy__o":
             return super().__setattr__(name, value)
         raise AttributeError(f"'{self.__class__.__name__}' object can't set attribute")

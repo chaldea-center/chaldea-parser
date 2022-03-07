@@ -20,6 +20,7 @@ from ..schemas.wiki_data import (
     ProbGroup,
     ServantW,
     SubSummon,
+    WarW,
     WikiData,
 )
 from ..utils import Worker, count_time, dump_json, load_json, logger, sort_dict
@@ -34,6 +35,7 @@ class WikiParser:
         self.summons: dict[str, LimitedSummon] = {}
         self.basic_summons: dict[str, LimitedSummon] = {}  # actually LimitedSummonBase
         self.basic_events: dict[int, EventW] = {}  # actually EventWBase
+        self.wars: dict[int, WarW] = {}
         self.mc_translation = MooncellTranslation()
         self.unknown_chara_mapping: dict[str, MappingStr] = {}
 
@@ -44,31 +46,35 @@ class WikiParser:
         MOONCELL.remove_recent_changed()
         FANDOM.remove_recent_changed()
         self.init_wiki_data()
-        print("[Mooncell] parsing servant data")
+        logger.info("[Mooncell] parsing servant data")
         self.mc_svt()
-        print("[Mooncell] parsing craft essence data")
+        logger.info("[Mooncell] parsing craft essence data")
         self.mc_ce()
-        print("[Mooncell] parsing command code data")
+        logger.info("[Mooncell] parsing command code data")
         self.mc_cc()
-        print("[Mooncell] parsing event data")
+        logger.info("[Mooncell] parsing event/war data")
         self.mc_events()
-        print("[Mooncell] parsing summon data")
+        self.mc_wars()
+        logger.info("[Mooncell] parsing summon data")
         self.mc_summon()
-        print("[Fandom] parsing servant data")
+        logger.info("[Fandom] parsing servant data")
         self.fandom_svt()
-        print("[Fandom] parsing craft essence data")
+        logger.info("[Fandom] parsing craft essence data")
         self.fandom_ce()
-        print("[Fandom] parsing command code data")
+        logger.info("[Fandom] parsing command code data")
         self.fandom_cc()
-        print("Saving data...")
+        logger.info("Saving data...")
         self.save_data()
         MOONCELL.save_cache()
         FANDOM.save_cache()
 
     def init_wiki_data(self):
-        for event_data in load_json(settings.output_wiki / "events_base.json"):
+        for event_data in load_json(settings.output_wiki / "events_base.json") or []:
             event = EventW.parse_obj(event_data)
             self.basic_events[event.id] = event
+        for war_data in load_json(settings.output_wiki / "main_stories.json") or []:
+            war = WarW.parse_obj(war_data)
+            self.wars[war.id] = war
         for summon_data in load_json(settings.output_wiki / "summons_base.json"):
             summon = LimitedSummon.parse_obj(summon_data)
             self.basic_summons[summon.id] = summon
@@ -340,6 +346,32 @@ class WikiParser:
         worker = Worker.from_map(_parse_one, self.basic_events.values())
         worker.wait()
 
+    def mc_wars(self):
+        def _parse_one(war: WarW):
+            if war.fandomLink and not FANDOM.get_page_text(war.fandomLink):
+                logger.warning(
+                    f'Fandom main story page not found, may be moved: "{war.mcLink}"'
+                )
+            if not war.mcLink:
+                return
+            text = MOONCELL.get_page_text(war.mcLink)
+            if not text:
+                logger.warning(
+                    f'Mooncell main story page not found, may be moved: "{war.mcLink}"'
+                )
+                return
+            params = parse_template(text, r"^{{活动信息")
+            print(params)
+
+            war.titleBanner.CN = MOONCELL.get_file_url(params.get("标题图文件名cn"))
+            war.titleBanner.JP = MOONCELL.get_file_url(params.get("标题图文件名jp"))
+            war.noticeLink.CN = params.get("官网链接cn")
+            war.noticeLink.JP = params.get("官网链接jp")
+            self.wiki_data.wars[war.id] = war
+
+        worker = Worker.fake(_parse_one, self.wars.values())
+        worker.wait()
+
     def mc_summon(self):
         def t_summon_data_table(src_str: str, instance: SubSummon):
             table = []
@@ -424,6 +456,7 @@ class WikiParser:
         # self.wiki_data.mysticCodes = sort_dict(self.wiki_data.mysticCodes)
 
         self.wiki_data.events = sort_dict(self.wiki_data.events)
+        self.wiki_data.wars = sort_dict(self.wiki_data.wars)
         summons = list(self.summons.values())
         summons.sort(key=lambda s: s.startTime.JP or 0)
         self.summons = {k.id: k for k in summons}

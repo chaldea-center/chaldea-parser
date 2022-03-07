@@ -140,13 +140,15 @@ class WikiTool:
 
     @staticmethod
     def get_timestamp(s: str, tz: str = "Asia/Shanghai") -> Optional[int]:
-        if s:
-            m = re.match(r"^(\d+)-(\d+)-(\d+)\s+(\d+):(\d+)", s)
-            seq = [int(x) for x in m.groups()]
-            t = datetime(*seq)
-            t.replace(tzinfo=pytz.timezone(tz))
-            return int(t.timestamp())
-        return None
+        if not s:
+            return None
+        m = re.match(r"^(\d+)-(\d+)-(\d+)\s+(\d+):(\d+)", s)
+        if not m:
+            return None
+        seq = [int(x) for x in m.groups()]
+        t = datetime(*seq, tzinfo=None)
+        t.replace(tzinfo=pytz.timezone(tz))
+        return int(t.timestamp())
 
     @retry_decorator()
     def recent_changes(
@@ -177,7 +179,7 @@ class WikiTool:
     def ask_query(self, query, title=None):
         return self.site.ask(query, title)
 
-    def remove_recent_changed(self, days: float = None):
+    def remove_recent_changed(self, days: float | None = None):
         _now = int(time.time())
         if days is not None:
             last_timestamp = datetime.utcnow().timestamp() - days * 24 * 3600
@@ -191,7 +193,7 @@ class WikiTool:
             toponly=1,
         )
         dropped = 0
-        for index, record in enumerate(changes):
+        for record in changes:
             title = self.norm_key(record.get("title"))
             page = self.cache.pages.pop(title, None)
             if page:

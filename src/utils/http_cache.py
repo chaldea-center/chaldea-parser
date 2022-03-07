@@ -4,7 +4,7 @@ import functools
 import time
 from contextlib import contextmanager
 from datetime import timedelta
-from typing import Optional, Type, Union
+from typing import Generator, Optional, Type, Union
 
 import requests
 import requests_cache
@@ -13,8 +13,9 @@ from app.schemas.nice import NiceQuestPhase
 from pydantic import ValidationError
 from ratelimit import limits, sleep_and_retry
 from requests import Response
-from requests_cache import CachedResponse, CachedSession
+from requests_cache import CachedSession
 from requests_cache.backends.sqlite import SQLiteCache
+from requests_cache.models.response import CachedResponse
 
 
 __all__ = ["HttpApiUtil"]
@@ -26,7 +27,7 @@ from .log import logger
 
 
 @contextmanager
-def http_cache_enabled(**kwargs) -> CachedSession:
+def http_cache_enabled(**kwargs) -> Generator[CachedSession, None, None]:
     session = CachedSession(
         backend=kwargs.pop(
             "backend", SQLiteCache(db_path=".cache/http_cache/http_cache")
@@ -75,10 +76,7 @@ class HttpApiUtil(abc.ABC):
             r = cache_session.get(url, **kwargs)
             if r.status_code == 429:
                 print(r.text)
-                try:
-                    retry_after = float(r.headers.get("Retry-After"))
-                except:  # noqa
-                    retry_after = 5
+                retry_after = float(r.headers.get("Retry-After") or "5")
                 time.sleep(retry_after)
                 return _call_api(url, retry_n - 1, **origin_kwargs)
             print(f"GOT url: {time.time() - t0:.3f}s: {url}")
@@ -87,7 +85,7 @@ class HttpApiUtil(abc.ABC):
         self._limit_api_func = _call_api
 
     def call_api(
-        self, url, filter_fn: FILTER_FN = None, **kwargs
+        self, url, filter_fn: FILTER_FN | None = None, **kwargs
     ) -> Optional[Union[Response, CachedResponse]]:
         """
         :param url: only path or full url
@@ -117,7 +115,7 @@ class HttpApiUtil(abc.ABC):
         return resp
 
     def api_model(
-        self, url, model: Type[Model], filter_fn: FILTER_FN = None, **kwargs
+        self, url, model: Type[Model], filter_fn: FILTER_FN | None = None, **kwargs
     ) -> Optional[Model]:
         url = self.full_url(url)
         response = self.call_api(url, filter_fn, **kwargs)
@@ -155,7 +153,7 @@ class HttpApiUtil(abc.ABC):
         quest_id: int,
         phase: int,
         region=Region.JP,
-        filter_fn: FILTER_FN = None,
+        filter_fn: FILTER_FN | None = None,
         **kwargs,
     ):
         return self.api_model(
@@ -176,7 +174,7 @@ class HttpApiUtil(abc.ABC):
         keys = []
         for key in self.cache_storage.responses.keys():
             resp = self.cache_storage.get_response(key)
-            if filter_fn(resp):
+            if resp and filter_fn(resp):
                 keys.append(key)
         print(f"removing {len(keys)} keys")
         self.cache_storage.bulk_delete(keys)

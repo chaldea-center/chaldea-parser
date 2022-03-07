@@ -107,7 +107,7 @@ class MasterData(BaseModelORJson):
     nice_command_code: list[NiceCommandCode] = []
     nice_cv: list[MstCv] = []
     nice_bgm: list[NiceBgm] = []
-    nice_enums: dict[str, dict[int, str]] = []
+    nice_enums: dict[str, dict[int, str]] = {}
     # nice_equip: list[NiceEquip]=[]
     nice_equip_lore: list[NiceEquip] = []
     nice_illustrator: list[MstIllustrator] = []
@@ -118,7 +118,7 @@ class MasterData(BaseModelORJson):
     nice_servant_lore: list[NiceServant] = []
     nice_war: list[NiceWar] = []
     nice_event: list[NiceEvent] = []
-    nice_trait: dict[int, Trait] = []
+    nice_trait: dict[int, Trait] = {}
     NiceAttributeRelation: dict[Attribute, dict[Attribute, int]] = {}
     NiceBuffList_ActionList: dict[NiceBuffAction, BuffActionDetail] = {}
     NiceCard: dict[NiceCardType, dict[int, CardInfo]] = {}
@@ -163,7 +163,8 @@ class MasterData(BaseModelORJson):
     def costume_dict(self) -> dict[int, NiceCostume]:
         d = {}
         for svt in self.nice_servant_lore:
-            d.update(svt.profile.costume)
+            if svt.profile:
+                d.update(svt.profile.costume)
         return d
 
     @cached_property

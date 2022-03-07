@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Callable
+from typing import Callable, Optional
 
 from src.config import settings
 from src.utils import logger
@@ -9,7 +9,7 @@ _executor = ThreadPoolExecutor()
 
 
 class Worker:
-    def __init__(self, name: str = None, func: Callable = None) -> None:
+    def __init__(self, name: str | None = None, func: Optional[Callable] = None) -> None:
         self.name = name
         self.func = func
         self._tasks = []
@@ -57,3 +57,4 @@ class Worker:
     def fake(fn, *iterables):
         for args in zip(*iterables):
             fn(*args)
+        return Worker()

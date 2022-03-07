@@ -1,9 +1,8 @@
 import re
-from typing import Union
+from typing import Any, Iterable, Union
 
-import mwparserfromhell
 from mwparserfromhell import parse as mwparse
-from mwparserfromhell.nodes import Template
+from mwparserfromhell.nodes import Template, Wikilink
 from mwparserfromhell.nodes.extras import Parameter
 from mwparserfromhell.wikicode import Wikicode
 
@@ -30,8 +29,8 @@ kAllTags = (
 )
 
 
-class Params(dict):
-    def get(self, k, default=None, cast=None, tags=None, nullable=True):
+class Params(dict[Any, str]):
+    def get(self, k, default=None, cast=None, tags=None, nullable=True) -> str | None:
         """
         :param k: dict key.
         :param default: default value if key not in dict.
@@ -55,7 +54,7 @@ class Params(dict):
             try:
                 # ,分隔符
                 if cast == int:
-                    v = v.replace(",", "")
+                    v = str(v).replace(",", "")
                 v = cast(v)
             except:  # noqas
                 v = default
@@ -66,7 +65,7 @@ class Params(dict):
         return self.get(k, default, cast, True, nullable)
 
 
-def remove_tag(string: str, tags: list[str] = kAllTags, console=False):
+def remove_tag(string: str, tags: Iterable[str] = kAllTags, console=False):
     if not string:
         return string
     if tags is True:
@@ -104,16 +103,16 @@ def remove_tag(string: str, tags: list[str] = kAllTags, console=False):
     if "heimu" in tags:
         for template in code.filter_templates(matches=r"^{{(黑幕|heimu|模糊|修正)"):
             params = parse_template(template)
-            string = string.replace(str(template), params.get("1", ""))
+            string = string.replace(str(template), params.get("1") or "")
         for template in code.filter_templates(matches=r"^{{color"):
             params = parse_template(template)
-            string = string.replace(str(template), params.get("2", ""))
+            string = string.replace(str(template), params.get("2") or "")
 
     # replace
     if "texing" in tags:
         for template in code.filter_templates(matches=r"^{{(特性|特攻)"):
             params = parse_template(template)
-            replace = params.get("2", params.get("1")).strip("〔〕")
+            replace = (params.get("2") or params.get("1") or "").strip("〔〕")
             string = string.replace(str(template), f"〔{replace}〕")
     if "ruby" in tags:
         for template in code.filter_templates(matches=r"^{{ruby"):
@@ -128,9 +127,7 @@ def remove_tag(string: str, tags: list[str] = kAllTags, console=False):
     if "link" in tags:
         # remove [[File:a.jpg|b|c]] - it show img
         string = re.sub(r"\[\[(文件|File):([^\[\]]*?)]]", "", string)
-        for (
-            wiki_link
-        ) in code.filter_wikilinks():  # type:mwparserfromhell.nodes.wikilink.Wikilink
+        for wiki_link in code.filter_wikilinks():  # type: Wikilink
             # [[语音关联从者::somebody]]
             link = re.split(r":+", str(wiki_link.title))[-1]
             shown_text = wiki_link.text
@@ -179,7 +176,7 @@ def trim(s: str, chars=None):
     return s.strip(chars)
 
 
-def parse_template(template: Wikitext, matches: str = None) -> Params:
+def parse_template(template: Wikitext, matches: str | None = None) -> Params:
     if not isinstance(template, Template):
 
         templates = mwparse(template).filter_templates(matches=matches)
@@ -196,7 +193,7 @@ def parse_template(template: Wikitext, matches: str = None) -> Params:
     return params
 
 
-def parse_template_list(code, matches: str = None) -> list[Params]:
+def parse_template_list(code, matches: str | None = None) -> list[Params]:
     results = []
     for tmpl in mwparse(code).filter_templates(matches=matches):
         results.append(parse_template(tmpl, matches))

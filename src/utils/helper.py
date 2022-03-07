@@ -6,7 +6,6 @@ import time
 from operator import itemgetter
 from pathlib import Path
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Generic,
@@ -23,13 +22,10 @@ import requests
 from pydantic import BaseModel
 from pydantic.json import pydantic_encoder
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util import Retry
+from urllib3.util import Retry
 
 from .log import logger
 
-
-if TYPE_CHECKING:
-    from _typeshed import StrOrBytesPath
 
 Model = TypeVar("Model", bound=BaseModel)
 
@@ -58,7 +54,7 @@ def sort_dict(d: Mapping) -> dict:
     return dict(sorted(d.items(), key=itemgetter(0)))
 
 
-def load_json(fp: "StrOrBytesPath", default=None) -> Optional[Any]:
+def load_json(fp: str | Path, default=None) -> Optional[Any]:
     fp = Path(fp)
     if fp.exists():
         obj = orjson.loads(fp.read_bytes())
@@ -68,7 +64,7 @@ def load_json(fp: "StrOrBytesPath", default=None) -> Optional[Any]:
 
 def dump_json(
     obj,
-    fp: "StrOrBytesPath" = None,
+    fp: str | Path | None = None,
     default: Optional[Callable[[Any], Any]] = pydantic_encoder,
     indent2: bool = True,
     non_str_keys: bool = True,

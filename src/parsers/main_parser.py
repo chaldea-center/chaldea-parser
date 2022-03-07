@@ -45,7 +45,8 @@ from app.schemas.nice import (
 )
 from pydantic import BaseModel
 from pydantic.json import pydantic_encoder
-from requests_cache import CachedResponse
+from requests_cache import Response
+from requests_cache.models.response import CachedResponse
 
 from ..config import settings
 from ..schemas.common import (
@@ -70,6 +71,7 @@ from ..schemas.wiki_data import (
     CraftEssenceW,
     EventWBase,
     MooncellTranslation,
+    WarW,
 )
 from ..utils import (
     NEVER_CLOSED_TIMESTAMP,
@@ -81,7 +83,7 @@ from ..utils import (
     load_json,
     logger,
 )
-from ..utils.nullsafe import nullsafe, undefined
+from ..utils.nullsafe import NullSafe, NullSafeProxy, nullsafe, undefined
 
 
 _ = nullsafe
@@ -155,7 +157,7 @@ class MainParser:
             logger.info(f'API changed:\n{dict(openapi_remote["info"], description="")}')
 
         info_remote = requests.get(AtlasApi.full_url("info")).json()
-        info_local = load_json(fp_info, {})
+        info_local = load_json(fp_info) or {}
 
         for region, info in info_remote.items():
             region_changed = not info_local.get(region) or RepoInfo.parse_obj(
@@ -213,12 +215,12 @@ class MainParser:
             if self.payload.regions:
                 previous_fixed_drops = {
                     v["key"]: FixedDrop.parse_obj(v)
-                    for v in load_json(settings.output_dist / "fixed_drops.json", [])
+                    for v in load_json(settings.output_dist / "fixed_drops.json") or []
                 }
         except Exception as e:
             logger.error(f"fail to reading fixed drop data of previous build: {e}")
 
-        def _check_quest_phase_in_recent(response: CachedResponse):
+        def _check_quest_phase_in_recent(response: Response | CachedResponse):
             try:
                 phase_data = orjson.loads(response.content)
                 return phase_data["openedAt"] > expire_time
@@ -379,24 +381,7 @@ class MainParser:
         data = self.jp_data
         data.sort()
         _now = datetime.datetime.now(datetime.timezone.utc)
-
-        logger.info("updating wiki/events_base.json")
-        wiki_event_base = {
-            e["id"]: EventWBase.parse_obj(e)
-            for e in load_json(settings.output_wiki / "events_base.json", [])
-        }
-        wiki_event_base_new = []
-        for event in self.jp_data.nice_event:
-            event_base = wiki_event_base.get(event.id) or EventWBase(
-                id=event.id, name=event.name
-            )
-            event_base.name = event.name
-            wiki_event_base_new.append(event_base)
-        dump_json(
-            wiki_event_base_new,
-            settings.output_wiki / "events_base.json",
-            default=pydantic_encoder,
-        )
+        self._export_wiki_base()
 
         print("Saving data")
         cur_version = DataVersion(
@@ -436,7 +421,7 @@ class MainParser:
                 size=len(_bytes),
             )
 
-        def _dump(_fn: str, obj=None, per_file: int = None, encoder=None):
+        def _dump(_fn: str, obj=None, per_file: int | None = None, encoder=None):
             if encoder is None:
                 encoder = self._encoder
             assert not _fn.lower().endswith(".json"), _fn
@@ -485,6 +470,7 @@ class MainParser:
         # for event in data.nice_event:
         #     if event.endedAt < _3year:
         #         old_events.add(event.id)
+        # TODO: split bt id range
         _dump("events", [e for e in data.nice_event if e.id not in old_events], 50)
         _dump(
             "wars", [war for war in data.nice_war if war.eventId not in old_events], 40
@@ -546,6 +532,46 @@ class MainParser:
         from .update_mapping import run_mapping_update
 
         run_mapping_update()
+
+    def _export_wiki_base(self):
+        logger.info("export wiki/events_base.json")
+        wiki_event_base = {
+            e["id"]: EventWBase.parse_obj(e)
+            for e in load_json(settings.output_wiki / "events_base.json") or []
+        }
+        wiki_event_base_new = []
+        for event in self.jp_data.nice_event:
+            event_base = wiki_event_base.get(event.id) or EventWBase(
+                id=event.id, name=event.name
+            )
+            event_base.name = event.name
+            wiki_event_base_new.append(event_base)
+        dump_json(
+            wiki_event_base_new,
+            settings.output_wiki / "events_base.json",
+            default=pydantic_encoder,
+        )
+
+        logger.info("updating wiki/main_stories.json")
+        wiki_wars = {
+            e["id"]: WarW.parse_obj(e)
+            for e in load_json(settings.output_wiki / "main_stories.json") or []
+        }
+        wiki_wars_new = []
+        for war in self.jp_data.nice_war:
+            if war.id >= 1000:
+                continue
+            war_new = wiki_wars.get(war.id) or WarW(id=war.id)
+            war_release = self.ext_data.wiki_data.wars.get(war.id)
+            if war_release:
+                war_new.noticeLink.update_from(war_release.noticeLink)
+                war_new.titleBanner.update_from(war_release.titleBanner)
+            wiki_wars_new.append(war_new)
+        dump_json(
+            wiki_wars_new,
+            settings.output_wiki / "main_stories.json",
+            default=pydantic_encoder,
+        )
 
     def _encoder(self, obj):
         exclude = set()
@@ -675,11 +701,14 @@ class MainParser:
                 continue
             year, month = match.group(2), match.group(1)
             m2 = re.search(r"^(.+)、(.+)、(.+)の中から一つと交換ができます。$", item.detail)
-            item_ids = [name_id_map.get(m2.group(i)) for i in (1, 2, 3)]
-            if None in item_ids:
-                print(
-                    f"exchange ticket: unknown items: {item_ids}: {item.id}-{item.name}:{item.detail}"
-                )
+            if not m2:
+                continue
+            item_ids = []
+            for i in (1, 2, 3):
+                item_id = name_id_map.get(m2.group(i))
+                if item_id:
+                    item_ids.append(item_id)
+            assert len(item_ids) == 3, f"exchange ticket items!=3: {item_ids}"
             tickets.append(
                 ExchangeTicket(
                     id=int(year) * 100 + int(month),
@@ -738,18 +767,22 @@ class MainParser:
         def _update_mapping(
             m: dict[_KT, MappingBase[_KV]],
             _key: _KT,
-            value: _KV,
+            value: _KV | NullSafe | NullSafeProxy | None,
             skip_exists=False,
             skip_unknown_key=False,
         ):
-            if _key is None or _key is undefined:
+            if _key is None or isinstance(value, NullSafe):
                 return
             m.setdefault(_key, MappingBase())
+            if isinstance(value, NullSafeProxy):
+                value2 = value.__o
+            else:
+                value2 = value
             return self._update_key_mapping(
                 region,
                 key_mapping=m,
                 _key=_key,
-                value=value,
+                value=value2,
                 skip_exists=skip_exists,
                 skip_unknown_key=skip_unknown_key,
             )
@@ -969,9 +1002,9 @@ class MainParser:
                 key in mappings.__fields__
             ), f"{key} not in {list(mappings.__fields__.keys())}"
 
-            def _repl(match: Match[AnyStr]) -> AnyStr:
+            def _repl(match: Match[AnyStr]) -> str:
                 return {"力": "Buster", "技": "Arts", "迅": "Quick", "额外": "Extra"}[
-                    match.group(0)
+                    str(match.group(0))
                 ]
 
             for jp_name, regions in mappings_dict[key].items():
@@ -1040,7 +1073,9 @@ class MainParser:
         fp_override = folder / "override_mappings.json"
         if not fp_override.exists():
             fp_override.write_text("{}")
-        override_data: dict[str, dict[str, dict[str, str]]] = load_json(fp_override, {})
+        override_data: dict[str, dict[str, dict[str, str]]] = (
+            load_json(fp_override) or {}
+        )
         self._merge_json(mappings_repo, override_data)
         self.jp_data.mappingData = MappingData.parse_obj(mappings_repo)
 

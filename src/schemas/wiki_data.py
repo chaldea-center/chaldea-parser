@@ -81,6 +81,14 @@ class EventWBase(BaseModel):
     extraItems: list[EventExtraItems] = []
 
 
+class WarW(BaseModel):
+    id: int
+    mcLink: NoneStr = None
+    fandomLink: NoneStr = None
+    titleBanner: MappingBase[HttpUrl] = MappingBase()
+    noticeLink: MappingStr = MappingStr()
+
+
 class EventW(EventWBase):
     startTime: Optional[MappingInt] = None
     endTime: Optional[MappingInt] = None
@@ -111,7 +119,7 @@ class LimitedSummonBase(BaseModel):
     fandomLink: NoneStr = None
     name: MappingStr = MappingStr()
     banner: MappingBase[HttpUrl] = MappingBase()
-    noticeLink: MappingStr = MappingStr  # cn: number, tw?
+    noticeLink: MappingStr = MappingStr()  # cn: number, tw?
     startTime: MappingInt = MappingInt()
     endTime: MappingInt = MappingInt()
 
@@ -130,6 +138,7 @@ class WikiData(BaseModelORJson):
 
     # events and summons are stored as base
     events: dict[int, EventW] = {}
+    wars: dict[int, WarW] = {}
 
     def get_svt(self, collection_no: int):
         return self.servants.setdefault(
