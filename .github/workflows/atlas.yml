@@ -1,8 +1,5 @@
 name: Atlas Parser
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
   repository_dispatch:
 
