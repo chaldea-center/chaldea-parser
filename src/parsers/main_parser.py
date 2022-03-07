@@ -420,7 +420,9 @@ class MainParser:
                 size=len(_bytes),
             )
 
-        def _dump(_fn: str, obj=None, per_file: int | None = None, encoder=None):
+        def _dump(
+            _fn: str, obj=None, per_file: int | None = None, ranges=None, encoder=None
+        ):
             if encoder is None:
                 encoder = self._encoder
             assert not _fn.lower().endswith(".json"), _fn
@@ -433,6 +435,29 @@ class MainParser:
                     _fn_i = f"{_fn}.{i + 1}.json"
                     _bytes = orjson.dumps(
                         obj[i * per_file : (i + 1) * per_file],
+                        default=encoder,
+                        option=orjson.OPT_NON_STR_KEYS,
+                    )
+                    cur_version.files[_fn_i] = _get_file_version(_fn_i, key, _bytes)
+                    dist_folder.joinpath(_fn_i).write_bytes(_bytes)
+                    print(f"dump {_fn_i}")
+            elif ranges is not None:
+                assert isinstance(obj, dict)
+                obj = dict(obj)
+                for i, id_range in enumerate(ranges):
+                    _fn_i = f"{_fn}.{i + 1}.json"
+                    _bytes = orjson.dumps(
+                        [obj.pop(_k) for _k in id_range if _k in obj],
+                        default=encoder,
+                        option=orjson.OPT_NON_STR_KEYS,
+                    )
+                    cur_version.files[_fn_i] = _get_file_version(_fn_i, key, _bytes)
+                    dist_folder.joinpath(_fn_i).write_bytes(_bytes)
+                    print(f"dump {_fn_i}")
+                if obj:
+                    _fn_i = f"{_fn}.{len(ranges)+1}.json"
+                    _bytes = orjson.dumps(
+                        [obj[_k] for _k in sorted(obj.keys())],
                         default=encoder,
                         option=orjson.OPT_NON_STR_KEYS,
                     )
@@ -464,15 +489,25 @@ class MainParser:
 
         _dump("servants", data.nice_servant_lore, 100)
         _dump("items", data.nice_item)
-        old_events = set()
-        # _3year = int(time.time()) - 3 * 365 * 24 * 3600
-        # for event in data.nice_event:
-        #     if event.endedAt < _3year:
-        #         old_events.add(event.id)
-        # TODO: split bt id range
-        _dump("events", [e for e in data.nice_event if e.id not in old_events], 50)
         _dump(
-            "wars", [war for war in data.nice_war if war.eventId not in old_events], 40
+            "events",
+            data.event_dict,
+            ranges=[
+                range(80000, 80100),
+                range(80100, 80300),
+                range(80300, 80400),
+            ],
+        )
+        _dump(
+            "wars",
+            data.war_dict,
+            ranges=[
+                list(range(0, 2000)) + list(range(9999, 14000)),
+                range(8000, 9000),
+                range(9000, 9050),
+                range(9050, 9100),
+                range(9100, 9999),
+            ],
         )
         _dump("entities", data.basic_svt)
         _dump("exchange_tickets", data.exchangeTickets)
