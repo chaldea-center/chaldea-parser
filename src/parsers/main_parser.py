@@ -231,7 +231,8 @@ class MainParser:
             # main story's free
             last_phase = quest.phases[-1]
             last_phase_key = quest.id * 100 + last_phase
-            if quest.type == NiceQuestType.free:
+            # war 9033 極東乖離結界「帝都」 also use FREE ???
+            if quest.type == NiceQuestType.free and quest.warId < 1000:
                 self.jp_data.cachedQuestPhases[last_phase_key] = AtlasApi.quest_phase(
                     quest.id,
                     last_phase,

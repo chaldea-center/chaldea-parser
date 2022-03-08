@@ -13,6 +13,7 @@ jobs:
     env:
       output_dir: 'data/'
       cache_dir: 'cache/'
+      static_dir: 'static/'
     steps:
       - name: Get Date
         id: get-date
@@ -30,6 +31,13 @@ jobs:
           repository: chaldea-center/chaldea-data
           token: ${{ secrets.GH_PAGES_TOKEN }}
           path: ${{ env.output_dir }}
+
+      - name: Checkout static repo
+        uses: actions/checkout@v2
+        with:
+          repository: chaldea-center/static-resource
+          token: ${{ secrets.GH_PAGES_TOKEN }}
+          path: ${{ env.static_dir }}
 
       - name: Cache Atlas and wiki api response
         uses: actions/cache@v2
@@ -54,14 +62,15 @@ jobs:
       - name: run wiki parser
         run: python main.py wiki
 
-      - name: publish data
+      - name: publish wiki data
         id: publish-data
         run: |
-          cd data
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          cd ${{ env.output_dir }}
           cat .git/refs/heads/main
           echo "::set-output name=ref1::$(cat .git/refs/heads/main)"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .
           git commit -m "wiki parser: update data" || echo "Nothing to update"
           git push
@@ -69,12 +78,20 @@ jobs:
           echo "::set-output name=ref2::$(cat .git/refs/heads/main)"
           cd ..
 
+      - name: publish static
+        run: |
+          cd ${{ env.static_dir }}
+          git add .
+          git commit -m "update static files" || echo "Nothing to update"
+          git push
+          cd ..
+
       - name: run atlas parser
         run: python main.py atlas
 
       - name: publish data
         run: |
-          cd data
+          cd ${{ env.output_dir }}
           git add .
           if [ -e commit-msg.txt ]
           then

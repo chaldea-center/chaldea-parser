@@ -9,6 +9,7 @@ jobs:
     env:
       output_dir: 'data/'
       cache_dir: 'cache/'
+      static_dir: 'static/'
     steps:
       - name: Get Date
         id: get-date
@@ -58,7 +59,7 @@ jobs:
 
       - name: publish data
         run: |
-          cd data
+          cd ${{ env.output_dir }}
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .

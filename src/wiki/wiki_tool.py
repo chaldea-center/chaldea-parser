@@ -2,6 +2,7 @@ import contextlib
 import re
 import time
 from datetime import datetime
+from hashlib import sha1
 from pathlib import Path
 from typing import Optional
 from urllib.parse import unquote
@@ -10,9 +11,11 @@ import mwclient
 import mwparserfromhell
 import pytz
 import pywikibot
+import requests
 from pydantic import NoneStr
 from ratelimit import limits, sleep_and_retry
 
+from ..config import settings
 from ..schemas.wiki_cache import WikiCache, WikiPageInfo
 from ..utils import dump_json, logger
 from ..utils.helper import retry_decorator
@@ -108,9 +111,24 @@ class WikiTool:
         # print(f'{key}: {len(result)}')
         return result
 
-    @staticmethod
-    def _replace_https(url: str) -> str:
-        return re.sub(r"^http://", "https://", url)
+    def _process_url(self, imageinfo: dict) -> str:
+        origin_url = unquote(imageinfo["url"])
+        sha1value = imageinfo['sha1']
+        url = re.sub(r"^http://", "https://", origin_url)
+        url += '?sha1=' + sha1value
+        filepath = Path(settings.static_dir) / self.host / sha1value
+        if not filepath.exists() or sha1(filepath.read_bytes()).hexdigest() == sha1value:
+            self._download_image(origin_url, filepath)
+        return url
+
+    @sleep_and_retry
+    @limits(2, 1)
+    @retry_decorator()
+    def _download_image(self, url: str, filepath: Path):
+        filepath = Path(filepath)
+        filepath.resolve().parent.mkdir(exist_ok=True, parents=True)
+        filepath.write_bytes(requests.get(url).content)
+        logger.info(f"Download image {filepath} from {url}")
 
     def get_file_url(self, name: str):
         name = self.norm_key(name)
@@ -118,15 +136,12 @@ class WikiTool:
             return None
         cached = self.cache.images.get(name)
         if cached and cached.get("url"):
-            return self._replace_https(unquote(cached["url"]))
+            return self._process_url(cached)
         image = self.site.images[name]
         if not image.imageinfo:
             return None
         self.cache.images[name] = image.imageinfo
-        url = image.imageinfo["url"]
-        if url:
-            url = unquote(url)
-        return self._replace_https(url)
+        return self._process_url(image.imageinfo)
 
     def get_cache(self, name: str) -> NoneStr:
         name = self.norm_key(name)
@@ -156,16 +171,16 @@ class WikiTool:
 
     @retry_decorator()
     def recent_changes(
-        self,
-        start=None,
-        end=None,
-        dir="older",
-        namespace=None,
-        prop=None,
-        show=None,
-        limit=None,
-        type=None,
-        toponly=None,
+            self,
+            start=None,
+            end=None,
+            dir="older", # noqa
+            namespace=None,
+            prop=None,
+            show=None,
+            limit=None,
+            type=None, # noqa
+            toponly=None,
     ):
         return self.site.recentchanges(
             start=start,
