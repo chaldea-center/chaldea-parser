@@ -1,3 +1,5 @@
+import time
+
 from pydantic import BaseModel, Field, NoneStr
 
 
@@ -6,6 +8,11 @@ class WikiPageInfo(BaseModel):
     redirect: NoneStr = None
     text: str
     updated: int
+
+    def outdated(self, expire: int = -1):
+        if expire < 0:
+            expire = 7 * 24 * 3600
+        return self.updated < time.time() - expire
 
 
 class WikiCache(BaseModel):

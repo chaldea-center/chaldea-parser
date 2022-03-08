@@ -55,7 +55,6 @@ class WikiTool:
                 text = page.text
                 if not text:
                     print(f'{self.site.host}: "{name}" empty')
-                    return text
                 redirect = page
                 while redirect.isRedirectPage():
                     redirect = redirect.getRedirectTarget()
@@ -103,7 +102,7 @@ class WikiTool:
             result = self.get_cache(key)
         # if result:
         #     print(f'{key}: use cached')
-        if not result:
+        if result is None:
             result = self._call_request(name)
         result = result or ""
         if clear_tag:
@@ -113,11 +112,14 @@ class WikiTool:
 
     def _process_url(self, imageinfo: dict) -> str:
         origin_url = unquote(imageinfo["url"])
-        sha1value = imageinfo['sha1']
+        sha1value = imageinfo["sha1"]
         url = re.sub(r"^http://", "https://", origin_url)
-        url += '?sha1=' + sha1value
+        url += "?sha1=" + sha1value
         filepath = Path(settings.static_dir) / self.host / sha1value
-        if not filepath.exists() or sha1(filepath.read_bytes()).hexdigest() == sha1value:
+        if (
+            not filepath.exists()
+            or sha1(filepath.read_bytes()).hexdigest() == sha1value
+        ):
             self._download_image(origin_url, filepath)
         return url
 
@@ -151,10 +153,14 @@ class WikiTool:
         if page.redirect:
             page = self.cache.pages.get(page.redirect)
             if page:
+                if not page.text and page.outdated():
+                    return None
                 return page.text
             else:
                 self.cache.pages.pop(name)
         else:
+            if not page.text and page.outdated():
+                return None
             return page.text
 
     @staticmethod
@@ -171,16 +177,16 @@ class WikiTool:
 
     @retry_decorator()
     def recent_changes(
-            self,
-            start=None,
-            end=None,
-            dir="older", # noqa
-            namespace=None,
-            prop=None,
-            show=None,
-            limit=None,
-            type=None, # noqa
-            toponly=None,
+        self,
+        start=None,
+        end=None,
+        dir="older",  # noqa
+        namespace=None,
+        prop=None,
+        show=None,
+        limit=None,
+        type=None,  # noqa
+        toponly=None,
     ):
         return self.site.recentchanges(
             start=start,
