@@ -118,7 +118,7 @@ class WikiTool:
         filepath = Path(settings.static_dir) / self.host / sha1value
         if (
             not filepath.exists()
-            or sha1(filepath.read_bytes()).hexdigest() == sha1value
+            or sha1(filepath.read_bytes()).hexdigest() != sha1value
         ):
             self._download_image(origin_url, filepath)
         return url
