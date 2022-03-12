@@ -12,6 +12,7 @@ from app.schemas.nice import NiceWar
 
 from src.config import settings
 from src.schemas.drop_data import DropRateData, DropRateSheet
+from src.utils import logger
 from src.utils.helper import LocalProxy, dump_json, load_json
 
 
@@ -52,7 +53,7 @@ def _full_sheet_url(key, gid):
 def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
     with LocalProxy(enabled=settings.is_debug):
         url = _full_sheet_url(key, gid)
-        print(f"downloading sheet from {url}")
+        logger.info(f"downloading sheet from {url}")
         csv_contents = requests.get(url).content.decode("utf8")
     df = pd.read_csv(StringIO(csv_contents), header=None, encoding="utf8")
     df.drop(index=0, inplace=True)

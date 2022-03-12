@@ -383,7 +383,7 @@ class MainParser:
         _now = datetime.datetime.now(datetime.timezone.utc)
         self._export_wiki_base()
 
-        print("Saving data")
+        logger.debug("Saving data")
         cur_version = DataVersion(
             timestamp=int(_now.timestamp()),
             utc=_now.isoformat(timespec="seconds"),
@@ -441,7 +441,7 @@ class MainParser:
                     )
                     cur_version.files[_fn_i] = _get_file_version(_fn_i, key, _bytes)
                     dist_folder.joinpath(_fn_i).write_bytes(_bytes)
-                    print(f"dump {_fn_i}")
+                    logger.info(f"dump {_fn_i}")
             elif ranges is not None:
                 assert isinstance(obj, dict)
                 obj = dict(obj)
@@ -454,7 +454,7 @@ class MainParser:
                     )
                     cur_version.files[_fn_i] = _get_file_version(_fn_i, key, _bytes)
                     dist_folder.joinpath(_fn_i).write_bytes(_bytes)
-                    print(f"dump {_fn_i}")
+                    logger.info(f"dump {_fn_i}")
                 if obj:
                     _fn_i = f"{_fn}.{len(ranges)+1}.json"
                     _bytes = orjson.dumps(
@@ -464,7 +464,7 @@ class MainParser:
                     )
                     cur_version.files[_fn_i] = _get_file_version(_fn_i, key, _bytes)
                     dist_folder.joinpath(_fn_i).write_bytes(_bytes)
-                    print(f"dump {_fn_i}")
+                    logger.info(f"[versioning] dump {_fn_i}")
             else:
                 _fp_0 = dist_folder / f"{_fn}.json"
                 if obj is None:
@@ -472,7 +472,7 @@ class MainParser:
                         logger.warning(f"skip non-exist file: {_fp_0}")
                         return
                     _bytes = _fp_0.read_bytes()
-                    print(f"read file: {_fp_0.name}")
+                    logger.info(f"[versioning] read file: {_fp_0.name}")
                 else:
                     _bytes = orjson.dumps(
                         obj, default=encoder, option=orjson.OPT_NON_STR_KEYS
@@ -482,7 +482,7 @@ class MainParser:
                 )
                 if obj is not None:
                     dist_folder.joinpath(_fp_0.name).write_bytes(_bytes)
-                    print(f"dump {_fp_0.name}")
+                    logger.info(f"[versioning] dump {_fp_0.name}")
 
         # save by priority
         _dump("wiki_data", self.ext_data.wiki_data)

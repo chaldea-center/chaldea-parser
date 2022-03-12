@@ -75,7 +75,7 @@ class HttpApiUtil(abc.ABC):
             )
             r = cache_session.get(url, **kwargs)
             if r.status_code == 429:
-                print(r.text)
+                logger.warning(r.text)
                 retry_after = float(r.headers.get("Retry-After") or "5")
                 time.sleep(retry_after)
                 return _call_api(url, retry_n - 1, **origin_kwargs)

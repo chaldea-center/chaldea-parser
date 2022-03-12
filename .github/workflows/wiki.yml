@@ -1,8 +1,8 @@
 name: Wiki Parser
 on:
-  push:
-    branches:
-      - main
+#  push:
+#    branches:
+#      - main
   workflow_dispatch:
   schedule:
     - cron: '15 13 * * *'
@@ -20,6 +20,7 @@ jobs:
         run: |
           /bin/date
           echo "::set-output name=date::$(/bin/date -u "+%Y%m%d%H%M")"
+          curl https://ipinfo.io/ip
         shell: bash
 
       - name: Checkout chaldea-parser

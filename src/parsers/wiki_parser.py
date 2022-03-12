@@ -436,7 +436,7 @@ class WikiParser:
             summon.name.CN = params.get2("卡池名cn") or params.get2("卡池名ha") or title
             summon.startTime.JP = MOONCELL.get_timestamp(params.get("卡池开始时间jp"))
             if not summon.startTime.JP:
-                print(f"[Summon] unknown startTimeJP: {summon.mcLink}")
+                logger.warning(f"[Summon] unknown startTimeJP: {summon.mcLink}")
             summon.startTime.CN = MOONCELL.get_timestamp(params.get("卡池开始时间cn"))
             summon.endTime.JP = MOONCELL.get_timestamp(params.get("卡池结束时间jp"))
             summon.endTime.CN = MOONCELL.get_timestamp(params.get("卡池结束时间cn"))

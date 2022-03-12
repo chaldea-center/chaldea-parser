@@ -36,7 +36,7 @@ class Worker:
             if show_progress:
                 name = f"({self.name})" if self.name else ""
                 if finished % step == 0:
-                    print(f"Worker{name}: {finished}/{len(self._tasks)}   ")
+                    logger.debug(f"Worker{name}: {finished}/{len(self._tasks)}   ")
                 elif settings.is_debug:
                     print(f"\rWorker{name}: {finished}/{len(self._tasks)}   ", end="")
         print("")

@@ -40,13 +40,13 @@ class WikiTool:
         if self._fp.exists():
             try:
                 data = load_json(self._fp) or {}
-                if "images" in data and data["images"]:
-                    value1 = list(data["images"].values())[0]
-                    if "imageinfo" not in value1:
-                        data["images"] = {}
+                # if "images" in data and data["images"]:
+                #     value1 = list(data["images"].values())[0]
+                #     if "imageinfo" not in value1:
+                #         data["images"] = {}
                 self.cache = WikiCache.parse_obj(data)
                 self.cache.host = self.host
-                print(f"wiki {self.host}: loaded {len(self.cache.pages)} cached")
+                logger.debug(f"wiki {self.host}: loaded {len(self.cache.pages)} cached")
             finally:
                 ...
 
@@ -69,7 +69,7 @@ class WikiTool:
                     page = pywikibot.Page(self.site2, name)
                     text = page.text
                     if not text:
-                        print(f'{self.site.host}: "{name}" empty')
+                        logger.debug(f'{self.site.host}: "{name}" empty')
                     redirect = page
                     while redirect.isRedirectPage():
                         redirect = redirect.getRedirectTarget()
@@ -93,7 +93,7 @@ class WikiTool:
                 if retry_n > 0:
                     logger.warning(f'downloaded "{name}" after {retry_n} retry')
                 else:
-                    print(f"download wikitext/imageinfo: {name}")
+                    logger.debug(f"download wikitext/imageinfo: {name}")
                 self._count += 1
                 if self._count > 100:
                     self._count = 0
@@ -112,7 +112,7 @@ class WikiTool:
             return None
         key = name.strip().replace("%26", "&")
         if key.startswith("#"):
-            print(f"wiki page title startwith #: {key}")
+            logger.warning(f"wiki page title startwith #: {key}")
             return ""
         result = None
         if allow_cache:
@@ -221,7 +221,7 @@ class WikiTool:
 
     @retry_decorator()
     def ask_query(self, query, title=None):
-        return self.site.ask(query, title)
+        return list(self.site.ask(query, title))
 
     def remove_recent_changed(self, days: float | None = None):
         _now = int(time.time())

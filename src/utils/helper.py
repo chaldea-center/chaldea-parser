@@ -18,11 +18,8 @@ from typing import (
 )
 
 import orjson
-import requests
 from pydantic import BaseModel
 from pydantic.json import pydantic_encoder
-from requests.adapters import HTTPAdapter
-from urllib3.util import Retry
 
 from .log import logger
 
@@ -31,9 +28,6 @@ Model = TypeVar("Model", bound=BaseModel)
 
 _KT = TypeVar("_KT")
 _NUM_KV = TypeVar("_NUM_KV", bound=Union[int, float])
-
-req_session = requests.Session()
-req_session.mount("https://", HTTPAdapter(max_retries=Retry(total=5)))
 
 
 class NumDict(dict, Generic[_KT, _NUM_KV]):
@@ -154,7 +148,7 @@ def retry_decorator(retry_times=5, lapse=3):
                 try:
                     return func(*args, **kwargs)
                 except Exception as e:
-                    print("retry_times", retry_times, e)
+                    logger.error(f"retry_times: {retry_times}, error: {e}")
                     retry_times -= 1
                     time.sleep(lapse)
 
