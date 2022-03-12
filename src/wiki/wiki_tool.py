@@ -16,9 +16,9 @@ from pydantic import NoneStr
 from ratelimit import limits, sleep_and_retry
 
 from ..config import settings
-from ..schemas.wiki_cache import WikiCache, WikiPageInfo
+from ..schemas.wiki_cache import WikiCache, WikiImageInfo, WikiPageInfo
 from ..utils import dump_json, logger
-from ..utils.helper import retry_decorator
+from ..utils.helper import load_json, retry_decorator
 
 
 class WikiTool:
@@ -39,49 +39,66 @@ class WikiTool:
         self._fp.resolve().parent.mkdir(exist_ok=True, parents=True)
         if self._fp.exists():
             try:
-                self.cache = WikiCache.parse_file(self._fp)
+                data = load_json(self._fp) or {}
+                if "images" in data and data["images"]:
+                    value1 = list(data["images"].values())[0]
+                    if "imageinfo" not in value1:
+                        data["images"] = {}
+                self.cache = WikiCache.parse_obj(data)
                 self.cache.host = self.host
                 print(f"wiki {self.host}: loaded {len(self.cache.pages)} cached")
             finally:
                 ...
 
     @sleep_and_retry
-    @limits(5, 1)
-    def _call_request(self, name: str):
+    @limits(4, 2)
+    def _call_request(
+        self, name: str, is_image: bool = False
+    ) -> WikiPageInfo | WikiImageInfo | None:
         retry_n, retry = 0, 10
         while retry_n < retry:
             try:
-                page = pywikibot.Page(self.site2, name)
-                text = page.text
-                if not text:
-                    print(f'{self.site.host}: "{name}" empty')
-                redirect = page
-                while redirect.isRedirectPage():
-                    redirect = redirect.getRedirectTarget()
                 now = int(time.time())
-                if redirect == page:
-                    self.cache.pages[self.norm_key(page.title())] = WikiPageInfo(
-                        name=page.title(), text=page.text, updated=now
+                if is_image:
+                    cached = self.cache.images[name] = WikiImageInfo(
+                        name=name,
+                        updated=now,
+                        imageinfo=self.site.images[name].imageinfo,
                     )
                 else:
-                    self.cache.pages[self.norm_key(page.title())] = WikiPageInfo(
-                        name=page.title(),
-                        redirect=redirect.title(),
-                        text=page.text,
-                        updated=now,
-                    )
-                    self.cache.pages[self.norm_key(redirect.title())] = WikiPageInfo(
-                        name=redirect.title(), text=redirect.text, updated=now
-                    )
+                    page = pywikibot.Page(self.site2, name)
+                    text = page.text
+                    if not text:
+                        print(f'{self.site.host}: "{name}" empty')
+                    redirect = page
+                    while redirect.isRedirectPage():
+                        redirect = redirect.getRedirectTarget()
+                    if redirect == page:
+                        self.cache.pages[self.norm_key(page.title())] = WikiPageInfo(
+                            name=page.title(), text=page.text, updated=now
+                        )
+                    else:
+                        self.cache.pages[self.norm_key(page.title())] = WikiPageInfo(
+                            name=page.title(),
+                            redirect=redirect.title(),
+                            text=page.text,
+                            updated=now,
+                        )
+                        self.cache.pages[
+                            self.norm_key(redirect.title())
+                        ] = WikiPageInfo(
+                            name=redirect.title(), text=redirect.text, updated=now
+                        )
+                    cached = redirect
                 if retry_n > 0:
                     logger.warning(f'downloaded "{name}" after {retry_n} retry')
                 else:
-                    print(f"download wikitext: {name}")
+                    print(f"download wikitext/imageinfo: {name}")
                 self._count += 1
                 if self._count > 100:
                     self._count = 0
                     self.save_cache()
-                return redirect.text
+                return cached
             except Exception as e:
                 retry_n += 1
                 if retry_n >= retry:
@@ -103,16 +120,18 @@ class WikiTool:
         # if result:
         #     print(f'{key}: use cached')
         if result is None:
-            result = self._call_request(name)
+            page = self._call_request(name)
+            if page:
+                result = page.text
         result = result or ""
         if clear_tag:
             result = self.remove_html_tags(result)
         # print(f'{key}: {len(result)}')
         return result
 
-    def _process_url(self, imageinfo: dict) -> str:
-        origin_url = unquote(imageinfo["url"])
-        sha1value = imageinfo["sha1"]
+    def _process_url(self, image: WikiImageInfo) -> str:
+        origin_url = unquote(image.imageinfo["url"])
+        sha1value = image.imageinfo["sha1"]
         url = re.sub(r"^http://", "https://", origin_url)
         url += "?sha1=" + sha1value
         filepath = Path(settings.static_dir) / self.host / sha1value
@@ -120,11 +139,12 @@ class WikiTool:
             not filepath.exists()
             or sha1(filepath.read_bytes()).hexdigest() != sha1value
         ):
-            self._download_image(origin_url, filepath)
+            if not settings.is_debug:
+                self._download_image(origin_url, filepath)
         return url
 
     @sleep_and_retry
-    @limits(2, 1)
+    @limits(2, 5)
     @retry_decorator()
     def _download_image(self, url: str, filepath: Path):
         filepath = Path(filepath)
@@ -137,13 +157,12 @@ class WikiTool:
         if not name:
             return None
         cached = self.cache.images.get(name)
-        if cached and cached.get("url"):
+        if cached and cached.imageinfo.get("url"):
             return self._process_url(cached)
-        image = self.site.images[name]
-        if not image.imageinfo:
+        image = self._call_request(name, True)
+        if not image or not image.imageinfo:
             return None
-        self.cache.images[name] = image.imageinfo
-        return self._process_url(image.imageinfo)
+        return self._process_url(image)
 
     def get_cache(self, name: str) -> NoneStr:
         name = self.norm_key(name)

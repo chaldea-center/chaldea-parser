@@ -793,11 +793,11 @@ class MainParser:
         # trait
         for k, v in self.jp_data.nice_trait.items():
             m_trait = mappings.trait.setdefault(k, MappingStr())
-            m_trait.update(Region.JP, v.value, skip_exists=True)
+            m_trait.update(Region.NA, v.value, skip_exists=True)
         # svt_class:
         for class_id, svt_class in CLASS_NAME.items():
             m_svt_class = mappings.svt_class.setdefault(class_id, MappingStr())
-            m_svt_class.update(Region.JP, svt_class.value, skip_exists=True)
+            m_svt_class.update(Region.NA, svt_class.value, skip_exists=True)
 
         def _update_mapping(
             m: dict[_KT, MappingBase[_KV]],
@@ -813,6 +813,8 @@ class MainParser:
                 value2 = value.__o
             else:
                 value2 = value
+            if value2 == _key:
+                return
             return self._update_key_mapping(
                 region,
                 key_mapping=m,

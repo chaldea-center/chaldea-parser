@@ -511,7 +511,7 @@ class WikiParser:
 
 
 def _mc_index_data(page: str) -> list[dict[str, Optional[str]]]:
-    text = MOONCELL.get_page_text(page, allow_cache=False)
+    text = MOONCELL.get_page_text(page)
     data: list[dict[str, Optional[str]]] = []
     for block in text.split("\n\n"):
         d = {}

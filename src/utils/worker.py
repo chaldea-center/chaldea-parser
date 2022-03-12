@@ -35,10 +35,10 @@ class Worker:
             finished += 1
             if show_progress:
                 name = f"({self.name})" if self.name else ""
-                if settings.is_debug:
-                    print(f"\rWorker{name}: {finished}/{len(self._tasks)}   ", end="")
-                elif finished % step == 0:
+                if finished % step == 0:
                     print(f"Worker{name}: {finished}/{len(self._tasks)}   ")
+                elif settings.is_debug:
+                    print(f"\rWorker{name}: {finished}/{len(self._tasks)}   ", end="")
         print("")
 
     @staticmethod
