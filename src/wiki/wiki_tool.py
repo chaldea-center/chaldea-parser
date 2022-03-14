@@ -46,7 +46,10 @@ class WikiTool:
                 #         data["images"] = {}
                 self.cache = WikiCache.parse_obj(data)
                 self.cache.host = self.host
-                logger.debug(f"wiki {self.host}: loaded {len(self.cache.pages)} cached")
+                logger.debug(
+                    f"wiki {self.host}: loaded {len(self.cache.pages)} pages, "
+                    f"{len(self.cache.images)} images"
+                )
             finally:
                 ...
 
@@ -56,6 +59,7 @@ class WikiTool:
         self, name: str, is_image: bool = False
     ) -> WikiPageInfo | WikiImageInfo | None:
         retry_n, retry = 0, 10
+        prefix = f'[{self.host}][{"image" if is_image else "page"}]'
         while retry_n < retry:
             try:
                 now = int(time.time())
@@ -91,9 +95,11 @@ class WikiTool:
                         )
                     cached = redirect
                 if retry_n > 0:
-                    logger.warning(f'downloaded "{name}" after {retry_n} retry')
+                    logger.warning(
+                        f'{prefix} downloaded "{name}" after {retry_n} retry'
+                    )
                 else:
-                    logger.debug(f"download wikitext/imageinfo: {name}")
+                    logger.debug(f"{prefix} download: {name}")
                 self._count += 1
                 if self._count > 100:
                     self._count = 0

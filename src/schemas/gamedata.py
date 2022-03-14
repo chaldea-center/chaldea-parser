@@ -147,7 +147,9 @@ class MasterData(BaseModelORJson):
         self.nice_war.sort(key=lambda x: x.id)
         self.nice_event.sort(key=lambda x: x.startedAt)
         self.nice_item.sort(key=lambda x: x.priority)
-        self.cachedQuestPhases = {k: v for k, v in self.cachedQuestPhases.items() if v}
+        phases = [v for v in self.cachedQuestPhases.values() if v]
+        phases.sort(key=lambda x: x.id * 100 + x.phase)
+        self.cachedQuestPhases = {x.id * 100 + x.phase: x for x in phases}
         self.questPhaseFixedDrops = sort_dict(self.questPhaseFixedDrops)
         self.mappingData.costume_detail = sort_dict(self.mappingData.costume_detail)
 
