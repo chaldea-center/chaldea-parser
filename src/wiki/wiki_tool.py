@@ -173,10 +173,10 @@ class WikiTool:
     def get_cache(self, name: str) -> NoneStr:
         name = self.norm_key(name)
         page = self.cache.pages.get(name)
-        if not page:
+        if page is None:
             return
         if page.redirect:
-            page = self.cache.pages.get(page.redirect)
+            page = self.cache.pages.get(self.norm_key(page.redirect))
             if page:
                 if not page.text and page.outdated():
                     return None

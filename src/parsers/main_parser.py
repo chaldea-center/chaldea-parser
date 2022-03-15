@@ -386,7 +386,7 @@ class MainParser:
         logger.debug("Saving data")
         cur_version = DataVersion(
             timestamp=int(_now.timestamp()),
-            utc=_now.isoformat(timespec="seconds"),
+            utc=_now.isoformat(timespec="seconds").split('+')[0],
             minimalApp=MIN_APP,
             files={},
         )
@@ -561,7 +561,7 @@ class MainParser:
         print(dump_json(cur_version))
         self.copy_static()
         Path(settings.output_dir).joinpath("commit-msg.txt").write_text(
-            f"Version({cur_version.minimalApp}, {cur_version.utc})"
+            f"Ver {cur_version.minimalApp}, {cur_version.utc}"
         )
         logger.info("Updating mappings")
         from .update_mapping import run_mapping_update
