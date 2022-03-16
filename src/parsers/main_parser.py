@@ -386,7 +386,7 @@ class MainParser:
         logger.debug("Saving data")
         cur_version = DataVersion(
             timestamp=int(_now.timestamp()),
-            utc=_now.isoformat(timespec="seconds").split('+')[0],
+            utc=_now.isoformat(timespec="seconds").split("+")[0],
             minimalApp=MIN_APP,
             files={},
         )
@@ -437,11 +437,13 @@ class MainParser:
                     _bytes = orjson.dumps(
                         obj[i * per_file : (i + 1) * per_file],
                         default=encoder,
-                        option=orjson.OPT_NON_STR_KEYS,
+                        option=orjson.OPT_NON_STR_KEYS
+                        | orjson.OPT_INDENT_2
+                        | orjson.OPT_APPEND_NEWLINE,
                     )
                     cur_version.files[_fn_i] = _get_file_version(_fn_i, key, _bytes)
                     dist_folder.joinpath(_fn_i).write_bytes(_bytes)
-                    logger.info(f"dump {_fn_i}")
+                    logger.info(f"[versioning] dump {_fn_i}")
             elif ranges is not None:
                 assert isinstance(obj, dict)
                 obj = dict(obj)
@@ -450,17 +452,21 @@ class MainParser:
                     _bytes = orjson.dumps(
                         [obj.pop(_k) for _k in id_range if _k in obj],
                         default=encoder,
-                        option=orjson.OPT_NON_STR_KEYS,
+                        option=orjson.OPT_NON_STR_KEYS
+                        | orjson.OPT_INDENT_2
+                        | orjson.OPT_APPEND_NEWLINE,
                     )
                     cur_version.files[_fn_i] = _get_file_version(_fn_i, key, _bytes)
                     dist_folder.joinpath(_fn_i).write_bytes(_bytes)
-                    logger.info(f"dump {_fn_i}")
+                    logger.info(f"[versioning] dump {_fn_i}")
                 if obj:
                     _fn_i = f"{_fn}.{len(ranges)+1}.json"
                     _bytes = orjson.dumps(
                         [obj[_k] for _k in sorted(obj.keys())],
                         default=encoder,
-                        option=orjson.OPT_NON_STR_KEYS,
+                        option=orjson.OPT_NON_STR_KEYS
+                        | orjson.OPT_INDENT_2
+                        | orjson.OPT_APPEND_NEWLINE,
                     )
                     cur_version.files[_fn_i] = _get_file_version(_fn_i, key, _bytes)
                     dist_folder.joinpath(_fn_i).write_bytes(_bytes)
@@ -475,7 +481,11 @@ class MainParser:
                     logger.info(f"[versioning] read file: {_fp_0.name}")
                 else:
                     _bytes = orjson.dumps(
-                        obj, default=encoder, option=orjson.OPT_NON_STR_KEYS
+                        obj,
+                        default=encoder,
+                        option=orjson.OPT_NON_STR_KEYS
+                        | orjson.OPT_INDENT_2
+                        | orjson.OPT_APPEND_NEWLINE,
                     )
                 cur_version.files[_fp_0.name] = _get_file_version(
                     _fp_0.name, key, _bytes

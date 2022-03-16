@@ -243,6 +243,10 @@ class WikiTool:
             toponly=1,
         )
         dropped = 0
+        logger.info(
+            f"[{self.host}] remove recent changes, last changed:"
+            f" {datetime.fromtimestamp(self.cache.updated).isoformat()}"
+        )
         for record in changes:
             title = self.norm_key(record.get("title"))
             page = self.cache.pages.pop(title, None)
