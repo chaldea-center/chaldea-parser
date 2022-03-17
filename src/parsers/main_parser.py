@@ -994,6 +994,11 @@ class MainParser:
             skip_exists=False,
             skip_unknown_key=False,
         ):
+            if (
+                re.findall(r"20[1-2][0-9]", str(value))
+                and m.get(_key, MappingBase()).CN
+            ):
+                return
             return self._update_key_mapping(
                 Region.CN,
                 key_mapping=m,
@@ -1015,8 +1020,8 @@ class MainParser:
             _update_mapping(mappings.skill_names, skill_jp, skill_cn, True, True)
         for td_name_jp, td_name_cn in mc_trans.td_names.items():
             _update_mapping(mappings.td_names, td_name_jp, td_name_cn, True, True)
-        for td_ruby_jp, td_runy_cn in mc_trans.td_ruby.items():
-            _update_mapping(mappings.td_ruby, td_ruby_jp, td_runy_cn, True, True)
+        for td_ruby_jp, td_ruby_cn in mc_trans.td_ruby.items():
+            _update_mapping(mappings.td_ruby, td_ruby_jp, td_ruby_cn, True, True)
         for ce_no, name in mc_trans.ce_names.items():
             ce = self.jp_data.ce_dict.get(ce_no)
             if ce:
@@ -1103,6 +1108,8 @@ class MainParser:
             for key, trans in dest.items():
                 value = source.get(key)
                 if value and value == key:
+                    continue
+                if re.findall(r"20[1-2][0-9]", str(value)) and trans.NA:
                     continue
                 trans.update(Region.NA, value, skip_exists=True)
         self.jp_data.mappingData = mappings

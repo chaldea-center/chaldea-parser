@@ -23,7 +23,7 @@ from ..schemas.wiki_data import (
     WarW,
     WikiData,
 )
-from ..utils import Worker, count_time, dump_json, load_json, logger, sort_dict
+from ..utils import Worker, count_time, dump_json, load_json, logger, sort_dict, NEVER_CLOSED_TIMESTAMP
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.template import mwparse, parse_template, parse_template_list, remove_tag
 
@@ -482,7 +482,7 @@ class WikiParser:
         self.wiki_data.events = sort_dict(self.wiki_data.events)
         self.wiki_data.wars = sort_dict(self.wiki_data.wars)
         summons = list(self.summons.values())
-        summons.sort(key=lambda s: s.startTime.JP or 0)
+        summons.sort(key=lambda s: s.startTime.JP or NEVER_CLOSED_TIMESTAMP)
         self.summons = {k.id: k for k in summons}
 
     def save_data(self):
