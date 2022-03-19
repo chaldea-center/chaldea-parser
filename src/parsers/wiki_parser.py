@@ -23,7 +23,15 @@ from ..schemas.wiki_data import (
     WarW,
     WikiData,
 )
-from ..utils import Worker, count_time, dump_json, load_json, logger, sort_dict, NEVER_CLOSED_TIMESTAMP
+from ..utils import (
+    Worker,
+    count_time,
+    dump_json,
+    load_json,
+    logger,
+    sort_dict,
+    NEVER_CLOSED_TIMESTAMP,
+)
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.template import mwparse, parse_template, parse_template_list, remove_tag
 
@@ -487,24 +495,9 @@ class WikiParser:
 
     def save_data(self):
 
-        dump_json(
-            self.wiki_data,
-            settings.output_wiki / "wiki_data.json",
-            indent2=False,
-            append_newline=False,
-        )
-        dump_json(
-            list(self.summons.values()),
-            settings.output_wiki / "summons.json",
-            indent2=False,
-            append_newline=False,
-        )
-        dump_json(
-            self.mc_translation,
-            settings.output_wiki / "mc_translation.json",
-            indent2=False,
-            append_newline=False,
-        )
+        dump_json(self.wiki_data, settings.output_wiki / "wiki_data.json")
+        dump_json(list(self.summons.values()), settings.output_wiki / "summons.json")
+        dump_json(self.mc_translation, settings.output_wiki / "mc_translation.json")
         dump_json(
             self.unknown_chara_mapping, settings.output_mapping / "chara_names.json"
         )

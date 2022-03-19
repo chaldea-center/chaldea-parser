@@ -37,12 +37,7 @@ def run_drop_rate_update():
         newData=_parse_sheet_data(*sheet_url),
         legacyData=_parse_sheet_data(*legacy_sheet_url),
     )
-    dump_json(
-        data,
-        settings.output_dist / "drop_rate.json",
-        indent2=False,
-        append_newline=False,
-    )
+    dump_json(data, settings.output_dist / "drop_rate.json")
     print("Saved drop rate data")
 
 
