@@ -133,6 +133,8 @@ class WikiTool:
         if clear_tag:
             result = self.remove_html_tags(result)
         # print(f'{key}: {len(result)}')
+        if result:
+            result = re.sub(r"[\u2028\u2029]", "", result)
         return result
 
     def _process_url(self, image: WikiImageInfo) -> str:
