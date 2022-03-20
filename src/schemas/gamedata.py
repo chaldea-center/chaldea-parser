@@ -152,6 +152,7 @@ class MasterData(BaseModelORJson):
         self.cachedQuestPhases = {x.id * 100 + x.phase: x for x in phases}
         self.questPhaseFixedDrops = sort_dict(self.questPhaseFixedDrops)
         self.mappingData.costume_detail = sort_dict(self.mappingData.costume_detail)
+        self.mappingData.trait = sort_dict(self.mappingData.trait)
 
     @cached_property
     def svt_dict(self) -> dict[int, NiceServant]:

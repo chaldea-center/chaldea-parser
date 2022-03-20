@@ -236,7 +236,7 @@ class WikiTool:
         if days is not None:
             last_timestamp = datetime.utcnow().timestamp() - days * 24 * 3600
         else:
-            last_timestamp = self.cache.updated - 1 * 24 * 3600
+            last_timestamp = self.cache.updated - 12 * 3600
         changes = self.recent_changes(
             start=datetime.fromtimestamp(last_timestamp).isoformat(),
             dir="newer",

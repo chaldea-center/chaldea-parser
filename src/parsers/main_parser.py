@@ -1123,6 +1123,11 @@ class MainParser:
         mappings_repo = {
             k: load_json(folder / f"{k}.json", {}) for k in MappingData.__fields__
         }
+        # mapping files which should override dist one
+        self._merge_json(
+            mapping_dict,
+            {key: mappings_repo.pop(key) for key in ["trait", "svt_class"]},
+        )
         self._merge_json(mappings_repo, mapping_dict)
 
         fp_override = folder / "override_mappings.json"

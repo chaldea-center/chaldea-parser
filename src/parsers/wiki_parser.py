@@ -24,13 +24,13 @@ from ..schemas.wiki_data import (
     WikiData,
 )
 from ..utils import (
+    NEVER_CLOSED_TIMESTAMP,
     Worker,
     count_time,
     dump_json,
     load_json,
     logger,
     sort_dict,
-    NEVER_CLOSED_TIMESTAMP,
 )
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.template import mwparse, parse_template, parse_template_list, remove_tag
