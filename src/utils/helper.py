@@ -150,6 +150,8 @@ def retry_decorator(retry_times=5, lapse=3):
                 except Exception as e:
                     logger.error(f"retry_times: {retry_times}, error: {e}")
                     retry_times -= 1
+                    if retry_times <= 0:
+                        raise
                     time.sleep(lapse)
 
         return wrapper

@@ -227,9 +227,31 @@ class WikiTool:
             toponly=toponly,
         )
 
-    @retry_decorator()
-    def ask_query(self, query, title=None):
-        return list(self.site.ask(query, title))
+    def ask_query(self, query):
+        offset = 0
+        params = {
+            "action": "ask",
+            "query": query,
+            "format": "json",
+            "utf8": 1,
+        }
+        result = []
+        while offset is not None:
+            params2 = dict(params)
+            params2["query"] = f"{params2['query']}|offset={offset}"
+            resp: dict = self._api_call(params2)
+            offset = resp.get("query-continue-offset")
+            answers = resp["query"].get("results", {})
+            if isinstance(answers, dict):
+                result.extend(answers.values())
+            else:
+                result.extend(answers)
+        return result
+
+    @retry_decorator(lapse=10)
+    def _api_call(self, params) -> dict:
+        logger.warning(f'[{self.host}] call api: {params}')
+        return requests.get(f"https://{self.host}/api.php", params=params).json()
 
     def remove_recent_changed(self, days: float | None = None):
         _now = int(time.time())
