@@ -11,6 +11,7 @@ from ..schemas.common import (
     SummonType,
     SvtObtain,
 )
+from ..utils import sort_dict
 
 
 class MooncellTranslation(BaseModelORJson):
@@ -27,6 +28,15 @@ class MooncellTranslation(BaseModelORJson):
     ce_names: dict[int, str] = {}
     cc_names: dict[int, str] = {}
     event_names: dict[str, str] = {}
+
+    def sort(self):
+        self.svt_names = sort_dict(self.svt_names)
+        self.skill_names = sort_dict(self.skill_names)
+        self.td_names = sort_dict(self.td_names)
+        self.td_ruby = sort_dict(self.td_ruby)
+        self.ce_names = sort_dict(self.ce_names)
+        self.cc_names = sort_dict(self.cc_names)
+        self.event_names = sort_dict(self.event_names)
 
 
 class ServantW(BaseModel):

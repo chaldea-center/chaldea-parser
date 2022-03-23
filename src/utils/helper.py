@@ -64,6 +64,7 @@ def dump_json(
     non_str_keys: bool = True,
     append_newline: bool = True,
     option: Optional[int] = None,
+    sort_keys: Optional[int] = None,
 ) -> Optional[str]:
     if option is None:
         option = 0
@@ -73,6 +74,8 @@ def dump_json(
         option = option | orjson.OPT_NON_STR_KEYS
     if append_newline:
         option = option | orjson.OPT_APPEND_NEWLINE
+    if sort_keys:
+        option = option | orjson.OPT_SORT_KEYS
     _bytes = orjson.dumps(obj, default=default, option=option)
     if fp is not None:
         fp = Path(fp)

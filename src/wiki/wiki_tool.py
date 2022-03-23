@@ -54,7 +54,7 @@ class WikiTool:
                 ...
 
     @sleep_and_retry
-    @limits(4, 2)
+    @limits(3, 2)
     def _call_request(
         self, name: str, is_image: bool = False
     ) -> WikiPageInfo | WikiImageInfo | None:

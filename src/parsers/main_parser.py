@@ -261,7 +261,7 @@ class MainParser:
                 previous_data = previous_fixed_drops.get(phase_key)
                 quest_na = self.jp_data.cachedQuestsNA.get(quest.id)
                 if (
-                    previous_data
+                    previous_data is not None
                     and quest.openedAt < expire_time
                     and (not quest_na or quest_na.openedAt < expire_time)
                 ):
@@ -380,6 +380,7 @@ class MainParser:
         dist_folder.mkdir(parents=True, exist_ok=True)
         data = self.jp_data
         data.sort()
+        self.ext_data.summons.sort(key=lambda x: x.id)
         _now = datetime.datetime.now(datetime.timezone.utc)
         self._export_wiki_base()
 
@@ -843,7 +844,7 @@ class MainParser:
             _update_mapping(
                 mappings.cv_names, cv_jp.name, _(data.cv_dict)[cv_jp.id].name
             )
-            cv_names = [str(s).strip() for s in re.split(r"[&＆]", cv_jp.name)]
+            cv_names = [str(s).strip() for s in re.split(r"[&＆\s]+", cv_jp.name) if s]
             if len(cv_names) > 1:
                 for one_name in cv_names:
                     mappings.cv_names.setdefault(one_name, MappingBase())
@@ -854,7 +855,7 @@ class MainParser:
                 _(data.illustrator_dict)[illustrator_jp.id].name,
             )
             illustrator_names = [
-                str(s).strip() for s in re.split(r"[&＆]", illustrator_jp.name)
+                str(s).strip() for s in re.split(r"[&＆\s]+", illustrator_jp.name) if s
             ]
             if len(illustrator_names) > 1:
                 for one_name in illustrator_names:

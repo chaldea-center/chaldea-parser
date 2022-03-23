@@ -492,9 +492,10 @@ class WikiParser:
         summons = list(self.summons.values())
         summons.sort(key=lambda s: s.startTime.JP or NEVER_CLOSED_TIMESTAMP)
         self.summons = {k.id: k for k in summons}
+        self.mc_translation.sort()
 
     def save_data(self):
-
+        self.sort()
         dump_json(self.wiki_data, settings.output_wiki / "wiki_data.json")
         dump_json(list(self.summons.values()), settings.output_wiki / "summons.json")
         dump_json(self.mc_translation, settings.output_wiki / "mc_translation.json")
