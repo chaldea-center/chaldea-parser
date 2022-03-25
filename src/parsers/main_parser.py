@@ -133,8 +133,7 @@ class MainParser:
             run_drop_rate_update()
         self.save_data()
 
-    @staticmethod
-    def update_exported_files():
+    def update_exported_files(self):
         worker = Worker("exported_file")
 
         def _add_download_task(_url, _fp):
@@ -167,6 +166,7 @@ class MainParser:
                 fp_export = f.cache_path(region)
                 fp_export.parent.mkdir(parents=True, exist_ok=True)
                 if api_changed or region_changed or not fp_export.exists():
+                    self.payload.regions.add(region)
                     url = f.resolve_link(region)
                     worker.add(_add_download_task, url, fp_export)
                 else:
@@ -782,17 +782,13 @@ class MainParser:
                 for region in Region.__members__.values()
             }
         )
-        if conditions.CN:
-            self._merge_official_mappings(Region.CN)
-            self._fix_cn_translation()
-            self._merge_mc_translation()
-        if conditions.NA:
-            self._merge_official_mappings(Region.NA)
-            self._add_na_mapping()
-        if conditions.TW:
-            self._merge_official_mappings(Region.TW)
-        if conditions.KR:
-            self._merge_official_mappings(Region.KR)
+        self._merge_official_mappings(Region.CN)
+        self._fix_cn_translation()
+        self._merge_mc_translation()
+        self._merge_official_mappings(Region.NA)
+        self._add_na_mapping()
+        self._merge_official_mappings(Region.TW)
+        self._merge_official_mappings(Region.KR)
         self._merge_repo_mapping()
 
     def _merge_official_mappings(self, region: Region):
