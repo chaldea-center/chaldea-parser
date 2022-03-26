@@ -41,7 +41,6 @@ from app.schemas.nice import (
     NiceSkill,
     NiceTd,
     QuestEnemy,
-    Vals,
 )
 from pydantic import BaseModel
 from pydantic.json import pydantic_encoder
@@ -593,19 +592,19 @@ class MainParser:
             exclude.update(NiceBaseFunction.__fields__.keys())
             exclude.remove("funcId")
 
-            def _trim_dup(svals: list[Vals] | None):
-                if not svals:
-                    return
-                v0 = svals[0]
-                if len(set([v == v0 for v in svals])) == 1:
-                    svals.clear()
-                    svals.append(v0)
-
-            _trim_dup(obj.svals)
-            _trim_dup(obj.svals2)
-            _trim_dup(obj.svals3)
-            _trim_dup(obj.svals4)
-            _trim_dup(obj.svals5)
+            # def _trim_dup(svals: list[Vals] | None):
+            #     if not svals:
+            #         return
+            #     v0 = svals[0]
+            #     if len(set([v == v0 for v in svals])) == 1:
+            #         svals.clear()
+            #         svals.append(v0)
+            #
+            # _trim_dup(obj.svals)
+            # _trim_dup(obj.svals2)
+            # _trim_dup(obj.svals3)
+            # _trim_dup(obj.svals4)
+            # _trim_dup(obj.svals5)
         elif isinstance(obj, NiceBaseFunction):
             ...
         if isinstance(obj, NiceTd):
