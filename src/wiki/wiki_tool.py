@@ -1,8 +1,8 @@
 import contextlib
-import json
 import re
 import time
 from datetime import datetime
+from enum import Enum
 from hashlib import sha1
 from pathlib import Path
 from typing import Optional
@@ -20,6 +20,11 @@ from ..config import settings
 from ..schemas.wiki_cache import WikiCache, WikiImageInfo, WikiPageInfo
 from ..utils import dump_json, logger
 from ..utils.helper import load_json, retry_decorator
+
+
+class KnownTimeZone(str, Enum):
+    cst = "Etc/GMT-8"
+    jst = "Etc/GMT-9"
 
 
 class WikiTool:
@@ -65,7 +70,7 @@ class WikiTool:
     def _call_request(
         self, name: str, is_image: bool = False
     ) -> WikiPageInfo | WikiImageInfo | None:
-        name_json = f"{name}({json.dumps(name)})"  # in case there is any special char
+        name_json = f"{name}({len(name)})"  # in case there is any special char
         self.active_requests.add(name)
         retry_n, retry = 0, 3
         prefix = f'[{self.host}][{"image" if is_image else "page"}]'
@@ -201,15 +206,14 @@ class WikiTool:
             return page.text
 
     @staticmethod
-    def get_timestamp(s: str, tz: str = "Asia/Shanghai") -> Optional[int]:
+    def get_timestamp(s: str, tz: KnownTimeZone) -> Optional[int]:
         if not s:
             return None
         m = re.match(r"^(\d+)-(\d+)-(\d+)\s+(\d+):(\d+)", s)
         if not m:
             return None
         seq = [int(x) for x in m.groups()]
-        t = datetime(*seq, tzinfo=None)
-        t.replace(tzinfo=pytz.timezone(tz))
+        t = datetime(*seq, tzinfo=pytz.timezone(tz.value))
         return int(t.timestamp())
 
     @retry_decorator(3, 10)

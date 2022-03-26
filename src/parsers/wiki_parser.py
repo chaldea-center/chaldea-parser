@@ -26,8 +26,10 @@ from ..utils import Worker, count_time, dump_json, load_json, logger
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.template import mwparse, parse_template, parse_template_list, remove_tag
 
-
 # noinspection DuplicatedCode
+from ..wiki.wiki_tool import KnownTimeZone
+
+
 class WikiParser:
     def __init__(self):
         self.wiki_data: WikiData = WikiData()
@@ -398,14 +400,26 @@ class WikiParser:
             summon.mcLink = title
             summon.name.JP = params.get2("卡池名jp")
             summon.name.CN = params.get2("卡池名cn") or params.get2("卡池名ha") or title
-            summon.startTime.JP = MOONCELL.get_timestamp(params.get("卡池开始时间jp"))
+            summon.startTime.JP = MOONCELL.get_timestamp(
+                params.get("卡池开始时间jp"), KnownTimeZone.jst
+            )
             if not summon.startTime.JP:
                 logger.warning(f"[Summon] unknown startTimeJP: {summon.mcLink}")
-            summon.startTime.CN = MOONCELL.get_timestamp(params.get("卡池开始时间cn"))
-            summon.endTime.JP = MOONCELL.get_timestamp(params.get("卡池结束时间jp"))
-            summon.endTime.CN = MOONCELL.get_timestamp(params.get("卡池结束时间cn"))
-            summon.banner.JP = MOONCELL.get_file_url(params.get("卡池图文件名jp"))
-            summon.banner.CN = MOONCELL.get_file_url(params.get("卡池图文件名cn"))
+            summon.startTime.CN = MOONCELL.get_timestamp(
+                params.get("卡池开始时间cn"), KnownTimeZone.cst
+            )
+            summon.endTime.JP = MOONCELL.get_timestamp(
+                params.get("卡池结束时间jp"), KnownTimeZone.jst
+            )
+            summon.endTime.CN = MOONCELL.get_timestamp(
+                params.get("卡池结束时间cn"), KnownTimeZone.cst
+            )
+            summon.banner.JP = MOONCELL.get_file_url(
+                params.get("卡池图文件名jp"), KnownTimeZone.jst
+            )
+            summon.banner.CN = MOONCELL.get_file_url(
+                params.get("卡池图文件名cn"), KnownTimeZone.cst
+            )
             summon.noticeLink.JP = params.get("卡池官网链接jp")
             summon.noticeLink.CN = params.get("卡池官网链接cn")
 
