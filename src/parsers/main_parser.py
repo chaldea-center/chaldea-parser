@@ -68,7 +68,9 @@ from ..schemas.gamedata import (
 from ..schemas.wiki_data import (
     CommandCodeW,
     CraftEssenceW,
+    EventW,
     MooncellTranslation,
+    WarW,
     WikiData,
 )
 from ..utils import (
@@ -376,7 +378,7 @@ class MainParser:
         wiki_data = self.wiki_data
         data.sort()
         wiki_data.sort()
-        wiki_data.save()
+        wiki_data.save(full_version=False)
         self.base_skills = sort_dict(self.base_skills)
         self.base_functions = sort_dict(self.base_functions)
 
@@ -799,6 +801,9 @@ class MainParser:
             )
 
         for event_jp in jp_data.nice_event:
+            self.wiki_data.events.setdefault(
+                event_jp.id, EventW(id=event_jp.id, name=event_jp.name)
+            )
             mappings.event_names.setdefault(event_jp.name, MappingBase())
             mappings.event_names.setdefault(event_jp.shortName, MappingBase())
             event = data.event_dict.get(event_jp.id)
@@ -809,6 +814,8 @@ class MainParser:
             _update_mapping(mappings.event_names, event_jp.name, event.name)
             _update_mapping(mappings.event_names, event_jp.shortName, event.shortName)
         for war_jp in jp_data.nice_war:
+            if war_jp.id < 1000:
+                self.wiki_data.wars.setdefault(war_jp.id, WarW(id=war_jp.id))
             mappings.war_names.setdefault(war_jp.name, MappingBase())
             mappings.war_names.setdefault(war_jp.longName, MappingBase())
             war = data.war_dict.get(war_jp.id)

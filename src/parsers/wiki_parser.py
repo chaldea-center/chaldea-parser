@@ -455,7 +455,7 @@ class WikiParser:
 
     def save_data(self):
         self.sort()
-        self.wiki_data.save()
+        self.wiki_data.save(full_version=True)
         dump_json(
             self.unknown_chara_mapping, settings.output_mapping / "chara_names.json"
         )

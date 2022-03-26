@@ -212,25 +212,27 @@ class WikiData(BaseModelORJson):
         self.summons = {summon.id: summon for summon in summons}
         self.mcTransl.sort()
 
-    def save(self):
+    def save(self, full_version: bool):
         folder = settings.output_wiki
-        dump_json(list(self.servants.values()), folder / "servants.json")
-        dump_json(list(self.craftEssences.values()), folder / "craftEssences.json")
-        dump_json(list(self.commandCodes.values()), folder / "commandCodes.json")
-        dump_json(list(self.events.values()), folder / "events.json")
+        if full_version:
+            dump_json(list(self.servants.values()), folder / "servants.json")
+            dump_json(list(self.craftEssences.values()), folder / "craftEssences.json")
+            dump_json(list(self.commandCodes.values()), folder / "commandCodes.json")
+            dump_json(list(self.events.values()), folder / "events.json")
+            dump_json(list(self.summons.values()), folder / "summons.json")
+            dump_json(self.mcTransl, settings.output_wiki / "mcTransl.json")
+
+        dump_json(list(self.wars.values()), folder / "wars.json")
         events_base = [
             event.dict(include=set(EventWBase.__fields__.keys()))
             for event in self.events.values()
         ]
         dump_json(events_base, folder / "eventsBase.json")
-        dump_json(list(self.wars.values()), folder / "wars.json")
-        dump_json(list(self.summons.values()), folder / "summons.json")
         summons_base = [
             summon.dict(include=set(LimitedSummonBase.__fields__.keys()))
             for summon in self.summons.values()
         ]
         dump_json(summons_base, folder / "summonsBase.json")
-        dump_json(self.mcTransl, settings.output_wiki / "mcTransl.json")
 
     def get_svt(self, collection_no: int):
         return self.servants.setdefault(
