@@ -888,13 +888,21 @@ class MainParser:
                 mappings.mc_detail.setdefault(mc_jp.id, MappingStr()).update(
                     region, mc.detail
                 )
+
+        def _process_detail(detail: str | None):
+            if not detail:
+                return detail
+            return detail.replace("[g][o]▲[/o][/g]", "▲")
+
         for skill_jp in jp_data.skill_dict.values():
             if skill_jp.name in mappings.ce_names or skill_jp.name in mappings.cc_names:
                 continue
             skill = _(data.skill_dict)[skill_jp.id]
             _update_mapping(mappings.skill_names, skill_jp.name, skill.name)
             _update_mapping(
-                mappings.skill_detail, skill_jp.unmodifiedDetail, skill.unmodifiedDetail
+                mappings.skill_detail,
+                _process_detail(skill_jp.unmodifiedDetail),
+                _process_detail(skill.unmodifiedDetail),
             )
         for td_jp in jp_data.td_dict.values():
             td = _(data.td_dict)[td_jp.id]
@@ -903,7 +911,9 @@ class MainParser:
                 _update_mapping(mappings.td_ruby, td_jp.ruby, td.ruby)
             _update_mapping(mappings.td_types, td_jp.type, td.type)
             _update_mapping(
-                mappings.td_detail, td_jp.unmodifiedDetail, td.unmodifiedDetail
+                mappings.td_detail,
+                _process_detail(td_jp.unmodifiedDetail),
+                _process_detail(td.unmodifiedDetail),
             )
         for func_jp in jp_data.func_dict.values():
             func = _(data.func_dict)[func_jp.funcId]
