@@ -23,12 +23,16 @@ from ..utils.helper import load_json, retry_decorator
 
 
 class WikiTool:
-    def __init__(self, host: str, path="/", limit: int = 10):
+    def __init__(self, host: str, path="/", user=None, pwd=None):
         from ..config import settings
 
         self.host: str = host
-        self.limit: int = limit
         self.site: mwclient.Site = mwclient.Site(host=host, path=path)
+        if user and pwd:
+            self.site.login(user, pwd)
+            logger.info(f"[{self.host}] logged in")
+        else:
+            logger.info(f"[{self.host}] keep logged out")
         self.site2 = pywikibot.Site(url=f"https://{host}/api.php")
         self._fp = Path(settings.cache_dir) / "wiki" / f"{host}.json"
         _now = int(time.time())
@@ -78,7 +82,7 @@ class WikiTool:
                     page = pywikibot.Page(self.site2, name)
                     text = page.text
                     if not text:
-                        logger.debug(f"{self.site.host}: {name_json} empty")
+                        logger.debug(f"{self.host}: {name_json} empty")
                     redirect = page
                     if text:
                         while redirect.isRedirectPage():
@@ -208,7 +212,7 @@ class WikiTool:
         t.replace(tzinfo=pytz.timezone(tz))
         return int(t.timestamp())
 
-    @retry_decorator(lapse=5)
+    @retry_decorator(3, 10)
     def recent_changes(
         self,
         start=None,
@@ -221,19 +225,58 @@ class WikiTool:
         type=None,  # noqa
         toponly=None,
     ):
-        return list(
-            self.site.recentchanges(
-                start=start,
-                end=end,
-                dir=dir,
-                namespace=namespace,
-                prop=prop,
-                show=show,
-                limit=limit,
-                type=type,
-                toponly=toponly,
-            )
+        # return list(
+        #     self.site.recentchanges(
+        #         start=start,
+        #         end=end,
+        #         dir=dir,
+        #         namespace=namespace,
+        #         prop=prop,
+        #         show=show,
+        #         limit=limit,
+        #         type=type,
+        #         toponly=toponly,
+        #     )
+        # )
+        return self.query_listing(
+            "recentchanges",
+            "rc",
+            limit=limit,
+            params={
+                "start": start,
+                "end": end,
+                "dir": dir,
+                "namespace": namespace,
+                "prop": prop,
+                "show": show,
+                "limit": limit,
+                "type": type,
+                "toponly": "1" if toponly else None,
+            },
         )
+
+    def query_listing(self, list_name: str, prefix: str, params: dict, limit=None):
+        full_params = {
+            "action": "query",
+            "format": "json",
+            "list": list_name,
+            "utf8": 1,
+            "limit": limit or "max",
+        }
+        for k, v in params.items():
+            if v is None:
+                continue
+            full_params[f"{prefix}{k}"] = v
+
+        items = []
+        while True:
+            resp = self._api_call(full_params)
+            items.extend(resp["query"][list_name])
+            print(f"Listing {list_name}: {len(items)} items")
+            if resp.get("continue"):
+                full_params.update(resp.get("continue"))
+            else:
+                return items
 
     def ask_query(self, query):
         offset = 0
@@ -256,7 +299,7 @@ class WikiTool:
                 result.extend(answers)
         return result
 
-    @retry_decorator(lapse=10)
+    @retry_decorator(retry_times=3, lapse=10)
     def _api_call(self, params) -> dict:
         logger.warning(f"[{self.host}] call api: {params}")
         return requests.get(f"https://{self.host}/api.php", params=params).json()
@@ -274,6 +317,7 @@ class WikiTool:
             type="new|edit",
             toponly=1,
         )
+        logger.info(f"[{self.host}] recent {len(changes)} changes")
         dropped = 0
         logger.info(
             f"[{self.host}] remove recent changes, last changed:"

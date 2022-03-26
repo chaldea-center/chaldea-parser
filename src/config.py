@@ -16,10 +16,10 @@ class Settings(BaseSettings):
     static_dir: str = "static/"
 
     # keys
-    user_mc: str = ""
-    pwd_mc: str = ""
-    user_fandom: str = ""
-    pwd_fandom: str = ""
+    mc_user: str = ""
+    mc_pwd: str = ""
+    fandom_user: str = ""
+    fandom_pwd: str = ""
 
     environment: str = ""
     quest_phase_expire: int = 30
