@@ -414,12 +414,8 @@ class WikiParser:
             summon.endTime.CN = MOONCELL.get_timestamp(
                 params.get("卡池结束时间cn"), KnownTimeZone.cst
             )
-            summon.banner.JP = MOONCELL.get_file_url(
-                params.get("卡池图文件名jp"), KnownTimeZone.jst
-            )
-            summon.banner.CN = MOONCELL.get_file_url(
-                params.get("卡池图文件名cn"), KnownTimeZone.cst
-            )
+            summon.banner.JP = MOONCELL.get_file_url(params.get("卡池图文件名jp"))
+            summon.banner.CN = MOONCELL.get_file_url(params.get("卡池图文件名cn"))
             summon.noticeLink.JP = params.get("卡池官网链接jp")
             summon.noticeLink.CN = params.get("卡池官网链接cn")
 

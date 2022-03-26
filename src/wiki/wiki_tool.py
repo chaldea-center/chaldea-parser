@@ -70,7 +70,7 @@ class WikiTool:
     def _call_request(
         self, name: str, is_image: bool = False
     ) -> WikiPageInfo | WikiImageInfo | None:
-        name_json = f"{name}({len(name)})"  # in case there is any special char
+        name_json = f'"{name}"({len(name)})'  # in case there is any special char
         self.active_requests.add(name)
         retry_n, retry = 0, 3
         prefix = f'[{self.host}][{"image" if is_image else "page"}]'
