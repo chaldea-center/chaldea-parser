@@ -141,7 +141,7 @@ class WikiParser:
                 if td_ruby_cn and td_ruby_jp:
                     self.wiki_data.mcTransl.td_ruby[td_ruby_jp] = td_ruby_cn
 
-        worker = Worker.from_map(_parse_one, index_data)
+        worker = Worker.from_map(_parse_one, index_data, name="mc_svt")
         worker.wait()
 
     def mc_ce(self):
@@ -174,7 +174,7 @@ class WikiParser:
                     ce_add.unknownCharacters.append(chara)
                     self.unknown_chara_mapping.setdefault(chara, MappingStr())
 
-        worker = Worker.from_map(_parse_one, index_data)
+        worker = Worker.from_map(_parse_one, index_data, name="mc_cc")
         worker.wait()
 
     def mc_cc(self):
@@ -206,7 +206,7 @@ class WikiParser:
                     cc_add.unknownCharacters.append(chara)
                     self.unknown_chara_mapping.setdefault(chara, MappingStr())
 
-        worker = Worker.from_map(_parse_one, index_data)
+        worker = Worker.from_map(_parse_one, index_data, name="mc_cc")
         worker.wait()
 
     def fandom_svt(self):
@@ -246,7 +246,7 @@ class WikiParser:
                     else:
                         svt_add.aprilFoolProfile.NA = apex
 
-        worker = Worker()
+        worker = Worker("fandom_svt")
         list_text = FANDOM.get_page_text("Servant List by ID")
         for sub in re.findall(
             r"{{:Sub:Servant[_ ]List[_ ]by[_ ]ID/([\d\-]+)}}", list_text
@@ -264,7 +264,7 @@ class WikiParser:
             params = parse_template(FANDOM.get_page_text(link), r"^{{Craftlore")
             ce_add.profile.NA = params.get2("na") or params.get2("en")
 
-        worker = Worker()
+        worker = Worker("fandom_ce")
         list_text = FANDOM.get_page_text("Craft Essence List/By ID")
         # {{:Craft Essence List/By ID/1-100}}
         for sub in re.findall(
@@ -334,7 +334,9 @@ class WikiParser:
                     event.relatedSummons.append(key)
             self.wiki_data.events[event.id] = event
 
-        worker = Worker.from_map(_parse_one, self.wiki_data.events.values())
+        worker = Worker.from_map(
+            _parse_one, self.wiki_data.events.values(), name="mc_events"
+        )
         worker.wait()
 
     def mc_wars(self):
@@ -359,7 +361,7 @@ class WikiParser:
             war.noticeLink.JP = params.get("官网链接jp")
             self.wiki_data.wars[war.id] = war
 
-        worker = Worker.fake(_parse_one, self.wiki_data.wars.values())
+        worker = Worker.fake(_parse_one, self.wiki_data.wars.values(), "mc_war")
         worker.wait()
 
     def mc_summon(self):
@@ -441,7 +443,7 @@ class WikiParser:
                         t_summon_data_table(table_str, sub_summon)
                         summon.subSummons.append(sub_summon)
 
-        worker = Worker()
+        worker = Worker("mc_summon")
         for answer in MOONCELL.ask_query("[[分类:限时召唤]]"):
             worker.add(_parse_one, answer["fulltext"])
         worker.wait()

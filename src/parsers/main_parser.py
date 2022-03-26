@@ -427,7 +427,7 @@ class MainParser:
                 hash=_hash,
                 size=len(_bytes),
             )
-            if _fn in _last_version.files.values():
+            if _fn in _last_version.files:
                 last_fv = _last_version.files[_fn]
                 if fv.json(exclude={"timestamp"}) == last_fv.json(
                     exclude={"timestamp"}

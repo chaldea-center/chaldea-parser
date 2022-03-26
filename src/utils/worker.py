@@ -24,6 +24,7 @@ class Worker:
         self.add(self.func, *args, **kwargs)
 
     def wait(self, show_progress=True):
+        name = f"({self.name})" if self.name else ""
         finished = 0
         steps = [i for i in (2, 5, 10, 20, 50, 100) if i <= len(self._tasks) // 5]
         step = steps[-1] if steps else 1
@@ -34,12 +35,11 @@ class Worker:
                 raise error
             finished += 1
             if show_progress:
-                name = f"({self.name})" if self.name else ""
                 if finished % step == 0:
                     logger.debug(f"Worker{name}: {finished}/{len(self._tasks)}   ")
                 elif settings.is_debug:
                     print(f"\rWorker{name}: {finished}/{len(self._tasks)}   ", end="")
-        print("")
+        logger.debug(f"Worker{name} finished: {finished}/{len(self._tasks)}   ")
 
     @staticmethod
     def map(fn, *iterables):
@@ -50,8 +50,8 @@ class Worker:
             self._tasks.append(_executor.submit(fn, *args))
 
     @staticmethod
-    def from_map(fn, *iterables) -> "Worker":
-        worker = Worker()
+    def from_map(fn, *iterables, name: str = None) -> "Worker":
+        worker = Worker(name)
         worker.map_add(fn, *iterables)
         return worker
 
