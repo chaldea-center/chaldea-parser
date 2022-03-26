@@ -1,8 +1,7 @@
-from typing import Optional
-
 from app.schemas.base import BaseModelORJson
 from pydantic import BaseModel, HttpUrl, NoneStr
 
+from ..config import settings
 from ..schemas.common import (
     CEObtain,
     MappingBase,
@@ -11,7 +10,7 @@ from ..schemas.common import (
     SummonType,
     SvtObtain,
 )
-from ..utils import sort_dict
+from ..utils import NEVER_CLOSED_TIMESTAMP, dump_json, load_json, sort_dict
 
 
 class MooncellTranslation(BaseModelORJson):
@@ -101,8 +100,8 @@ class WarW(BaseModel):
 
 
 class EventW(EventWBase):
-    startTime: Optional[MappingInt] = None
-    endTime: Optional[MappingInt] = None
+    startTime: MappingInt = MappingInt()
+    endTime: MappingInt = MappingInt()
     rarePrism: int = 0
     grail: int = 0  # pure grail
     crystal: int = 0  # pure crystal
@@ -146,11 +145,92 @@ class WikiData(BaseModelORJson):
     craftEssences: dict[int, CraftEssenceW] = {}
     commandCodes: dict[int, CommandCodeW] = {}
     # mysticCodes: dict[int, MysticCodeW] = {}
-
-    # events and summons are stored as base
     events: dict[int, EventW] = {}
     wars: dict[int, WarW] = {}
-    fsmSvtIdMapping: dict[int, int] = {}
+    summons: dict[str, LimitedSummon] = {}
+    mcTransl: MooncellTranslation = MooncellTranslation()
+
+    @classmethod
+    def parse_dir(cls, full_version: bool = False) -> "WikiData":
+        folder = settings.output_wiki
+        data = {
+            "wars": {war["id"]: war for war in load_json(folder / "wars.json", [])},
+            "mcTransl": load_json(folder / "mcTransl.json", {}),
+        }
+        if full_version:
+            data |= {
+                "servants": {
+                    svt["collectionNo"]: svt
+                    for svt in load_json(folder / "servants.json", [])
+                },
+                "craftEssences": {
+                    ce["collectionNo"]: ce
+                    for ce in load_json(folder / "craftEssences.json", [])
+                },
+                "commandCodes": {
+                    cc["collectionNo"]: cc
+                    for cc in load_json(folder / "commandCodes.json", [])
+                },
+                "events": {
+                    event["id"]: event
+                    for event in load_json(folder / "events.json", [])
+                },
+                "summons": {
+                    summon["id"]: summon
+                    for summon in load_json(
+                        folder / "summons.json",
+                        [],
+                    )
+                },
+            }
+        else:
+            data |= {
+                "events": {
+                    event["id"]: event
+                    for event in load_json(folder / "eventsBase.json", [])
+                },
+                "summons": {
+                    summon["id"]: summon
+                    for summon in load_json(
+                        folder / "summonsBase.json",
+                        [],
+                    )
+                },
+            }
+        return WikiData.parse_obj(data)
+
+    def sort(self):
+        self.servants = sort_dict(self.servants)
+        self.craftEssences = sort_dict(self.craftEssences)
+        self.commandCodes = sort_dict(self.commandCodes)
+        events = list(self.events.values())
+        events.sort(key=lambda event: event.startTime.JP or NEVER_CLOSED_TIMESTAMP)
+        self.events = {event.id: event for event in events}
+        self.wars = sort_dict(self.wars)
+        summons = list(self.summons.values())
+        summons.sort(key=lambda summon: summon.startTime.JP or NEVER_CLOSED_TIMESTAMP)
+        self.summons = {summon.id: summon for summon in summons}
+        self.mcTransl.sort()
+
+    def save(self):
+        folder = settings.output_wiki
+        dump_json(list(self.servants.values()), folder / "servants.json")
+        dump_json(list(self.craftEssences.values()), folder / "craftEssences.json")
+        dump_json(list(self.commandCodes.values()), folder / "commandCodes.json")
+        dump_json(list(self.events.values()), folder / "events.json")
+        events_base = [
+            event.dict(include=set(EventWBase.__fields__.keys()))
+            for event in self.events.values()
+        ]
+        dump_json(events_base, folder / "eventsBase.json")
+        dump_json(list(self.wars.values()), folder / "wars.json")
+        dump_json(list(self.summons.values()), folder / "summons.json")
+        summons_base = [
+            summon.dict(include=set(LimitedSummonBase.__fields__.keys()))
+            for summon in self.summons.values()
+        ]
+        dump_json(summons_base, folder / "summonsBase.json")
+        dump_json(self.mcTransl, settings.output_wiki / "mcTransl.json")
 
     def get_svt(self, collection_no: int):
         return self.servants.setdefault(

@@ -31,7 +31,6 @@ from pydantic import BaseModel
 from ..utils import sort_dict
 from .common import MappingBase, MappingInt, MappingStr
 from .const_data import BuffActionDetail, CardInfo, GrailCostDetail, MasterUserLvDetail
-from .wiki_data import LimitedSummon, WikiData
 
 
 class MappingData(BaseModel):
@@ -91,13 +90,8 @@ class ExchangeTicket(BaseModel):
 
 
 class FixedDrop(BaseModel):
-    key: int  # quest phase key
+    id: int  # quest phase key
     items: dict[int, int]
-
-
-class ExtData(BaseModelORJson):
-    wiki_data: WikiData = WikiData()
-    summons: list[LimitedSummon] = []
 
 
 class MasterData(BaseModelORJson):

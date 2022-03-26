@@ -16,22 +16,13 @@ from ..schemas.common import CEObtain, MappingStr, SummonType, SvtObtain
 from ..schemas.wiki_data import (
     EventW,
     LimitedSummon,
-    MooncellTranslation,
     ProbGroup,
     ServantW,
     SubSummon,
     WarW,
     WikiData,
 )
-from ..utils import (
-    NEVER_CLOSED_TIMESTAMP,
-    Worker,
-    count_time,
-    dump_json,
-    load_json,
-    logger,
-    sort_dict,
-)
+from ..utils import Worker, count_time, dump_json, load_json, logger
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.template import mwparse, parse_template, parse_template_list, remove_tag
 
@@ -40,11 +31,6 @@ from ..wiki.template import mwparse, parse_template, parse_template_list, remove
 class WikiParser:
     def __init__(self):
         self.wiki_data: WikiData = WikiData()
-        self.summons: dict[str, LimitedSummon] = {}
-        self.basic_summons: dict[str, LimitedSummon] = {}  # actually LimitedSummonBase
-        self.basic_events: dict[int, EventW] = {}  # actually EventWBase
-        self.wars: dict[int, WarW] = {}
-        self.mc_translation = MooncellTranslation()
         self.unknown_chara_mapping: dict[str, MappingStr] = {}
 
     @count_time
@@ -71,42 +57,13 @@ class WikiParser:
         self.fandom_ce()
         logger.info("[Fandom] parsing command code data")
         self.fandom_cc()
-        logger.info("[FGOSim] add servant id mapping")
-        self.add_fsm_svt_mapping()
         logger.info("Saving data...")
-        self.save_data()
         MOONCELL.save_cache()
         FANDOM.save_cache()
-
-    def add_fsm_svt_mapping(self):
-        # fmt: off
-        self.wiki_data.fsmSvtIdMapping = {
-            149: 150, 150: 153, 151: 154, 152: 196, 153: 155, 154: 156, 155: 157, 156: 158, 157: 159, 158: 160,
-            159: 161, 160: 162, 161: 163, 162: 164, 163: 165, 164: 166, 165: 167, 166: 169, 167: 170, 168: 171,
-            169: 172, 170: 173, 171: 174, 172: 175, 173: 176, 174: 177, 175: 178, 176: 182, 177: 179, 178: 180,
-            179: 181, 180: 183, 181: 184, 182: 185, 183: 186, 184: 187, 185: 188, 186: 189, 187: 190, 188: 192,
-            189: 193, 190: 194, 191: 195, 192: 197, 193: 198, 194: 199, 195: 200, 196: 201, 197: 202, 198: 203,
-            199: 204, 200: 205, 201: 206, 202: 207, 203: 208, 204: 209, 205: 210, 206: 211, 207: 212, 208: 213,
-            209: 214, 210: 215, 211: 191, 212: 216, 213: 217, 214: 218, 215: 219, 216: 220, 217: 221, 218: 222,
-            219: 223, 220: 224, 221: 225, 222: 226, 223: 227, 224: 228, 225: 231, 226: 230, 227: 229, 228: 232,
-            229: 233, 230: 234, 231: 235, 232: 236, 233: 237, 234: 238, 235: 239, 295: 301, 296: 300, 297: 302,
-            298: 303, 299: 304, 300: 305, 301: 306, 302: 307, 303: 308, 304: 309, 305: 310, 306: 311, 307: 312,
-            308: 313, 309: 314, 310: 315, 311: 316, 312: 317, 313: 318, 314: 319, 315: 320, 316: 321, 317: 322,
-            318: 323, 319: 324, 320: 325, 321: 326, 322: 327, 323: 328, 324: 329, 325: 330, 326: 331, 327: 332,
-            328: 334, 329: 335, 330: 336
-        }
-        # fmt: on
+        self.save_data()
 
     def init_wiki_data(self):
-        for event_data in load_json(settings.output_wiki / "events_base.json") or []:
-            event = EventW.parse_obj(event_data)
-            self.basic_events[event.id] = event
-        for war_data in load_json(settings.output_wiki / "main_stories.json") or []:
-            war = WarW.parse_obj(war_data)
-            self.wars[war.id] = war
-        for summon_data in load_json(settings.output_wiki / "summons_base.json"):
-            summon = LimitedSummon.parse_obj(summon_data)
-            self.basic_summons[summon.id] = summon
+        self.wiki_data = WikiData.parse_dir(full_version=False)
         self.unknown_chara_mapping = {
             k: MappingStr.parse_obj(v)
             for k, v in load_json(
@@ -122,17 +79,16 @@ class WikiParser:
             svt_add.mcLink = record["name_link"]
             svt_add.nameOther = [s.strip() for s in record["name_other"].split("&")]
             obtains = [SvtObtain.from_cn(m) for m in record["method"].split("<br>")]
-            obtains = sorted(set(obtains))
-            svt_add.obtains = obtains
+            svt_add.obtains = sorted(set(obtains))
             # profile
 
             wikitext = mwparse(MOONCELL.get_page_text(svt_add.mcLink))
             params = parse_template(wikitext, r"^{{基础数值")
             name_cn = params.get("中文名")
             if name_cn:
-                self.mc_translation.svt_names[svt_add.collectionNo] = name_cn
+                self.wiki_data.mcTransl.svt_names[svt_add.collectionNo] = name_cn
             svt_add.nameOther.extend(re.split(r"[,，&]", params.get2("昵称", "")))
-            svt_add.nameOther = [s for s in set(svt_add.nameOther) if s]
+            svt_add.nameOther = [s for s in sorted(set(svt_add.nameOther)) if s]
 
             for index in range(1, 15):
                 if "愚人节" in params.get(f"立绘{index}", ""):
@@ -173,15 +129,15 @@ class WikiParser:
             for params in parse_template_list(wikitext, r"^{{持有技能"):
                 text_cn, text_jp = params.get2(2), params.get2(3)
                 if text_cn and text_jp:
-                    self.mc_translation.skill_names[text_jp] = text_cn
+                    self.wiki_data.mcTransl.skill_names[text_jp] = text_cn
 
             for params in parse_template_list(wikitext, r"^{{宝具"):
                 td_name_cn, td_ruby_cn = params.get2("中文名"), params.get2("国服上标")
                 td_name_jp, td_ruby_jp = params.get2("日文名"), params.get2("日服上标")
                 if td_name_cn and td_name_jp:
-                    self.mc_translation.td_names[td_name_jp] = td_name_cn
+                    self.wiki_data.mcTransl.td_names[td_name_jp] = td_name_cn
                 if td_ruby_cn and td_ruby_jp:
-                    self.mc_translation.td_ruby[td_ruby_jp] = td_ruby_cn
+                    self.wiki_data.mcTransl.td_ruby[td_ruby_jp] = td_ruby_cn
 
         worker = Worker.from_map(_parse_one, index_data)
         worker.wait()
@@ -198,14 +154,14 @@ class WikiParser:
             params = parse_template(wikitext, r"^{{概念礼装")
             name_cn = params.get2("名称")
             if name_cn:
-                self.mc_translation.ce_names[ce_add.collectionNo] = name_cn
+                self.wiki_data.mcTransl.ce_names[ce_add.collectionNo] = name_cn
             profile_cn = params.get2("解说")
             if profile_cn:
                 ce_add.profile.CN = profile_cn
             for index in range(20):
                 key = "出场角色" if index == 0 else index
                 chara = params.get2(key)
-                if not chara or chara in self.unknown_chara_mapping:
+                if not chara:
                     continue
                 svt_text = MOONCELL.get_page_text(chara)
                 param_svt = parse_template(svt_text, r"^{{基础数值")
@@ -230,14 +186,14 @@ class WikiParser:
             params = parse_template(wikitext, r"^{{指令纹章")
             name_cn = params.get2("名称")
             if name_cn:
-                self.mc_translation.cc_names[cc_add.collectionNo] = name_cn
+                self.wiki_data.mcTransl.cc_names[cc_add.collectionNo] = name_cn
             profile_cn = params.get2("解说")
             if profile_cn:
                 cc_add.profile.CN = profile_cn
             for index in range(20):
                 key = "出场角色" if index == 0 else index
                 chara = params.get2(key)
-                if not chara or chara in self.unknown_chara_mapping:
+                if not chara:
                     continue
                 svt_text = MOONCELL.get_page_text(chara)
                 param_svt = parse_template(svt_text, r"^{{基础数值")
@@ -345,7 +301,7 @@ class WikiParser:
             name_jp = params.get2("名称jp")
             name_cn = params.get2("名称cn")
             if name_jp and name_cn:
-                self.mc_translation.event_names[name_jp] = name_cn
+                self.wiki_data.mcTransl.event_names[name_jp] = name_cn
 
             event.titleBanner.CN = MOONCELL.get_file_url(params.get("标题图文件名cn"))
             event.titleBanner.JP = MOONCELL.get_file_url(params.get("标题图文件名jp"))
@@ -376,7 +332,7 @@ class WikiParser:
                     event.relatedSummons.append(key)
             self.wiki_data.events[event.id] = event
 
-        worker = Worker.from_map(_parse_one, self.basic_events.values())
+        worker = Worker.from_map(_parse_one, self.wiki_data.events.values())
         worker.wait()
 
     def mc_wars(self):
@@ -401,7 +357,7 @@ class WikiParser:
             war.noticeLink.JP = params.get("官网链接jp")
             self.wiki_data.wars[war.id] = war
 
-        worker = Worker.fake(_parse_one, self.wars.values())
+        worker = Worker.fake(_parse_one, self.wiki_data.wars.values())
         worker.wait()
 
     def mc_summon(self):
@@ -438,7 +394,7 @@ class WikiParser:
             key = _gen_summon_key(params.get("卡池官网链接jp"))
             if not key:
                 return
-            summon = self.basic_summons.get(key, LimitedSummon(id=key))
+            summon = self.wiki_data.summons.setdefault(key, LimitedSummon(id=key))
             summon.mcLink = title
             summon.name.JP = params.get2("卡池名jp")
             summon.name.CN = params.get2("卡池名cn") or params.get2("卡池名ha") or title
@@ -474,7 +430,6 @@ class WikiParser:
                     if table_str:
                         t_summon_data_table(table_str, sub_summon)
                         summon.subSummons.append(sub_summon)
-            self.summons[summon.id] = summon
 
         worker = Worker()
         for answer in MOONCELL.ask_query("[[分类:限时召唤]]"):
@@ -482,23 +437,11 @@ class WikiParser:
         worker.wait()
 
     def sort(self):
-        self.wiki_data.servants = sort_dict(self.wiki_data.servants)
-        self.wiki_data.craftEssences = sort_dict(self.wiki_data.craftEssences)
-        self.wiki_data.commandCodes = sort_dict(self.wiki_data.commandCodes)
-        # self.wiki_data.mysticCodes = sort_dict(self.wiki_data.mysticCodes)
-
-        self.wiki_data.events = sort_dict(self.wiki_data.events)
-        self.wiki_data.wars = sort_dict(self.wiki_data.wars)
-        summons = list(self.summons.values())
-        summons.sort(key=lambda s: s.startTime.JP or NEVER_CLOSED_TIMESTAMP)
-        self.summons = {k.id: k for k in summons}
-        self.mc_translation.sort()
+        self.wiki_data.sort()
 
     def save_data(self):
         self.sort()
-        dump_json(self.wiki_data, settings.output_wiki / "wiki_data.json")
-        dump_json(list(self.summons.values()), settings.output_wiki / "summons.json")
-        dump_json(self.mc_translation, settings.output_wiki / "mc_translation.json")
+        self.wiki_data.save()
         dump_json(
             self.unknown_chara_mapping, settings.output_mapping / "chara_names.json"
         )

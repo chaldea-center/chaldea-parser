@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field
 
 
 class DropRateSheet(BaseModel):
-    freeCounts: dict[str, int] = Field(default_factory=dict)
     questIds: list[int] = Field(default_factory=list)
     itemIds: list[int] = Field(default_factory=list)
     apCosts: list[int] = Field(default_factory=list)

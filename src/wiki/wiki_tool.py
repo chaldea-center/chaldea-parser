@@ -1,4 +1,5 @@
 import contextlib
+import json
 import re
 import time
 from datetime import datetime
@@ -35,6 +36,8 @@ class WikiTool:
         self._temp_disabled = False
         self._count = 0
 
+        self.active_requests: set[str] = set()
+
     def load(self):
         self._fp.resolve().parent.mkdir(exist_ok=True, parents=True)
         if self._fp.exists():
@@ -54,11 +57,13 @@ class WikiTool:
                 ...
 
     @sleep_and_retry
-    @limits(3, 2)
+    @limits(3, 4)
     def _call_request(
         self, name: str, is_image: bool = False
     ) -> WikiPageInfo | WikiImageInfo | None:
-        retry_n, retry = 0, 10
+        name_json = f"{name}({json.dumps(name)})"  # in case there is any special char
+        self.active_requests.add(name)
+        retry_n, retry = 0, 3
         prefix = f'[{self.host}][{"image" if is_image else "page"}]'
         while retry_n < retry:
             try:
@@ -73,10 +78,11 @@ class WikiTool:
                     page = pywikibot.Page(self.site2, name)
                     text = page.text
                     if not text:
-                        logger.debug(f'{self.site.host}: "{name}" empty')
+                        logger.debug(f"{self.site.host}: {name_json} empty")
                     redirect = page
-                    while redirect.isRedirectPage():
-                        redirect = redirect.getRedirectTarget()
+                    if text:
+                        while redirect.isRedirectPage():
+                            redirect = redirect.getRedirectTarget()
                     if redirect == page:
                         self.cache.pages[self.norm_key(page.title())] = WikiPageInfo(
                             name=page.title(), text=page.text, updated=now
@@ -96,19 +102,22 @@ class WikiTool:
                     cached = redirect
                 if retry_n > 0:
                     logger.warning(
-                        f'{prefix} downloaded "{name}" after {retry_n} retry'
+                        f"{prefix} downloaded {name_json} after {retry_n} retry"
                     )
                 else:
-                    logger.debug(f"{prefix} download: {name}")
+                    logger.debug(f"{prefix} download: {name_json}")
                 self._count += 1
                 if self._count > 100:
                     self._count = 0
                     self.save_cache()
+                self.active_requests.remove(name)
                 return cached
             except Exception as e:
                 retry_n += 1
                 if retry_n >= retry:
-                    logger.warning(f'Fail download "{name}" after {retry_n} retry: {e}')
+                    logger.warning(
+                        f"Fail download {name_json} after {retry_n} retry: {e}"
+                    )
                 time.sleep(2)
 
     def get_page_text(self, name: str, allow_cache=True, clear_tag=True):
@@ -116,7 +125,7 @@ class WikiTool:
         if not name:
             # print('name empty')
             return None
-        key = name.strip().replace("%26", "&")
+        key = unquote(name.strip())
         if key.startswith("#"):
             logger.warning(f"wiki page title startwith #: {key}")
             return ""
@@ -134,7 +143,8 @@ class WikiTool:
             result = self.remove_html_tags(result)
         # print(f'{key}: {len(result)}')
         if result:
-            result = re.sub(r"[\u2028\u2029]", "", result)
+            # ----------------   LS    PS    LTR  --------------
+            result = re.sub(r"[\u2028\u2029\u200e]", "", result)
         return result
 
     def _process_url(self, image: WikiImageInfo) -> str:
@@ -180,14 +190,10 @@ class WikiTool:
         if page.redirect:
             page = self.cache.pages.get(self.norm_key(page.redirect))
             if page:
-                if not page.text and page.outdated():
-                    return None
                 return page.text
             else:
                 self.cache.pages.pop(name)
         else:
-            if not page.text and page.outdated():
-                return None
             return page.text
 
     @staticmethod
@@ -202,7 +208,7 @@ class WikiTool:
         t.replace(tzinfo=pytz.timezone(tz))
         return int(t.timestamp())
 
-    @retry_decorator()
+    @retry_decorator(lapse=5)
     def recent_changes(
         self,
         start=None,
@@ -215,16 +221,18 @@ class WikiTool:
         type=None,  # noqa
         toponly=None,
     ):
-        return self.site.recentchanges(
-            start=start,
-            end=end,
-            dir=dir,
-            namespace=namespace,
-            prop=prop,
-            show=show,
-            limit=limit,
-            type=type,
-            toponly=toponly,
+        return list(
+            self.site.recentchanges(
+                start=start,
+                end=end,
+                dir=dir,
+                namespace=namespace,
+                prop=prop,
+                show=show,
+                limit=limit,
+                type=type,
+                toponly=toponly,
+            )
         )
 
     def ask_query(self, query):
@@ -250,7 +258,7 @@ class WikiTool:
 
     @retry_decorator(lapse=10)
     def _api_call(self, params) -> dict:
-        logger.warning(f'[{self.host}] call api: {params}')
+        logger.warning(f"[{self.host}] call api: {params}")
         return requests.get(f"https://{self.host}/api.php", params=params).json()
 
     def remove_recent_changed(self, days: float | None = None):

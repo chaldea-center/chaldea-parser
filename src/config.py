@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     x_https_proxy: NoneStr = None
     x_all_proxy: NoneStr = None
 
+    tmp_vars: dict = {}
+
     @property
     def is_debug(self):
         return self.environment == "debug"

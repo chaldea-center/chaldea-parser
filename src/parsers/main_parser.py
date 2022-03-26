@@ -4,7 +4,7 @@ import re
 import shutil
 import time
 from pathlib import Path
-from typing import AnyStr, Match, TypeVar
+from typing import Any, AnyStr, Iterable, Match, TypeVar
 
 import orjson
 import requests
@@ -59,7 +59,6 @@ from ..schemas.common import (
 from ..schemas.const_data import ConstGameData
 from ..schemas.gamedata import (
     ExchangeTicket,
-    ExtData,
     FixedDrop,
     MappingBase,
     MappingData,
@@ -69,9 +68,8 @@ from ..schemas.gamedata import (
 from ..schemas.wiki_data import (
     CommandCodeW,
     CraftEssenceW,
-    EventWBase,
     MooncellTranslation,
-    WarW,
+    WikiData,
 )
 from ..utils import (
     NEVER_CLOSED_TIMESTAMP,
@@ -82,6 +80,7 @@ from ..utils import (
     dump_json,
     load_json,
     logger,
+    sort_dict,
 )
 from ..utils.nullsafe import NullSafe, NullSafeProxy, nullsafe, undefined
 
@@ -93,14 +92,14 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
-MIN_APP = "1.6.7"
+MIN_APP = "1.6.9"
 
 
 # noinspection DuplicatedCode
 class MainParser:
     def __init__(self):
         self.jp_data = MasterData(region=Region.JP)
-        self.ext_data = ExtData()
+        self.wiki_data = WikiData()
         self.base_skills: dict[int, NiceBaseSkill] = {}
         self.base_functions: dict[int, NiceBaseFunction] = {}
         self.payload: Payload = Payload.parse_obj(load_json("payload.json") or {})
@@ -113,12 +112,7 @@ class MainParser:
             shutil.rmtree(settings.cache_dir, ignore_errors=True)
         logger.info("update_exported_files")
         self.update_exported_files()
-        self.ext_data = ExtData.parse_obj(
-            {
-                "wiki_data": load_json(settings.output_wiki / "wiki_data.json", {}),
-                "summons": load_json(settings.output_wiki / "summons.json", []),
-            }
-        )
+        self.wiki_data = WikiData.parse_dir(full_version=True)
         self.jp_data = self.load_master_data(Region.JP)
         self.merge_all_mappings()
         if settings.skip_quests:
@@ -126,8 +120,8 @@ class MainParser:
         else:
             self.filter_quests()
         self.exchange_tickets()
-        if not settings.output_dist.joinpath("drop_rate.json").exists():
-            logger.info("drop_rate.json not exist, run domus_aurea parser")
+        if not settings.output_wiki.joinpath("dropRate.json").exists():
+            logger.info("dropRate.json not exist, run domus_aurea parser")
             from .domus_aurea import run_drop_rate_update
 
             run_drop_rate_update()
@@ -213,8 +207,8 @@ class MainParser:
         try:
             if self.payload.regions:
                 previous_fixed_drops = {
-                    v["key"]: FixedDrop.parse_obj(v)
-                    for v in load_json(settings.output_dist / "fixed_drops.json") or []
+                    v["id"]: FixedDrop.parse_obj(v)
+                    for v in load_json(settings.output_dist / "fixedDrops.json") or []
                 }
         except Exception as e:
             logger.error(f"fail to reading fixed drop data of previous build: {e}")
@@ -307,7 +301,7 @@ class MainParser:
                 # always add even if there is nothing dropped
                 # if phase_drops:
                 self.jp_data.questPhaseFixedDrops[phase_key] = FixedDrop(
-                    key=phase_key, items=phase_drops
+                    id=phase_key, items=phase_drops
                 )
 
         worker = Worker("quest", func=_check_one_quest)
@@ -379,10 +373,14 @@ class MainParser:
         dist_folder = settings.output_dist
         dist_folder.mkdir(parents=True, exist_ok=True)
         data = self.jp_data
+        wiki_data = self.wiki_data
         data.sort()
-        self.ext_data.summons.sort(key=lambda x: x.id)
+        wiki_data.sort()
+        wiki_data.save()
+        self.base_skills = sort_dict(self.base_skills)
+        self.base_functions = sort_dict(self.base_functions)
+
         _now = datetime.datetime.now(datetime.timezone.utc)
-        self._export_wiki_base()
 
         logger.debug("Saving data")
         cur_version = DataVersion(
@@ -399,119 +397,105 @@ class MainParser:
             _last_version = cur_version.copy(deep=True)
         if not settings.is_debug:
             for f in settings.output_dist.glob("**/*"):
-                if f.name == "drop_rate.json":
-                    continue
                 if f.is_file():
                     f.unlink()
                 elif f.is_dir():
                     shutil.rmtree(f)
 
-        def _get_file_version(_fn: str, key: str, _bytes: bytes) -> FileVersion:
+        def _normal_dump(
+            obj, key: str, _fn: str = None, encoder=None, _bytes: bytes = None
+        ):
+            if _fn is None:
+                _fn = f"{key}.json"
+            if _bytes is None:
+                _bytes = orjson.dumps(
+                    obj,
+                    default=encoder or self._encoder,
+                    option=orjson.OPT_NON_STR_KEYS
+                    | orjson.OPT_INDENT_2
+                    | orjson.OPT_APPEND_NEWLINE,
+                )
             md5 = hashlib.md5()
             md5.update(_bytes)
             _hash = md5.hexdigest()[:6]
-            if _fn in _last_version.files:
-                _fv = _last_version.files[_fn]
-                if _hash == _fv.hash and key == _fv.key:
-                    return _last_version.files[_fn].copy()
-            return FileVersion(
+            fv = FileVersion(
                 key=key,
                 filename=_fn,
                 timestamp=int(_now.timestamp()),
                 hash=_hash,
                 size=len(_bytes),
             )
+            if _fn in _last_version.files.values():
+                last_fv = _last_version.files[_fn]
+                if fv.json(exclude={"timestamp"}) == last_fv.json(
+                    exclude={"timestamp"}
+                ):
+                    fv.timestamp = last_fv.timestamp
+            cur_version.files[_fn] = fv
+            settings.output_dist.joinpath(_fn).write_bytes(_bytes)
+            logger.info(f"[version] dump {key}: {_fn}")
 
-        def _dump(
-            _fn: str, obj=None, per_file: int | None = None, ranges=None, encoder=None
+        def _dump_by_count(
+            obj: list, count: int, key: str, base_fn: str = None, encoder=None
         ):
-            if encoder is None:
-                encoder = self._encoder
-            assert not _fn.lower().endswith(".json"), _fn
-            fn_splits = _fn.split("_")
-            key = "".join([fn_splits[0]] + [x.title() for x in fn_splits[1:]])
-            if per_file is not None:
-                assert per_file > 0 and isinstance(obj, list), (per_file, type(obj))
-                n = len(obj) // per_file + 1
-                for i in range(n):
-                    _fn_i = f"{_fn}.{i + 1}.json"
-                    _bytes = orjson.dumps(
-                        obj[i * per_file : (i + 1) * per_file],
-                        default=encoder,
-                        option=orjson.OPT_NON_STR_KEYS
-                        | orjson.OPT_INDENT_2
-                        | orjson.OPT_APPEND_NEWLINE,
-                    )
-                    cur_version.files[_fn_i] = _get_file_version(_fn_i, key, _bytes)
-                    dist_folder.joinpath(_fn_i).write_bytes(_bytes)
-                    logger.info(f"[versioning] dump {_fn_i}")
-            elif ranges is not None:
-                assert isinstance(obj, dict)
-                obj = dict(obj)
-                for i, id_range in enumerate(ranges):
-                    _fn_i = f"{_fn}.{i + 1}.json"
-                    _bytes = orjson.dumps(
-                        [obj.pop(_k) for _k in id_range if _k in obj],
-                        default=encoder,
-                        option=orjson.OPT_NON_STR_KEYS
-                        | orjson.OPT_INDENT_2
-                        | orjson.OPT_APPEND_NEWLINE,
-                    )
-                    cur_version.files[_fn_i] = _get_file_version(_fn_i, key, _bytes)
-                    dist_folder.joinpath(_fn_i).write_bytes(_bytes)
-                    logger.info(f"[versioning] dump {_fn_i}")
-                if obj:
-                    _fn_i = f"{_fn}.{len(ranges)+1}.json"
-                    _bytes = orjson.dumps(
-                        [obj[_k] for _k in sorted(obj.keys())],
-                        default=encoder,
-                        option=orjson.OPT_NON_STR_KEYS
-                        | orjson.OPT_INDENT_2
-                        | orjson.OPT_APPEND_NEWLINE,
-                    )
-                    cur_version.files[_fn_i] = _get_file_version(_fn_i, key, _bytes)
-                    dist_folder.joinpath(_fn_i).write_bytes(_bytes)
-                    logger.info(f"[versioning] dump {_fn_i}")
-            else:
-                _fp_0 = dist_folder / f"{_fn}.json"
-                if obj is None:
-                    if not _fp_0.exists():
-                        logger.warning(f"skip non-exist file: {_fp_0}")
-                        return
-                    _bytes = _fp_0.read_bytes()
-                    logger.info(f"[versioning] read file: {_fp_0.name}")
-                else:
-                    _bytes = orjson.dumps(
-                        obj,
-                        default=encoder,
-                        option=orjson.OPT_NON_STR_KEYS
-                        | orjson.OPT_INDENT_2
-                        | orjson.OPT_APPEND_NEWLINE,
-                    )
-                cur_version.files[_fp_0.name] = _get_file_version(
-                    _fp_0.name, key, _bytes
+            if base_fn is None:
+                base_fn = key
+            n = len(obj) // count + 1
+            for i in range(n):
+                _fn_i = f"{base_fn}.{i + 1}.json"
+                _normal_dump(obj[i * count : (i + 1) * count], key, _fn_i, encoder)
+
+        def _dump_by_ranges(
+            obj: dict[int, Any],
+            ranges: list[Iterable[int]],
+            save_remained: bool,
+            key: str,
+            base_fn: str = None,
+            encoder=None,
+        ):
+            if base_fn is None:
+                base_fn = key
+            obj = dict(obj)
+            i = 1
+            for i, id_range in enumerate(ranges):
+                _fn_i = f"{base_fn}.{i + 1}.json"
+                values = [obj.pop(_k) for _k in id_range if _k in obj]
+                assert values, f"No value found at range {i}"
+                _normal_dump(values, key, _fn_i, encoder)
+            if save_remained:
+                _normal_dump(
+                    list(obj.values()), key, f"{base_fn}.{i + 1}.json", encoder
                 )
-                if obj is not None:
-                    dist_folder.joinpath(_fp_0.name).write_bytes(_bytes)
-                    logger.info(f"[versioning] dump {_fp_0.name}")
+            else:
+                assert (
+                    not obj
+                ), f"There are still {len(obj)} values not saved: {list(obj.keys())}"
 
-        # save by priority
-        _dump("wiki_data", self.ext_data.wiki_data)
-        _dump("mapping_data", data.mappingData.dict(exclude_none=True))
+        def _dump_file(fp: Path, key: str, fn: str = None):
+            if fn is None:
+                fn = f"{key}.json"
+            _normal_dump(None, key, fn, _bytes=fp.read_bytes())
 
-        _dump("servants", data.nice_servant_lore, 100)
-        _dump("items", data.nice_item)
-        _dump(
-            "events",
+        _dump_by_count(data.nice_servant_lore, 100, "servants")
+        _dump_by_count(data.nice_equip_lore, 500, "craftEssences")
+        _normal_dump(data.nice_command_code, "commandCodes")
+        _normal_dump(data.nice_mystic_code, "mysticCodes")
+        _normal_dump(data.nice_item, "items")
+        _normal_dump(data.basic_svt, "entities")
+        _normal_dump(data.exchangeTickets, "exchangeTickets")
+        _normal_dump(data.nice_bgm, "bgms", encoder=pydantic_encoder)
+        _normal_dump(data.mappingData.dict(exclude_none=True), "mappingData")
+        _dump_by_ranges(
             data.event_dict,
             ranges=[
                 range(80000, 80100),
                 range(80100, 80300),
                 range(80300, 80400),
             ],
+            save_remained=True,
+            key="events",
         )
-        _dump(
-            "wars",
+        _dump_by_ranges(
             data.war_dict,
             ranges=[
                 list(range(0, 2000)) + list(range(9999, 14000)),
@@ -520,27 +504,15 @@ class MainParser:
                 range(9050, 9100),
                 range(9100, 9999),
             ],
+            save_remained=False,
+            key="wars",
         )
-        _dump("entities", data.basic_svt)
-        _dump("exchange_tickets", data.exchangeTickets)
-        _dump("craft_essences", data.nice_equip_lore, 500)
-        _dump("command_codes", data.nice_command_code)
-        _dump("mystic_codes", data.nice_mystic_code)
-        if data.questPhaseFixedDrops:
-            _dump("fixed_drops", list(data.questPhaseFixedDrops.values()))
-        _dump("drop_rate")
-        _dump("bgms", data.nice_bgm, encoder=pydantic_encoder)
         # sometimes disabled quest parser when debugging
+        if data.questPhaseFixedDrops:
+            _normal_dump(list(data.questPhaseFixedDrops.values()), "fixedDrops")
         if data.cachedQuestPhases:
-            _dump("quest_phases", list(data.cachedQuestPhases.values()), 150)
-        base_skills = list(self.base_skills.values())
-        base_skills.sort(key=lambda x: x.id)
-        _dump("base_skills", base_skills)
-        base_functions = list(self.base_functions.values())
-        base_functions.sort(key=lambda x: x.funcId)
-        _dump("base_functions", base_functions)
-        _dump(
-            "const_data",
+            _normal_dump(list(data.cachedQuestPhases.values()), "questPhases")
+        _normal_dump(
             ConstGameData(
                 attributeRelation=data.NiceAttributeRelation,
                 buffActions=data.NiceBuffList_ActionList,
@@ -551,8 +523,18 @@ class MainParser:
                 svtGrailCost=data.NiceSvtGrailCost,
                 userLevel=data.NiceUserLevel,
             ),
+            "constData",
         )
-        _dump("summons", self.ext_data.summons)
+        _normal_dump(list(wiki_data.servants.values()), "wiki.servants")
+        _normal_dump(list(wiki_data.craftEssences.values()), "wiki.craftEssences")
+        _normal_dump(list(wiki_data.commandCodes.values()), "wiki.commandCodes")
+        _normal_dump(list(wiki_data.events.values()), "wiki.events")
+        _normal_dump(list(wiki_data.wars.values()), "wiki.wars")
+        _normal_dump(list(wiki_data.summons.values()), "wiki.summons")
+        _dump_file(settings.output_wiki / "webcrowMapping.json", "wiki.webcrowMapping")
+        _dump_file(settings.output_wiki / "dropRate.json", "dropRate")
+        _normal_dump(list(self.base_skills.values()), "baseSkills")
+        _normal_dump(list(self.base_functions.values()), "baseFunctions")
 
         changed = False
         for k, f in cur_version.files.items():
@@ -578,46 +560,6 @@ class MainParser:
         from .update_mapping import run_mapping_update
 
         run_mapping_update()
-
-    def _export_wiki_base(self):
-        logger.info("export wiki/events_base.json")
-        wiki_event_base = {
-            e["id"]: EventWBase.parse_obj(e)
-            for e in load_json(settings.output_wiki / "events_base.json") or []
-        }
-        wiki_event_base_new = []
-        for event in self.jp_data.nice_event:
-            event_base = wiki_event_base.get(event.id) or EventWBase(
-                id=event.id, name=event.name
-            )
-            event_base.name = event.name
-            wiki_event_base_new.append(event_base)
-        dump_json(
-            wiki_event_base_new,
-            settings.output_wiki / "events_base.json",
-            default=pydantic_encoder,
-        )
-
-        logger.info("updating wiki/main_stories.json")
-        wiki_wars = {
-            e["id"]: WarW.parse_obj(e)
-            for e in load_json(settings.output_wiki / "main_stories.json") or []
-        }
-        wiki_wars_new = []
-        for war in self.jp_data.nice_war:
-            if war.id >= 1000:
-                continue
-            war_new = wiki_wars.get(war.id) or WarW(id=war.id)
-            war_release = self.ext_data.wiki_data.wars.get(war.id)
-            if war_release:
-                war_new.noticeLink.update_from(war_release.noticeLink)
-                war_new.titleBanner.update_from(war_release.titleBanner)
-            wiki_wars_new.append(war_new)
-        dump_json(
-            wiki_wars_new,
-            settings.output_wiki / "main_stories.json",
-            default=pydantic_encoder,
-        )
 
     def _encoder(self, obj):
         exclude = set()
@@ -770,18 +712,11 @@ class MainParser:
         if self.payload.regions:
             try:
                 self.jp_data.mappingData = MappingData.parse_file(
-                    settings.output_dist / "mapping_data.json"
+                    settings.output_dist / "mappingData.json"
                 )
             except Exception as e:
                 logger.error(f"failed to load mapping data from last build: {e}")
                 self.payload.regions.clear()
-        conditions: MappingBase[bool] = MappingBase.parse_obj(
-            {
-                str(region.value): not self.payload.regions
-                or region in self.payload.regions
-                for region in Region.__members__.values()
-            }
-        )
         self._merge_official_mappings(Region.CN)
         self._fix_cn_translation()
         self._merge_mc_translation()
@@ -813,9 +748,11 @@ class MainParser:
             skip_exists=False,
             skip_unknown_key=False,
         ):
-            if _key is None or isinstance(value, NullSafe):
+            if _key is None:
                 return
             m.setdefault(_key, MappingBase())
+            if isinstance(value, NullSafe):
+                return
             if isinstance(value, NullSafeProxy):
                 value2 = value.__o
             else:
@@ -920,7 +857,7 @@ class MainParser:
                 continue
             mappings.ce_release.setdefault(ce_jp.id, MappingBase()).update(region, 1)
             if region != Region.JP and ce.profile.comments:
-                ce_w = self.ext_data.wiki_data.craftEssences.setdefault(
+                ce_w = self.wiki_data.craftEssences.setdefault(
                     ce_jp.collectionNo, CraftEssenceW(collectionNo=ce.collectionNo)
                 )
                 ce_w.profile.update(region, ce.profile.comments[0].comment)
@@ -932,7 +869,7 @@ class MainParser:
                 continue
             mappings.cc_release.setdefault(cc_jp.id, MappingBase()).update(region, 1)
             if region != Region.JP and cc.comment:
-                cc_w = self.ext_data.wiki_data.commandCodes.setdefault(
+                cc_w = self.wiki_data.commandCodes.setdefault(
                     cc_jp.collectionNo, CommandCodeW(collectionNo=cc.collectionNo)
                 )
                 cc_w.profile.update(region, cc.comment)
@@ -1006,28 +943,28 @@ class MainParser:
             )
 
         mappings = self.jp_data.mappingData
-        mc_trans = MooncellTranslation.parse_obj(
-            load_json(settings.output_wiki / "mc_translation.json", {})
+        mc_transl = MooncellTranslation.parse_obj(
+            load_json(settings.output_wiki / "mcTransl.json", {})
         )
-        for svt_no, name in mc_trans.svt_names.items():
+        for svt_no, name in mc_transl.svt_names.items():
             svt = self.jp_data.svt_dict.get(svt_no)
             if svt:
                 _update_mapping(mappings.svt_names, svt.name, name, True, True)
-        for skill_jp, skill_cn in mc_trans.skill_names.items():
+        for skill_jp, skill_cn in mc_transl.skill_names.items():
             _update_mapping(mappings.skill_names, skill_jp, skill_cn, True, True)
-        for td_name_jp, td_name_cn in mc_trans.td_names.items():
+        for td_name_jp, td_name_cn in mc_transl.td_names.items():
             _update_mapping(mappings.td_names, td_name_jp, td_name_cn, True, True)
-        for td_ruby_jp, td_ruby_cn in mc_trans.td_ruby.items():
+        for td_ruby_jp, td_ruby_cn in mc_transl.td_ruby.items():
             _update_mapping(mappings.td_ruby, td_ruby_jp, td_ruby_cn, True, True)
-        for ce_no, name in mc_trans.ce_names.items():
+        for ce_no, name in mc_transl.ce_names.items():
             ce = self.jp_data.ce_dict.get(ce_no)
             if ce:
                 _update_mapping(mappings.ce_names, ce.name, name, True, True)
-        for cc_no, name in mc_trans.cc_names.items():
+        for cc_no, name in mc_transl.cc_names.items():
             cc = self.jp_data.cc_dict.get(cc_no)
             if cc:
                 _update_mapping(mappings.cc_names, cc.name, name, True, True)
-        for name_jp, name_cn in mc_trans.event_names.items():
+        for name_jp, name_cn in mc_transl.event_names.items():
             _update_mapping(mappings.event_names, name_jp, name_cn, True, True)
 
     def _fix_cn_translation(self):
