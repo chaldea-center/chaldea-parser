@@ -458,7 +458,7 @@ class MainParser:
             if base_fn is None:
                 base_fn = key
             obj = dict(obj)
-            i = 1
+            i = -1
             for i, id_range in enumerate(ranges):
                 _fn_i = f"{base_fn}.{i + 1}.json"
                 values = [obj.pop(_k) for _k in id_range if _k in obj]
@@ -466,7 +466,7 @@ class MainParser:
                 _normal_dump(values, key, _fn_i, encoder)
             if save_remained:
                 _normal_dump(
-                    list(obj.values()), key, f"{base_fn}.{i + 1}.json", encoder
+                    list(obj.values()), key, f"{base_fn}.{i + 2}.json", encoder
                 )
             else:
                 assert (

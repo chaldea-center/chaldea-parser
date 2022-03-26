@@ -361,7 +361,7 @@ class WikiParser:
             war.noticeLink.JP = params.get("官网链接jp")
             self.wiki_data.wars[war.id] = war
 
-        worker = Worker.fake(_parse_one, self.wiki_data.wars.values(), "mc_war")
+        worker = Worker.from_map(_parse_one, self.wiki_data.wars.values())
         worker.wait()
 
     def mc_summon(self):
