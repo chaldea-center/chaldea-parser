@@ -21,13 +21,6 @@ jobs:
       - name: Checkout chaldea-parser
         uses: actions/checkout@v2
 
-      - name: Checkout data repo
-        uses: actions/checkout@v2
-        with:
-          repository: chaldea-center/chaldea-data
-          token: ${{ secrets.GH_PAGES_TOKEN }}
-          path: ${{ env.output_dir }}
-
       - name: Save payload
         if: ${{ github.event.client_payload }}
         run: |
@@ -53,6 +46,13 @@ jobs:
         run: |
           pip uninstall --yes fgo-game-data-api
           pip install -r requirements.txt
+
+      - name: Checkout data repo
+        uses: actions/checkout@v2
+        with:
+          repository: chaldea-center/chaldea-data
+          token: ${{ secrets.GH_PAGES_TOKEN }}
+          path: ${{ env.output_dir }}
 
       - name: run atlas parser
         run: python main.py atlas

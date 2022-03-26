@@ -31,20 +31,6 @@ jobs:
       - name: Checkout chaldea-parser
         uses: actions/checkout@v2
 
-      - name: Checkout data repo
-        uses: actions/checkout@v2
-        with:
-          repository: chaldea-center/chaldea-data
-          token: ${{ secrets.GH_PAGES_TOKEN }}
-          path: ${{ env.output_dir }}
-
-      - name: Checkout static repo
-        uses: actions/checkout@v2
-        with:
-          repository: chaldea-center/static-resource
-          token: ${{ secrets.GH_PAGES_TOKEN }}
-          path: ${{ env.static_dir }}
-
       - name: Cache Atlas and wiki api response
         uses: actions/cache@v2
         with:
@@ -64,6 +50,20 @@ jobs:
         run: |
           pip uninstall --yes fgo-game-data-api
           pip install -r requirements.txt
+
+      - name: Checkout data repo
+        uses: actions/checkout@v2
+        with:
+          repository: chaldea-center/chaldea-data
+          token: ${{ secrets.GH_PAGES_TOKEN }}
+          path: ${{ env.output_dir }}
+
+      - name: Checkout static repo
+        uses: actions/checkout@v2
+        with:
+          repository: chaldea-center/static-resource
+          token: ${{ secrets.GH_PAGES_TOKEN }}
+          path: ${{ env.static_dir }}
 
       - name: run wiki parser
         run: python main.py wiki
