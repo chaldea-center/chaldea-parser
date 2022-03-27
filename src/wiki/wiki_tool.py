@@ -32,12 +32,9 @@ class WikiTool:
         from ..config import settings
 
         self.host: str = host
+        self.user = user
+        self.pwd = pwd
         self.site: mwclient.Site = mwclient.Site(host=host, path=path)
-        if user and pwd:
-            self.site.login(user, pwd)
-            logger.info(f"[{self.host}] logged in")
-        else:
-            logger.info(f"[{self.host}] keep logged out")
         self.site2 = pywikibot.Site(url=f"https://{host}/api.php")
         self._fp = Path(settings.cache_dir) / "wiki" / f"{host}.json"
         _now = int(time.time())
