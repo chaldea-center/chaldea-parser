@@ -65,10 +65,10 @@ jobs:
           token: ${{ secrets.GH_PAGES_TOKEN }}
           path: ${{ env.static_dir }}
 
-      - name: run wiki parser
+      - name: Run wiki parser
         run: python main.py wiki
 
-      - name: publish wiki data
+      - name: Publish wiki data
         id: publish-data
         run: |
           git config --global user.name "github-actions[bot]"
@@ -84,7 +84,7 @@ jobs:
           echo "::set-output name=ref2::$(cat .git/refs/heads/main)"
           cd ..
 
-      - name: publish static
+      - name: Publish static
         run: |
           cd ${{ env.static_dir }}
           git add .
@@ -92,10 +92,10 @@ jobs:
           git push
           cd ..
 
-      - name: run atlas parser
+      - name: Run atlas parser
         run: python main.py atlas
 
-      - name: publish data
+      - name: Publish data
         run: |
           cd ${{ env.output_dir }}
           git add .

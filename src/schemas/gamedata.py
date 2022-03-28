@@ -126,7 +126,7 @@ class MasterData(BaseModelORJson):
     cachedQuests: dict[int, NiceQuest] = {}
     cachedQuestsNA: dict[int, NiceQuest] = {}
     cachedQuestPhases: dict[int, Optional[NiceQuestPhase]] = {}
-    questPhaseFixedDrops: dict[int, FixedDrop] = {}
+    fixedDrops: dict[int, FixedDrop] = {}
     mappingData: MappingData = MappingData()
     exchangeTickets: list[ExchangeTicket] = []
 
@@ -144,7 +144,7 @@ class MasterData(BaseModelORJson):
         phases = [v for v in self.cachedQuestPhases.values() if v]
         phases.sort(key=lambda x: x.id * 100 + x.phase)
         self.cachedQuestPhases = {x.id * 100 + x.phase: x for x in phases}
-        self.questPhaseFixedDrops = sort_dict(self.questPhaseFixedDrops)
+        self.fixedDrops = sort_dict(self.fixedDrops)
         self.mappingData.costume_detail = sort_dict(self.mappingData.costume_detail)
         self.mappingData.trait = sort_dict(self.mappingData.trait)
 

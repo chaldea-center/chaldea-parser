@@ -69,9 +69,9 @@ class WikiTool:
     ) -> WikiPageInfo | WikiImageInfo | None:
         name_json = f'"{name}"({len(name)})'  # in case there is any special char
         self.active_requests.add(name)
-        retry_n, retry = 0, 3
+        retry_n, max_retry = 0, 5
         prefix = f'[{self.host}][{"image" if is_image else "page"}]'
-        while retry_n < retry:
+        while retry_n < max_retry:
             try:
                 now = int(time.time())
                 if is_image:
@@ -120,11 +120,11 @@ class WikiTool:
                 return cached
             except Exception as e:
                 retry_n += 1
-                if retry_n >= retry:
+                if retry_n >= max_retry:
                     logger.warning(
                         f"Fail download {name_json} after {retry_n} retry: {e}"
                     )
-                time.sleep(2)
+                time.sleep(min(5 * retry_n, 30))
 
     def get_page_text(self, name: str, allow_cache=True, clear_tag=True):
         name = self.norm_key(name)
@@ -273,7 +273,7 @@ class WikiTool:
         while True:
             resp = self._api_call(full_params)
             items.extend(resp["query"][list_name])
-            print(f"Listing {list_name}: {len(items)} items")
+            logger.debug(f"Listing {list_name}: {len(items)} items")
             if resp.get("continue"):
                 full_params.update(resp.get("continue"))
             else:
@@ -329,7 +329,7 @@ class WikiTool:
             page = self.cache.pages.pop(title, None)
             if page:
                 dropped += 1
-                print(f'{self.host}: drop outdated: {dropped} - "{title}"')
+                logger.debug(f'{self.host}: drop outdated: {dropped} - "{title}"')
         self.cache.updated = _now
 
     def save_cache(self):

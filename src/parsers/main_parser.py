@@ -260,12 +260,10 @@ class MainParser:
                     and quest.openedAt < expire_time
                     and (not quest_na or quest_na.openedAt < expire_time)
                 ):
-                    self.jp_data.questPhaseFixedDrops[phase_key] = previous_data.copy(
-                        deep=True
-                    )
+                    self.jp_data.fixedDrops[phase_key] = previous_data.copy(deep=True)
                     nonlocal used_previous_count
                     used_previous_count += 1
-                    return
+                    continue
                 phase_data = None
                 if phase in quest.phasesWithEnemies:
                     phase_data = AtlasApi.quest_phase(
@@ -291,17 +289,15 @@ class MainParser:
                     for enemy in stage.enemies
                     for _drop in enemy.drops
                 ]:
-                    if (
-                        drop.type == NiceGiftType.item
-                        and drop.dropCount >= drop.runs * 0.95 > 0
-                    ):
-                        phase_drops.add_one(
-                            drop.objectId, round(drop.dropCount / drop.runs) * drop.num
-                        )
+                    drop_prob = drop.dropCount / drop.runs
+                    if 0.95 < drop_prob < 1:
+                        drop_prob = 1
+                    if drop.type == NiceGiftType.item and drop_prob >= 1:
+                        phase_drops.add_one(drop.objectId, int(drop_prob) * drop.num)
                 phase_drops.drop_negative()
                 # always add even if there is nothing dropped
                 # if phase_drops:
-                self.jp_data.questPhaseFixedDrops[phase_key] = FixedDrop(
+                self.jp_data.fixedDrops[phase_key] = FixedDrop(
                     id=phase_key, items=phase_drops
                 )
 
@@ -509,8 +505,8 @@ class MainParser:
             key="wars",
         )
         # sometimes disabled quest parser when debugging
-        if data.questPhaseFixedDrops:
-            _normal_dump(list(data.questPhaseFixedDrops.values()), "fixedDrops")
+        if data.fixedDrops:
+            _normal_dump(list(data.fixedDrops.values()), "fixedDrops")
         if data.cachedQuestPhases:
             _normal_dump(list(data.cachedQuestPhases.values()), "questPhases")
         _normal_dump(
