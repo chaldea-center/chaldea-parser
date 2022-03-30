@@ -609,7 +609,7 @@ class MainParser:
             # exclude.update({"warLongName"})
             pass
         if isinstance(obj, QuestEnemy):
-            exclude.update({"drops", "skills", "noblePhantasm", "ai", "limit"})
+            exclude.update({"drops", "ai", "limit"})
         if isinstance(obj, EnemyDrop):
             exclude.update({"dropExpected", "dropVariance"})
         if isinstance(obj, NiceEventMissionCondition):
@@ -649,7 +649,9 @@ class MainParser:
                     "warningMessage",
                 }
             )
-        if isinstance(obj, (NiceServant, NiceEquip)):
+        if isinstance(obj, NiceServant):
+            exclude.update({"expFeed"})
+        if isinstance(obj, NiceEquip):
             exclude.update({"expFeed", "expGrowth"})
         if isinstance(obj, (AscensionAdd, ExtraAssets)):
             obj = obj.dict(exclude_none=True, exclude_defaults=True)
@@ -912,6 +914,8 @@ class MainParser:
                 _process_detail(td.unmodifiedDetail),
             )
         for func_jp in jp_data.func_dict.values():
+            if func_jp.funcPopupText in ["", "-", "なし"]:
+                _update_mapping(mappings.func_popuptext, func_jp.funcType.value, None)
             func = _(data.func_dict)[func_jp.funcId]
             _update_mapping(
                 mappings.func_popuptext, func_jp.funcPopupText, func.funcPopupText
