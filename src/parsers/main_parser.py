@@ -508,7 +508,7 @@ class MainParser:
         if data.fixedDrops:
             _normal_dump(list(data.fixedDrops.values()), "fixedDrops")
         if data.cachedQuestPhases:
-            _normal_dump(list(data.cachedQuestPhases.values()), "questPhases")
+            _dump_by_count(list(data.cachedQuestPhases.values()), 50, "questPhases")
         _normal_dump(
             ConstGameData(
                 attributeRelation=data.NiceAttributeRelation,
