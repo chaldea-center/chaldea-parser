@@ -550,9 +550,10 @@ class MainParser:
         dump_json(cur_version, dist_folder / "version.json")
         print(dump_json(cur_version))
         self.copy_static()
-        Path(settings.output_dir).joinpath("commit-msg.txt").write_text(
-            f"Ver {cur_version.minimalApp}, {cur_version.utc}"
-        )
+        msg = f"Ver {cur_version.minimalApp}, {cur_version.utc}"
+        if self.payload.regions:
+            msg = "[" + ",".join([r.value for r in self.payload.regions]) + "] " + msg
+        Path(settings.output_dir).joinpath("commit-msg.txt").write_text(msg)
         logger.info("Updating mappings")
         from .update_mapping import run_mapping_update
 
@@ -895,6 +896,9 @@ class MainParser:
         for skill_jp in jp_data.skill_dict.values():
             if skill_jp.name in mappings.ce_names or skill_jp.name in mappings.cc_names:
                 continue
+            for skill_add in skill_jp.skillAdd:
+                # manually add
+                _update_mapping(mappings.skill_names, skill_add.name, None)
             skill = _(data.skill_dict)[skill_jp.id]
             _update_mapping(mappings.skill_names, skill_jp.name, skill.name)
             _update_mapping(
