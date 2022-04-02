@@ -34,6 +34,7 @@ from app.schemas.nice import (
     NiceGift,
     NiceItemAmount,
     NiceLore,
+    NiceMap,
     NiceQuest,
     NiceQuestType,
     NiceServant,
@@ -560,7 +561,7 @@ class MainParser:
         run_mapping_update()
 
     def _encoder(self, obj):
-        exclude = set()
+        exclude = {"originalName"}
         if obj is undefined:
             return None
         if isinstance(obj, NiceBgm):
@@ -574,6 +575,8 @@ class MainParser:
         if isinstance(obj, NiceLore):
             # print("ignore lore comments&voices")
             exclude.update({"comments", "voices"})
+        if isinstance(obj, NiceMap):
+            exclude.update({"mapGimmicks"})
         if isinstance(obj, NiceSkill):
             if obj.id not in self.base_skills:
                 self.base_skills[obj.id] = NiceBaseSkill.parse_obj(obj.dict())
@@ -588,20 +591,6 @@ class MainParser:
                 self.base_functions[obj.funcId] = NiceBaseFunction.parse_obj(obj.dict())
             exclude.update(NiceBaseFunction.__fields__.keys())
             exclude.remove("funcId")
-
-            # def _trim_dup(svals: list[Vals] | None):
-            #     if not svals:
-            #         return
-            #     v0 = svals[0]
-            #     if len(set([v == v0 for v in svals])) == 1:
-            #         svals.clear()
-            #         svals.append(v0)
-            #
-            # _trim_dup(obj.svals)
-            # _trim_dup(obj.svals2)
-            # _trim_dup(obj.svals3)
-            # _trim_dup(obj.svals4)
-            # _trim_dup(obj.svals5)
         elif isinstance(obj, NiceBaseFunction):
             ...
         if isinstance(obj, NiceTd):
