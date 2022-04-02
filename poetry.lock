@@ -298,7 +298,7 @@ uvicorn = {version = "^0.17.5", extras = ["standard"]}
 type = "git"
 url = "https://github.com/chaldea-center/fgo-game-data-api.git"
 reference = "master"
-resolved_reference = "48bd0d0a0c3f0c28ad0fb9524183fc22710335b6"
+resolved_reference = "00f55c457e9bb1e91ea4a946ab1091f27292b5a0"
 
 [[package]]
 name = "fuzzywuzzy"

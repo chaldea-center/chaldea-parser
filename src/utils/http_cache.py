@@ -79,7 +79,7 @@ class HttpApiUtil(abc.ABC):
                 retry_after = float(r.headers.get("Retry-After") or "5")
                 time.sleep(retry_after)
                 return _call_api(url, retry_n - 1, **origin_kwargs)
-            print(f"GOT url: {time.time() - t0:.3f}s: {url}")
+            logger.debug(f"GOT url: {time.time() - t0:.3f}s: {url}")
             return r
 
         self._limit_api_func = _call_api

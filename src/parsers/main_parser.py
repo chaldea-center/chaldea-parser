@@ -171,7 +171,7 @@ class MainParser:
         worker.wait()
         dump_json(info_remote, fp_info)
         dump_json(openapi_remote, fp_openapi)
-        print(f"Exported files updated:\n{dump_json(info_remote)}")
+        logger.debug(f"Exported files updated:\n{dump_json(info_remote)}")
 
     @staticmethod
     def load_master_data(region: Region) -> MasterData:
@@ -549,7 +549,7 @@ class MainParser:
             cur_version.utc = _last_version.utc
 
         dump_json(cur_version, dist_folder / "version.json")
-        print(dump_json(cur_version))
+        logger.info(dump_json(cur_version))
         self.copy_static()
         msg = f"Ver {cur_version.minimalApp}, {cur_version.utc}"
         if len(self.payload.regions) not in (0, len(Region.__members__)):
