@@ -152,7 +152,7 @@ class MainParser:
         info_remote = requests.get(AtlasApi.full_url("info")).json()
         info_local = load_json(fp_info) or {}
 
-        for region, info in info_remote.items():
+        for region, info in info_remote.items():  # type: str, dict
             region_changed = not info_local.get(region) or RepoInfo.parse_obj(
                 info_local[region]
             ) != RepoInfo.parse_obj(info)
@@ -161,7 +161,7 @@ class MainParser:
                 fp_export = f.cache_path(region)
                 fp_export.parent.mkdir(parents=True, exist_ok=True)
                 if api_changed or region_changed or not fp_export.exists():
-                    self.payload.regions.add(region)
+                    self.payload.regions.add(Region.__members__[region])
                     url = f.resolve_link(region)
                     worker.add(_add_download_task, url, fp_export)
                 else:
@@ -551,7 +551,7 @@ class MainParser:
         print(dump_json(cur_version))
         self.copy_static()
         msg = f"Ver {cur_version.minimalApp}, {cur_version.utc}"
-        if self.payload.regions:
+        if len(self.payload.regions) not in (0, len(Region.__members__)):
             msg = "[" + ",".join([r.value for r in self.payload.regions]) + "] " + msg
         Path(settings.output_dir).joinpath("commit-msg.txt").write_text(msg)
         logger.info("Updating mappings")
