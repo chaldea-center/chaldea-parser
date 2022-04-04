@@ -45,7 +45,7 @@ from app.schemas.nice import (
 )
 from pydantic import BaseModel
 from pydantic.json import pydantic_encoder
-from requests_cache import Response
+from requests import Response
 from requests_cache.models.response import CachedResponse
 
 from ..config import settings
@@ -788,7 +788,7 @@ class MainParser:
             )
 
         for event_jp in jp_data.nice_event:
-            self.wiki_data.events.setdefault(
+            event_extra = self.wiki_data.events.setdefault(
                 event_jp.id, EventW(id=event_jp.id, name=event_jp.name)
             )
             mappings.event_names.setdefault(event_jp.name, MappingBase())
@@ -796,6 +796,9 @@ class MainParser:
             event = data.event_dict.get(event_jp.id)
             if event is None:
                 continue
+            if event.startedAt < NEVER_CLOSED_TIMESTAMP:
+                event_extra.startTime.update(region, event.startedAt)
+                event_extra.endTime.update(region, event.endedAt)
             if event.startedAt > time.time():
                 continue
             _update_mapping(mappings.event_names, event_jp.name, event.name)
