@@ -564,19 +564,6 @@ class MainParser:
         exclude = {"originalName"}
         if obj is undefined:
             return None
-        if isinstance(obj, NiceBgm):
-            exclude.update({"name", "fileName", "notReleased", "audioAsset"})
-        if isinstance(obj, NiceTrait):
-            exclude.add("name")
-        if isinstance(obj, NiceItemAmount):
-            return {"itemId": obj.item.id, "amount": obj.amount}
-        if isinstance(obj, NiceGift):
-            exclude.update({"id", "priority"})
-        if isinstance(obj, NiceLore):
-            # print("ignore lore comments&voices")
-            exclude.update({"comments", "voices"})
-        if isinstance(obj, NiceMap):
-            exclude.update({"mapGimmicks"})
         if isinstance(obj, NiceSkill):
             if obj.id not in self.base_skills:
                 self.base_skills[obj.id] = NiceBaseSkill.parse_obj(obj.dict())
@@ -593,18 +580,32 @@ class MainParser:
             exclude.remove("funcId")
         elif isinstance(obj, NiceBaseFunction):
             ...
-        if isinstance(obj, NiceTd):
+
+        if isinstance(obj, NiceBgm):
+            exclude.update({"name", "fileName", "notReleased", "audioAsset"})
+        elif isinstance(obj, NiceTrait):
+            exclude.add("name")
+        elif isinstance(obj, NiceItemAmount):
+            return {"itemId": obj.item.id, "amount": obj.amount}
+        elif isinstance(obj, NiceGift):
+            exclude.update({"id", "priority"})
+        elif isinstance(obj, NiceLore):
+            # print("ignore lore comments&voices")
+            exclude.update({"comments", "voices"})
+        elif isinstance(obj, NiceMap):
+            exclude.update({"mapGimmicks"})
+        elif isinstance(obj, NiceTd):
             exclude.add("detail")
-        if isinstance(obj, NiceQuest):
+        elif isinstance(obj, NiceQuest):
             # exclude.update({"warLongName"})
             pass
-        if isinstance(obj, QuestEnemy):
+        elif isinstance(obj, QuestEnemy):
             exclude.update({"drops", "ai", "limit"})
-        if isinstance(obj, EnemyDrop):
+        elif isinstance(obj, EnemyDrop):
             exclude.update({"dropExpected", "dropVariance"})
-        if isinstance(obj, NiceEventMissionCondition):
+        elif isinstance(obj, NiceEventMissionCondition):
             exclude.update({"missionTargetId"})
-        if isinstance(obj, NiceEventMission):
+        elif isinstance(obj, NiceEventMission):
             exclude.update(
                 {
                     "flag",
@@ -618,19 +619,19 @@ class MainParser:
                     "presentMessageId",
                 }
             )
-        if isinstance(obj, NiceEventTowerReward):
+        elif isinstance(obj, NiceEventTowerReward):
             exclude.update({"boardMessage", "rewardGet", "banner"})
-        if isinstance(obj, NiceEventLotteryBox):
+        elif isinstance(obj, NiceEventLotteryBox):
             exclude.update({"id", "priority", "detail", "icon", "banner"})
-        if isinstance(obj, NiceEventReward):
+        elif isinstance(obj, NiceEventReward):
             exclude.update({"bgImagePoint", "bgImageGet"})
-        if isinstance(obj, NiceEventPointBuff):
+        elif isinstance(obj, NiceEventPointBuff):
             exclude.update({"detail"})
-        if isinstance(obj, NiceShop):
+        elif isinstance(obj, NiceShop):
             exclude.update(
                 {
-                    "id",
-                    "name",
+                    # "id",
+                    # "name",
                     "baseShopId",
                     "eventId",
                     "detail",
@@ -639,12 +640,19 @@ class MainParser:
                     "warningMessage",
                 }
             )
-        if isinstance(obj, NiceServant):
+        elif isinstance(obj, NiceServant):
             exclude.update({"expFeed"})
-        if isinstance(obj, NiceEquip):
+        elif isinstance(obj, NiceEquip):
             exclude.update({"expFeed", "expGrowth"})
-        if isinstance(obj, (AscensionAdd, ExtraAssets)):
-            obj = obj.dict(exclude_none=True, exclude_defaults=True)
+        elif isinstance(obj, (AscensionAdd, ExtraAssets)):
+            exclude.update(
+                {
+                    "originalOverWriteServantName",
+                    "originalOverWriteServantBattleName",
+                    "originalOverWriteTDName",
+                }
+            )
+            obj = obj.dict(exclude_none=True, exclude_defaults=True, exclude=exclude)
             # print('start encoding ', type(obj))
             for k in list(obj.keys()):
                 if isinstance(obj[k], dict):
@@ -655,6 +663,7 @@ class MainParser:
                     obj.pop(k)
             # print('ended encoding ', type(obj))
             return obj
+
         if isinstance(obj, BaseModel):
             # noinspection PyProtectedMember
             return dict(
