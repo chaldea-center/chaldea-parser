@@ -531,8 +531,12 @@ class MainParser:
         _normal_dump(list(wiki_data.summons.values()), "wiki.summons")
         _dump_file(settings.output_wiki / "webcrowMapping.json", "wiki.webcrowMapping")
         _dump_file(settings.output_wiki / "dropRate.json", "dropRate")
-        _normal_dump(list(self.base_skills.values()), "baseSkills")
-        _normal_dump(list(self.base_functions.values()), "baseFunctions")
+        base_skills = list(self.base_skills.values())
+        base_skills.sort(key=lambda x: x.id)
+        base_functions = list(self.base_functions.values())
+        base_functions.sort(key=lambda x: x.funcId)
+        _normal_dump(base_skills, "baseSkills")
+        _normal_dump(base_functions, "baseFunctions")
 
         changed = False
         for k, f in cur_version.files.items():
@@ -643,7 +647,7 @@ class MainParser:
         elif isinstance(obj, NiceServant):
             exclude.update({"expFeed"})
         elif isinstance(obj, NiceEquip):
-            exclude.update({"expFeed", "expGrowth"})
+            exclude.update({"expFeed", "expGrowth", "atkGrowth", "hpGrowth"})
         elif isinstance(obj, (AscensionAdd, ExtraAssets)):
             exclude.update(
                 {
