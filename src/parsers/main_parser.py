@@ -375,8 +375,6 @@ class MainParser:
         data.sort()
         wiki_data.sort()
         wiki_data.save(full_version=False)
-        self.base_skills = sort_dict(self.base_skills)
-        self.base_functions = sort_dict(self.base_functions)
 
         _now = datetime.datetime.now(datetime.timezone.utc)
 
@@ -401,7 +399,11 @@ class MainParser:
                     shutil.rmtree(f)
 
         def _normal_dump(
-            obj, key: str, _fn: str = None, encoder=None, _bytes: bytes = None
+            obj,
+            key: str,
+            _fn: str | None = None,
+            encoder=None,
+            _bytes: bytes | None = None,
         ):
             if _fn is None:
                 _fn = f"{key}.json"
@@ -434,7 +436,7 @@ class MainParser:
             logger.info(f"[version] dump {key}: {_fn}")
 
         def _dump_by_count(
-            obj: list, count: int, key: str, base_fn: str = None, encoder=None
+            obj: list, count: int, key: str, base_fn: str | None = None, encoder=None
         ):
             if base_fn is None:
                 base_fn = key
@@ -448,7 +450,7 @@ class MainParser:
             ranges: list[Iterable[int]],
             save_remained: bool,
             key: str,
-            base_fn: str = None,
+            base_fn: str | None = None,
             encoder=None,
         ):
             if base_fn is None:
@@ -469,7 +471,7 @@ class MainParser:
                     not obj
                 ), f"There are still {len(obj)} values not saved: {list(obj.keys())}"
 
-        def _dump_file(fp: Path, key: str, fn: str = None):
+        def _dump_file(fp: Path, key: str, fn: str | None = None):
             if fn is None:
                 fn = f"{key}.json"
             _normal_dump(None, key, fn, _bytes=fp.read_bytes())
@@ -533,9 +535,9 @@ class MainParser:
         _dump_file(settings.output_wiki / "dropRate.json", "dropRate")
         base_skills = list(self.base_skills.values())
         base_skills.sort(key=lambda x: x.id)
+        _normal_dump(base_skills, "baseSkills")
         base_functions = list(self.base_functions.values())
         base_functions.sort(key=lambda x: x.funcId)
-        _normal_dump(base_skills, "baseSkills")
         _normal_dump(base_functions, "baseFunctions")
 
         changed = False
@@ -577,7 +579,7 @@ class MainParser:
                 exclude.add("ruby")
         elif isinstance(obj, NiceBaseSkill):
             exclude.add("detail")
-        if isinstance(obj, NiceFunction):
+        elif isinstance(obj, NiceFunction):
             if obj.funcId not in self.base_functions:
                 self.base_functions[obj.funcId] = NiceBaseFunction.parse_obj(obj.dict())
             exclude.update(NiceBaseFunction.__fields__.keys())
