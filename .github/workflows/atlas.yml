@@ -21,6 +21,11 @@ jobs:
       - name: Checkout chaldea-parser
         uses: actions/checkout@v2
 
+      - name: Configure git author
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Save payload
         if: ${{ github.event.client_payload }}
         run: |
@@ -54,23 +59,45 @@ jobs:
           token: ${{ secrets.GH_PAGES_TOKEN }}
           path: ${{ env.output_dir }}
 
-      - name: Check last commit author
-        id: check-last-author
-        run: echo "::set-output name=author::$(git log -1 --pretty=format:'%an')"
+      - run: echo "LAST_AUTHOR=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
+        working-directory: ${{ env.output_dir }}
+      - run: echo "LAST_NOT_BOT=${{ !contains(env.LAST_AUTHOR, '[bot]') }}" >> $GITHUB_ENV
         working-directory: ${{ env.output_dir }}
 
-      - name: run wiki parser
-        if: ${{ !contains(steps.check-last-author.outputs.author, '[bot]') }}
+      - name: Checkout static repo
+        if: env.LAST_NOT_BOT == 'true'
+        uses: actions/checkout@v2
+        with:
+          repository: chaldea-center/static-resource
+          token: ${{ secrets.GH_PAGES_TOKEN }}
+          path: ${{ env.static_dir }}
+
+      - name: Run wiki parser
+        if: env.LAST_NOT_BOT == 'true'
         run: python main.py wiki
 
-      - name: run atlas parser
+      - name: Publish wiki data
+        if: env.LAST_NOT_BOT == 'true'
+        working-directory: ${{ env.output_dir }}
+        run: |
+          git add .
+          git commit -m "wiki parser: update data" || echo "Nothing to update"
+          git push
+
+      - name: Publish static
+        if: env.LAST_NOT_BOT == 'true'
+        working-directory: ${{ env.static_dir }}
+        run: |
+          git add .
+          git commit -m "update static files" || echo "Nothing to update"
+          git push
+
+      - name: Run atlas parser
         run: python main.py atlas
 
-      - name: publish data
+      - name: Publish data
+        working-directory: ${{ env.output_dir }}
         run: |
-          cd ${{ env.output_dir }}
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .
           if [ -e commit-msg.txt ]
           then
@@ -79,4 +106,3 @@ jobs:
               git commit -m "atlas parser: update data" || echo "Nothing to update"
           fi
           git push
-          cd ..
