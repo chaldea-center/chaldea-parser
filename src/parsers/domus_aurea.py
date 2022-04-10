@@ -5,6 +5,7 @@ free counts: quest_id -> war -> checkbox
 """
 from io import StringIO
 
+import numpy
 import pandas as pd
 import requests
 from app.schemas.gameenums import NiceQuestAfterClearType, NiceQuestType
@@ -118,7 +119,7 @@ def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
     sparse_matrix: dict[int, dict[int, float]] = {}
     for j, _ in enumerate(matrix.columns):
         for i, __ in enumerate(matrix.index):
-            v = matrix.iloc[i, j]
+            v: numpy.float64 = matrix.iloc[i, j]  # type: ignore
             if pd.notna(v):
                 sparse_matrix.setdefault(j, {})[i] = float(v)
     sheet_data.sparseMatrix = sparse_matrix

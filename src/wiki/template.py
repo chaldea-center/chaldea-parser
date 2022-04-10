@@ -1,5 +1,5 @@
 import re
-from typing import Any, Iterable, Union
+from typing import Any, Callable, Iterable, TypeVar, Union
 
 from mwparserfromhell import parse as mwparse
 from mwparserfromhell.nodes import Template, Wikilink
@@ -28,13 +28,14 @@ kAllTags = (
     "event",
 )
 
+_T = TypeVar("_T")
+
 
 class Params(dict[Any, str]):
-    def get(self, k, default=None, cast=None, tags=None, nullable=True) -> str | None:
+    def get(self, k, default=None, tags=None, nullable=True) -> str | None:
         """
         :param k: dict key.
         :param default: default value if key not in dict.
-        :param cast: A callable function for type cast, e.g. int, str.
         :param tags: tags to be removed.
         :param nullable:
         :return:
@@ -50,19 +51,24 @@ class Params(dict[Any, str]):
         v = super(Params, self).get(k)
         if isinstance(v, str) and tags is not None:
             v = remove_tag(v, tags)
-        if cast is not None:
-            try:
-                # ,分隔符
-                if cast == int:
-                    v = str(v).replace(",", "")
-                v = cast(v)
-            except:  # noqas
-                v = default
         assert nullable or v is not None
         return v
 
-    def get2(self, k, default=None, cast=None, nullable=True):
-        return self.get(k, default, cast, True, nullable)
+    def get2(self, k, default=None, nullable=True):
+        return self.get(k, default, True, nullable)
+
+    def get_cast(
+        self, k, cast: Callable[[str], _T], default=None, tags=None, nullable=True
+    ) -> _T | None:
+        v = self.get(k, default, tags=tags, nullable=nullable)
+        if v:
+            try:
+                # remove ","
+                if cast == int:
+                    v = str(v).replace(",", "")
+                return cast(v)
+            except:  # noqas
+                return default
 
 
 def remove_tag(string: str, tags: Iterable[str] = kAllTags, console=False):

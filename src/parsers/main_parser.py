@@ -9,15 +9,25 @@ from typing import Any, AnyStr, Iterable, Match, TypeVar
 import orjson
 import requests
 from app.schemas.common import NiceTrait, Region, RepoInfo
-from app.schemas.enums import CLASS_NAME
+from app.schemas.enums import (
+    CLASS_NAME,
+    OLD_TRAIT_MAPPING,
+    Attribute,
+    ServantPersonality,
+    ServantPolicy,
+    SvtClass,
+)
 from app.schemas.gameenums import (
     NiceEventType,
+    NiceFuncTargetType,
+    NiceGender,
     NiceGiftType,
     NiceItemType,
     NiceQuestAfterClearType,
 )
 from app.schemas.nice import (
     AscensionAdd,
+    AscensionAddEntryStr,
     EnemyDrop,
     ExtraAssets,
     NiceBaseFunction,
@@ -51,20 +61,17 @@ from requests_cache.models.response import CachedResponse
 from ..config import settings
 from ..schemas.common import (
     AtlasExportFile,
+    CEObtain,
     DataVersion,
     FileVersion,
+    MappingBase,
+    MappingStr,
     OpenApiInfo,
     Payload,
+    SvtObtain,
 )
 from ..schemas.const_data import ConstGameData
-from ..schemas.gamedata import (
-    ExchangeTicket,
-    FixedDrop,
-    MappingBase,
-    MappingData,
-    MappingStr,
-    MasterData,
-)
+from ..schemas.gamedata import ExchangeTicket, FixedDrop, MappingData, MasterData
 from ..schemas.wiki_data import (
     CommandCodeW,
     CraftEssenceW,
@@ -84,10 +91,7 @@ from ..utils import (
     logger,
     sort_dict,
 )
-from ..utils.nullsafe import NullSafe, NullSafeProxy, nullsafe, undefined
 
-
-_ = nullsafe
 
 _KT = TypeVar("_KT", str, int)
 _KV = TypeVar("_KV", str, int)
@@ -568,8 +572,6 @@ class MainParser:
 
     def _encoder(self, obj):
         exclude = {"originalName"}
-        if obj is undefined:
-            return None
         if isinstance(obj, NiceSkill):
             if obj.id not in self.base_skills:
                 self.base_skills[obj.id] = NiceBaseSkill.parse_obj(obj.dict())
@@ -721,6 +723,7 @@ class MainParser:
             except Exception as e:
                 logger.error(f"failed to load mapping data from last build: {e}")
                 self.payload.regions.clear()
+        self._add_enum_mappings()
         self._merge_official_mappings(Region.CN)
         self._fix_cn_translation()
         self._merge_mc_translation()
@@ -730,66 +733,87 @@ class MainParser:
         self._merge_official_mappings(Region.KR)
         self._merge_repo_mapping()
 
+    def _add_enum_mappings(self):
+        mappings = self.jp_data.mappingData
+        for k, v in self.jp_data.nice_trait.items():
+            if v in OLD_TRAIT_MAPPING:
+                continue
+            m_trait = mappings.trait.setdefault(k, MappingStr())
+            m_trait.update(Region.NA, v.value, skip_exists=True)
+        # deprecated
+        for class_id, svt_class in CLASS_NAME.items():
+            m_svt_class = mappings.svt_class.setdefault(class_id, MappingStr())
+            m_svt_class.update(Region.NA, svt_class.value, skip_exists=True)
+
+        enums = self.jp_data.mappingData.enums
+        for v in SvtClass.__members__.values():
+            enums.svt_class.setdefault(v.value, MappingStr())
+        for v in Attribute.__members__.values():
+            enums.attribute.setdefault(v.value, MappingStr())
+        for v in ServantPolicy.__members__.values():
+            enums.servant_policy.setdefault(v.value, MappingStr())
+        for v in ServantPersonality.__members__.values():
+            enums.servant_personality.setdefault(v.value, MappingStr())
+        for v in NiceGender.__members__.values():
+            enums.gender.setdefault(v.value, MappingStr())
+        for v in NiceFuncTargetType.__members__.values():
+            enums.func_target_type.setdefault(v.value, MappingStr())
+        for v in SvtObtain.__members__.values():
+            enums.svt_obtain.setdefault(v.value, MappingStr())
+        for v in CEObtain.__members__.values():
+            enums.ce_obtain.setdefault(v.value, MappingStr())
+
     def _merge_official_mappings(self, region: Region):
         logger.info(f"merging official translations from {region}")
         mappings = self.jp_data.mappingData
         jp_data = self.jp_data
         data = self.load_master_data(region)
 
-        # trait
-        for k, v in self.jp_data.nice_trait.items():
-            m_trait = mappings.trait.setdefault(k, MappingStr())
-            m_trait.update(Region.NA, v.value, skip_exists=True)
-        # svt_class:
-        for class_id, svt_class in CLASS_NAME.items():
-            m_svt_class = mappings.svt_class.setdefault(class_id, MappingStr())
-            m_svt_class.update(Region.NA, svt_class.value, skip_exists=True)
+        if region != Region.JP:
+            mappings.svt_release.update(region, sorted(data.svt_dict.keys()))
+            mappings.ce_release.update(region, sorted(data.ce_dict.keys()))
+            mappings.cc_release.update(region, sorted(data.cc_dict.keys()))
 
         def _update_mapping(
             m: dict[_KT, MappingBase[_KV]],
             _key: _KT,
-            value: _KV | NullSafe | NullSafeProxy | None,
+            value: _KV | None,
             skip_exists=False,
             skip_unknown_key=False,
         ):
             if _key is None:
                 return
             m.setdefault(_key, MappingBase())
-            if isinstance(value, NullSafe):
-                return
-            if isinstance(value, NullSafeProxy):
-                value2 = value.__o
-            else:
-                value2 = value
-            if value2 == _key:
+            if value == _key:
                 return
             return self._update_key_mapping(
                 region,
                 key_mapping=m,
                 _key=_key,
-                value=value2,
+                value=value,
                 skip_exists=skip_exists,
                 skip_unknown_key=skip_unknown_key,
             )
 
         # str key
         for item_jp in jp_data.nice_item:
+            item = data.item_dict.get(item_jp.id)
             _update_mapping(
-                mappings.item_names, item_jp.name, _(data.item_dict)[item_jp.id].name
+                mappings.item_names, item_jp.name, item.name if item else None
             )
         for cv_jp in jp_data.nice_cv:
-            _update_mapping(
-                mappings.cv_names, cv_jp.name, _(data.cv_dict)[cv_jp.id].name
-            )
+            cv = data.cv_dict.get(cv_jp.id)
+            _update_mapping(mappings.cv_names, cv_jp.name, cv.name if cv else None)
             cv_names = [str(s).strip() for s in re.split(r"[&＆\s]+", cv_jp.name) if s]
             if len(cv_names) > 1:
                 for one_name in cv_names:
                     mappings.cv_names.setdefault(one_name, MappingBase())
         for illustrator_jp in jp_data.nice_illustrator:
+            illustrator = data.illustrator_dict.get(illustrator_jp.id)
             _update_mapping(
                 mappings.illustrator_names,
                 illustrator_jp.name,
-                _(data.illustrator_dict)[illustrator_jp.id].name,
+                illustrator.name if illustrator else None,
             )
             illustrator_names = [
                 str(s).strip() for s in re.split(r"[&＆\s]+", illustrator_jp.name) if s
@@ -798,9 +822,8 @@ class MainParser:
                 for one_name in illustrator_names:
                     mappings.illustrator_names.setdefault(one_name, MappingBase())
         for bgm_jp in jp_data.nice_bgm:
-            _update_mapping(
-                mappings.bgm_names, bgm_jp.name, _(data.bgm_dict)[bgm_jp.id].name
-            )
+            bgm = data.bgm_dict.get(bgm_jp.id)
+            _update_mapping(mappings.bgm_names, bgm_jp.name, bgm.name if bgm else None)
 
         for event_jp in jp_data.nice_event:
             event_extra = self.wiki_data.events.setdefault(
@@ -831,16 +854,56 @@ class MainParser:
             _update_mapping(mappings.war_names, war_jp.name, war.name)
             _update_mapping(mappings.war_names, war_jp.longName, war.longName)
         for spot_jp in jp_data.spot_dict.values():
+            spot = data.spot_dict.get(spot_jp.id)
             _update_mapping(
-                mappings.spot_names, spot_jp.name, _(data.spot_dict)[spot_jp.id].name
+                mappings.spot_names, spot_jp.name, spot.name if spot else None
             )
 
+        def __update_assension_add(
+            m: dict[str, MappingStr],
+            jp_entry: AscensionAddEntryStr,
+            entry: AscensionAddEntryStr | None,
+        ):
+            for ascension, name in jp_entry.ascension.items():
+                _update_mapping(
+                    m,
+                    name,
+                    entry.ascension.get(ascension) if entry else None,
+                    skip_exists=True,
+                )
+            for ascension, name in jp_entry.costume.items():
+                _update_mapping(
+                    m,
+                    name,
+                    entry.costume.get(ascension) if entry else None,
+                    skip_exists=True,
+                )
+
         for svt_jp in jp_data.nice_servant_lore:
-            svt = _(data.svt_id_dict)[svt_jp.id]
-            _update_mapping(mappings.svt_names, svt_jp.name, svt.name)
+            svt = data.svt_id_dict.get(svt_jp.id)
+            _update_mapping(mappings.svt_names, svt_jp.name, svt.name if svt else None)
+            __update_assension_add(
+                mappings.svt_names,
+                svt_jp.ascensionAdd.overWriteServantName,
+                svt.ascensionAdd.overWriteServantName if svt else None,
+            )
+            __update_assension_add(
+                mappings.td_names,
+                svt_jp.ascensionAdd.overWriteTDName,
+                svt.ascensionAdd.overWriteTDName if svt else None,
+            )
+            __update_assension_add(
+                mappings.td_ruby,
+                svt_jp.ascensionAdd.overWriteTDRuby,
+                svt.ascensionAdd.overWriteTDRuby if svt else None,
+            )
+            __update_assension_add(
+                mappings.td_types,
+                svt_jp.ascensionAdd.overWriteTDTypeText,
+                svt.ascensionAdd.overWriteTDTypeText if svt else None,
+            )
             if not svt:
                 continue
-            mappings.svt_release.setdefault(svt_jp.id, MappingBase()).update(region, 1)
             skill_prog = mappings.skill_state.setdefault(svt_jp.id, MappingBase())
             skill_prog.update(
                 region, {skill.id: skill.strengthStatus for skill in svt.skills}
@@ -854,40 +917,44 @@ class MainParser:
             #       ServantW(collectionNo=svt.collectionNo))
             #     svt_w.profileComment.update(region, svt.profile.comments)
         for costume_id, costume_jp in jp_data.costume_dict.items():
-            costume = _(data.costume_dict)[costume_id]
-            _update_mapping(mappings.costume_names, costume_jp.name, costume.name)
+            costume = data.costume_dict.get(costume_id)
             _update_mapping(
-                mappings.costume_names, costume_jp.shortName, costume.shortName
+                mappings.costume_names,
+                costume_jp.name,
+                costume.name if costume else None,
+            )
+            _update_mapping(
+                mappings.costume_names,
+                costume_jp.shortName,
+                costume.shortName if costume else None,
             )
             mappings.costume_detail.setdefault(
                 costume_jp.costumeCollectionNo, MappingStr()
-            ).update(region, costume.detail)
+            ).update(region, costume.detail if costume else None)
         for ce_jp in jp_data.nice_equip_lore:
-            ce = _(data.ce_id_dict)[ce_jp.id]
-            _update_mapping(mappings.ce_names, ce_jp.name, ce.name)
+            ce = data.ce_id_dict.get(ce_jp.id)
+            _update_mapping(mappings.ce_names, ce_jp.name, ce.name if ce else None)
             if not ce:
                 continue
-            mappings.ce_release.setdefault(ce_jp.id, MappingBase()).update(region, 1)
-            if region != Region.JP and ce.profile.comments:
+            if region != Region.JP and ce.profile and ce.profile.comments:
                 ce_w = self.wiki_data.craftEssences.setdefault(
                     ce_jp.collectionNo, CraftEssenceW(collectionNo=ce.collectionNo)
                 )
                 ce_w.profile.update(region, ce.profile.comments[0].comment)
 
         for cc_jp in jp_data.nice_command_code:
-            cc = _(data.cc_id_dict)[cc_jp.id]
-            _update_mapping(mappings.cc_names, cc_jp.name, cc.name)
+            cc = data.cc_id_dict.get(cc_jp.id)
+            _update_mapping(mappings.cc_names, cc_jp.name, cc.name if cc else None)
             if not cc:
                 continue
-            mappings.cc_release.setdefault(cc_jp.id, MappingBase()).update(region, 1)
             if region != Region.JP and cc.comment:
                 cc_w = self.wiki_data.commandCodes.setdefault(
                     cc_jp.collectionNo, CommandCodeW(collectionNo=cc.collectionNo)
                 )
                 cc_w.profile.update(region, cc.comment)
         for mc_jp in jp_data.nice_mystic_code:
-            mc = _(data.mc_dict)[mc_jp.id]
-            _update_mapping(mappings.mc_names, mc_jp.name, mc.name)
+            mc = data.mc_dict.get(mc_jp.id)
+            _update_mapping(mappings.mc_names, mc_jp.name, mc.name if mc else None)
             if mc and region != Region.JP and mc.detail:
                 # mc_w = self.wiki_data.mysticCodes.setdefault(mc_jp.id, MysticCodeW(id=mc_jp.id))
                 # mc_w.detail.update(region, mc.detail)
@@ -906,41 +973,63 @@ class MainParser:
             for skill_add in skill_jp.skillAdd:
                 # manually add
                 _update_mapping(mappings.skill_names, skill_add.name, None)
-            skill = _(data.skill_dict)[skill_jp.id]
-            _update_mapping(mappings.skill_names, skill_jp.name, skill.name)
+            skill = data.skill_dict.get(skill_jp.id)
+            _update_mapping(
+                mappings.skill_names, skill_jp.name, skill.name if skill else None
+            )
+            if not skill:
+                continue
+            detail_jp = _process_detail(skill_jp.unmodifiedDetail)
+            if not detail_jp:
+                continue
             _update_mapping(
                 mappings.skill_detail,
-                _process_detail(skill_jp.unmodifiedDetail),
+                detail_jp,
                 _process_detail(skill.unmodifiedDetail),
             )
         for td_jp in jp_data.td_dict.values():
-            td = _(data.td_dict)[td_jp.id]
-            _update_mapping(mappings.td_names, td_jp.name, td.name)
+            td = data.td_dict.get(td_jp.id)
+            _update_mapping(mappings.td_names, td_jp.name, td.name if td else None)
             if region != Region.NA:  # always empty for NA
-                _update_mapping(mappings.td_ruby, td_jp.ruby, td.ruby)
-            _update_mapping(mappings.td_types, td_jp.type, td.type)
+                _update_mapping(mappings.td_ruby, td_jp.ruby, td.ruby if td else None)
+            _update_mapping(mappings.td_types, td_jp.type, td.type if td else None)
+            if not td:
+                continue
+            detail_jp = _process_detail(td_jp.unmodifiedDetail)
+            if not detail_jp:
+                continue
             _update_mapping(
                 mappings.td_detail,
-                _process_detail(td_jp.unmodifiedDetail),
+                detail_jp,
                 _process_detail(td.unmodifiedDetail),
             )
         for func_jp in jp_data.func_dict.values():
             if func_jp.funcPopupText in ["", "-", "なし"]:
                 _update_mapping(mappings.func_popuptext, func_jp.funcType.value, None)
-            func = _(data.func_dict)[func_jp.funcId]
+            func = data.func_dict.get(func_jp.funcId)
             _update_mapping(
-                mappings.func_popuptext, func_jp.funcPopupText, func.funcPopupText
+                mappings.func_popuptext,
+                func_jp.funcPopupText,
+                func.funcPopupText if func else None,
             )
         for buff_jp in jp_data.buff_dict.values():
-            buff = _(data.buff_dict)[buff_jp.id]
-            _update_mapping(mappings.buff_names, buff_jp.name, buff.name)
-            _update_mapping(mappings.buff_detail, buff_jp.detail, buff.detail)
+            buff = data.buff_dict.get(buff_jp.id)
+            _update_mapping(
+                mappings.buff_names, buff_jp.name, buff.name if buff else None
+            )
+            _update_mapping(
+                mappings.buff_detail, buff_jp.detail, buff.detail if buff else None
+            )
         for quest_jp in jp_data.main_free_quest_dict.values():
-            quest = _(data.main_free_quest_dict)[quest_jp.id]
-            _update_mapping(mappings.quest_names, quest_jp.name, quest.name)
+            quest = data.main_free_quest_dict.get(quest_jp.id)
+            _update_mapping(
+                mappings.quest_names, quest_jp.name, quest.name if quest else None
+            )
         for entity_jp in jp_data.basic_svt:
-            entity = _(data.entity_dict)[entity_jp.id]
-            _update_mapping(mappings.entity_names, entity_jp.name, entity.name)
+            entity = data.entity_dict.get(entity_jp.id)
+            _update_mapping(
+                mappings.entity_names, entity_jp.name, entity.name if entity else None
+            )
 
         self.jp_data.mappingData = mappings
         del data
@@ -1105,7 +1194,7 @@ class MainParser:
         region: Region,
         key_mapping: dict[_KT, MappingBase[_KV]],
         _key: _KT,
-        value: _KV,
+        value: _KV | None,
         skip_exists=False,
         skip_unknown_key=False,
     ):
@@ -1128,8 +1217,10 @@ class MainParser:
             if key not in dest:
                 dest[key] = value
                 continue
-            assert not isinstance(value, list) and not isinstance(dest[key], list)
-            if isinstance(value, dict):
+            if isinstance(value, list):
+                # only list of basic types
+                dest[key] = list(value)
+            elif isinstance(value, dict):
                 if dest[key] is None:
                     dest[key] = value
                 else:

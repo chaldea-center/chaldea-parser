@@ -66,11 +66,11 @@ class WikiParser:
 
     def init_wiki_data(self):
         self.wiki_data = WikiData.parse_dir(full_version=False)
+        chara_names: dict = (
+            load_json(settings.output_mapping / "chara_names.json") or {}
+        )
         self.unknown_chara_mapping = {
-            k: MappingStr.parse_obj(v)
-            for k, v in load_json(
-                settings.output_mapping / "chara_names.json", {}
-            ).items()
+            k: MappingStr.parse_obj(v) for k, v in chara_names.items()
         }
 
     def mc_svt(self):
@@ -89,11 +89,11 @@ class WikiParser:
             name_cn = params.get("中文名")
             if name_cn:
                 self.wiki_data.mcTransl.svt_names[svt_add.collectionNo] = name_cn
-            svt_add.nameOther.extend(re.split(r"[,，&]", params.get2("昵称", "")))
+            svt_add.nameOther.extend(re.split(r"[,，&]", params.get2("昵称") or ""))
             svt_add.nameOther = [s for s in sorted(set(svt_add.nameOther)) if s]
 
             for index in range(1, 15):
-                if "愚人节" in params.get(f"立绘{index}", ""):
+                if "愚人节" in (params.get(f"立绘{index}") or ""):
                     illustration = params.get(f"文件{index}")
                     if illustration:
                         svt_add.aprilFoolAssets.append(
@@ -167,7 +167,7 @@ class WikiParser:
                     continue
                 svt_text = MOONCELL.get_page_text(chara)
                 param_svt = parse_template(svt_text, r"^{{基础数值")
-                svt_no = param_svt.get("序号", cast=int)
+                svt_no = param_svt.get_cast("序号", cast=int)
                 if svt_no:
                     ce_add.characters.append(svt_no)
                 else:
@@ -199,7 +199,7 @@ class WikiParser:
                     continue
                 svt_text = MOONCELL.get_page_text(chara)
                 param_svt = parse_template(svt_text, r"^{{基础数值")
-                svt_no = param_svt.get("序号", cast=int)
+                svt_no = param_svt.get_cast("序号", cast=int)
                 if svt_no:
                     cc_add.characters.append(svt_no)
                 else:
@@ -230,7 +230,7 @@ class WikiParser:
                         NiceLoreComment(
                             id=index,
                             priority=priority,
-                            condMessage=params.get2("exunlock", "")
+                            condMessage=(params.get2("exunlock") or "")
                             if suffix == "ex"
                             else "",
                             comment=comment,
@@ -282,6 +282,8 @@ class WikiParser:
             fa_link = FANDOM.resolve_wikilink(row[1])
             cc_add = self.wiki_data.get_cc(collection_no)
             cc_add.fandomLink = fa_link
+            if not fa_link:
+                continue
             params = parse_template(FANDOM.get_page_text(fa_link), r"^{{Craftlore")
             cc_add.profile.NA = params.get2("na") or params.get2("en")
 
@@ -305,15 +307,10 @@ class WikiParser:
             if name_jp and name_cn:
                 self.wiki_data.mcTransl.event_names[name_jp] = name_cn
 
-            event.titleBanner.CN = MOONCELL.get_file_url(params.get("标题图文件名cn"))
-            event.titleBanner.JP = MOONCELL.get_file_url(params.get("标题图文件名jp"))
+            event.titleBanner.CN = MOONCELL.get_file_url_null(params.get("标题图文件名cn"))
+            event.titleBanner.JP = MOONCELL.get_file_url_null(params.get("标题图文件名jp"))
             event.noticeLink.CN = params.get("官网链接cn")
             event.noticeLink.JP = params.get("官网链接jp")
-            event.rarePrism = params.get2("稀有棱镜", 0, cast=int)
-            event.grail = params.get2("圣杯", 0, cast=int)
-            event.grail2crystal = params.get2("圣杯转结晶", 0, cast=int)
-            event.crystal = params.get2("传承结晶", 0, cast=int) - event.grail2crystal
-            event.foukun4 = params.get2("★4芙芙", 0, cast=int)
             # summons
             summon_pages = []
             for i in range(1, 6):
@@ -355,8 +352,8 @@ class WikiParser:
                 return
             params = parse_template(text, r"^{{活动信息")
 
-            war.titleBanner.CN = MOONCELL.get_file_url(params.get("标题图文件名cn"))
-            war.titleBanner.JP = MOONCELL.get_file_url(params.get("标题图文件名jp"))
+            war.titleBanner.CN = MOONCELL.get_file_url_null(params.get("标题图文件名cn"))
+            war.titleBanner.JP = MOONCELL.get_file_url_null(params.get("标题图文件名jp"))
             war.noticeLink.CN = params.get("官网链接cn")
             war.noticeLink.JP = params.get("官网链接jp")
             self.wiki_data.wars[war.id] = war
@@ -416,8 +413,8 @@ class WikiParser:
             summon.endTime.CN = MOONCELL.get_timestamp(
                 params.get("卡池结束时间cn"), KnownTimeZone.cst
             )
-            summon.banner.JP = MOONCELL.get_file_url(params.get("卡池图文件名jp"))
-            summon.banner.CN = MOONCELL.get_file_url(params.get("卡池图文件名cn"))
+            summon.banner.JP = MOONCELL.get_file_url_null(params.get("卡池图文件名jp"))
+            summon.banner.CN = MOONCELL.get_file_url_null(params.get("卡池图文件名cn"))
             summon.noticeLink.JP = params.get("卡池官网链接jp")
             summon.noticeLink.CN = params.get("卡池官网链接cn")
 
@@ -432,11 +429,11 @@ class WikiParser:
                 summon.type = SummonType.limited
 
             for i in range(1, 31):
-                if f"子名称{i}" in sim_params and f"数据{i}" in sim_params:
-                    sub_summon = SubSummon(title=sim_params.get(f"子名称{i}"))
-                    data_page_name = sim_params.get(f"数据{i}").replace(
-                        "{{PAGENAME}}", f"{title}/模拟器"
-                    )
+                sub_title = sim_params.get(f"子名称{i}")
+                sub_data = sim_params.get(f"数据{i}")
+                if sub_title and sub_data:
+                    sub_summon = SubSummon(title=sub_title)
+                    data_page_name = sub_data.replace("{{PAGENAME}}", f"{title}/模拟器")
                     data_page_name = remove_tag(data_page_name)
                     table_str = MOONCELL.get_page_text(data_page_name)
                     if table_str:
@@ -471,7 +468,7 @@ def _mc_index_data(page: str) -> list[dict[str, Optional[str]]]:
     return data
 
 
-def _gen_summon_key(jp_url: str) -> Optional[str]:
+def _gen_summon_key(jp_url: str | None) -> Optional[str]:
     if not jp_url:
         return None
     key_match = re.search(r"^https://news\.fate-go\.jp/(.+)$", jp_url)

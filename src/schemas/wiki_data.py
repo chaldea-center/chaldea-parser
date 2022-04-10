@@ -1,5 +1,5 @@
 from app.schemas.base import BaseModelORJson
-from pydantic import BaseModel, HttpUrl, NoneStr
+from pydantic import BaseModel, NoneStr
 
 from ..config import settings
 from ..schemas.common import (
@@ -42,7 +42,7 @@ class ServantW(BaseModel):
     collectionNo: int
     nameOther: list[str] = []
     obtains: list[SvtObtain] = []
-    aprilFoolAssets: list[HttpUrl] = []
+    aprilFoolAssets: list[str] = []
     aprilFoolProfile: MappingStr = MappingStr()
     # profileComment: MappingBase[list[NiceLoreComment]] = Field(default_factory=MappingBase)
     mcLink: NoneStr = None
@@ -84,7 +84,7 @@ class EventWBase(BaseModel):
     name: str
     mcLink: NoneStr = None
     fandomLink: NoneStr = None
-    titleBanner: MappingBase[HttpUrl] = MappingBase()
+    titleBanner: MappingBase[str] = MappingBase()
     noticeLink: MappingStr = MappingStr()
     huntingQuestIds: list[int] = []
     # item_id: hint, ${var_name}
@@ -95,18 +95,13 @@ class WarW(BaseModel):
     id: int
     mcLink: NoneStr = None
     fandomLink: NoneStr = None
-    titleBanner: MappingBase[HttpUrl] = MappingBase()
+    titleBanner: MappingBase[str] = MappingBase()
     noticeLink: MappingStr = MappingStr()
 
 
 class EventW(EventWBase):
     startTime: MappingInt = MappingInt()
     endTime: MappingInt = MappingInt()
-    rarePrism: int = 0
-    grail: int = 0  # pure grail
-    crystal: int = 0  # pure crystal
-    grail2crystal: int = 0  # total = grail+crystal+grail2crystal
-    foukun4: int = 0
     relatedSummons: list[str] = []
 
 
@@ -128,7 +123,7 @@ class LimitedSummonBase(BaseModel):
     mcLink: NoneStr = None
     fandomLink: NoneStr = None
     name: MappingStr = MappingStr()
-    banner: MappingBase[HttpUrl] = MappingBase()
+    banner: MappingBase[str] = MappingBase()
     noticeLink: MappingStr = MappingStr()  # cn: number, tw?
     startTime: MappingInt = MappingInt()
     endTime: MappingInt = MappingInt()
@@ -154,47 +149,41 @@ class WikiData(BaseModelORJson):
     def parse_dir(cls, full_version: bool = False) -> "WikiData":
         folder = settings.output_wiki
         data = {
-            "wars": {war["id"]: war for war in load_json(folder / "wars.json", [])},
+            "wars": {war["id"]: war for war in load_json(folder / "wars.json") or []},
             "mcTransl": load_json(folder / "mcTransl.json", {}),
         }
         if full_version:
             data |= {
                 "servants": {
                     svt["collectionNo"]: svt
-                    for svt in load_json(folder / "servants.json", [])
+                    for svt in load_json(folder / "servants.json") or []
                 },
                 "craftEssences": {
                     ce["collectionNo"]: ce
-                    for ce in load_json(folder / "craftEssences.json", [])
+                    for ce in load_json(folder / "craftEssences.json") or []
                 },
                 "commandCodes": {
                     cc["collectionNo"]: cc
-                    for cc in load_json(folder / "commandCodes.json", [])
+                    for cc in load_json(folder / "commandCodes.json") or []
                 },
                 "events": {
                     event["id"]: event
-                    for event in load_json(folder / "events.json", [])
+                    for event in load_json(folder / "events.json") or []
                 },
                 "summons": {
                     summon["id"]: summon
-                    for summon in load_json(
-                        folder / "summons.json",
-                        [],
-                    )
+                    for summon in load_json(folder / "summons.json") or []
                 },
             }
         else:
             data |= {
                 "events": {
                     event["id"]: event
-                    for event in load_json(folder / "eventsBase.json", [])
+                    for event in load_json(folder / "eventsBase.json") or []
                 },
                 "summons": {
                     summon["id"]: summon
-                    for summon in load_json(
-                        folder / "summonsBase.json",
-                        [],
-                    )
+                    for summon in load_json(folder / "summonsBase.json") or []
                 },
             }
         return WikiData.parse_obj(data)

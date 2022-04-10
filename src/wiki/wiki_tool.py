@@ -3,7 +3,7 @@ import re
 import time
 from datetime import datetime
 from enum import Enum
-from hashlib import sha1
+from hashlib import md5, sha1
 from pathlib import Path
 from typing import Optional
 from urllib.parse import unquote
@@ -28,10 +28,11 @@ class KnownTimeZone(str, Enum):
 
 
 class WikiTool:
-    def __init__(self, host: str, path="/", user=None, pwd=None):
+    def __init__(self, host: str, img_url_prefix: str, path="/", user=None, pwd=None):
         from ..config import settings
 
         self.host: str = host
+        self.img_url_prefix: str = img_url_prefix
         self.user = user
         self.pwd = pwd
         self.site: mwclient.Site = mwclient.Site(host=host, path=path)
@@ -64,48 +65,37 @@ class WikiTool:
 
     @sleep_and_retry
     @limits(3, 4)
-    def _call_request(
-        self, name: str, is_image: bool = False
-    ) -> WikiPageInfo | WikiImageInfo | None:
+    def _call_request_page(self, name: str) -> WikiPageInfo:
         name_json = f'"{name}"({len(name)})'  # in case there is any special char
         self.active_requests.add(name)
         retry_n, max_retry = 0, 5
-        prefix = f'[{self.host}][{"image" if is_image else "page"}]'
-        while retry_n < max_retry:
+        prefix = f"[{self.host}][page]"
+        while True:
             try:
                 now = int(time.time())
-                if is_image:
-                    cached = self.cache.images[name] = WikiImageInfo(
-                        name=name,
-                        updated=now,
-                        imageinfo=self.site.images[name].imageinfo,
+                page = pywikibot.Page(self.site2, name)
+                text = page.text
+                if not text:
+                    logger.debug(f"{self.host}: {name_json} empty")
+                redirect = page
+                if text:
+                    while redirect.isRedirectPage():
+                        redirect = redirect.getRedirectTarget()
+                if redirect == page:
+                    self.cache.pages[self.norm_key(page.title())] = WikiPageInfo(
+                        name=page.title(), text=page.text, updated=now
                     )
                 else:
-                    page = pywikibot.Page(self.site2, name)
-                    text = page.text
-                    if not text:
-                        logger.debug(f"{self.host}: {name_json} empty")
-                    redirect = page
-                    if text:
-                        while redirect.isRedirectPage():
-                            redirect = redirect.getRedirectTarget()
-                    if redirect == page:
-                        self.cache.pages[self.norm_key(page.title())] = WikiPageInfo(
-                            name=page.title(), text=page.text, updated=now
-                        )
-                    else:
-                        self.cache.pages[self.norm_key(page.title())] = WikiPageInfo(
-                            name=page.title(),
-                            redirect=redirect.title(),
-                            text=page.text,
-                            updated=now,
-                        )
-                        self.cache.pages[
-                            self.norm_key(redirect.title())
-                        ] = WikiPageInfo(
-                            name=redirect.title(), text=redirect.text, updated=now
-                        )
-                    cached = redirect
+                    self.cache.pages[self.norm_key(page.title())] = WikiPageInfo(
+                        name=page.title(),
+                        redirect=redirect.title(),
+                        text=page.text,
+                        updated=now,
+                    )
+                    self.cache.pages[self.norm_key(redirect.title())] = WikiPageInfo(
+                        name=redirect.title(), text=redirect.text, updated=now
+                    )
+                cached = redirect
                 if retry_n > 0:
                     logger.warning(
                         f"{prefix} downloaded {name_json} after {retry_n} retry"
@@ -124,13 +114,50 @@ class WikiTool:
                     logger.warning(
                         f"Fail download {name_json} after {retry_n} retry: {e}"
                     )
+                    raise
+                time.sleep(min(5 * retry_n, 30))
+
+    @sleep_and_retry
+    @limits(3, 4)
+    def _call_request_img(self, name: str) -> WikiImageInfo:
+        name_json = f'"{name}"({len(name)})'  # in case there is any special char
+        self.active_requests.add(name)
+        retry_n, max_retry = 0, 5
+        prefix = f"[{self.host}][image]"
+        while True:
+            try:
+                now = int(time.time())
+                cached = self.cache.images[name] = WikiImageInfo(
+                    name=name,
+                    updated=now,
+                    imageinfo=self.site.images[name].imageinfo,  # type: ignore
+                )
+                if retry_n > 0:
+                    logger.warning(
+                        f"{prefix} downloaded {name_json} after {retry_n} retry"
+                    )
+                else:
+                    logger.debug(f"{prefix} download: {name_json}")
+                self._count += 1
+                if self._count > 100:
+                    self._count = 0
+                    self.save_cache()
+                self.active_requests.remove(name)
+                return cached
+            except Exception as e:
+                retry_n += 1
+                if retry_n >= max_retry:
+                    logger.warning(
+                        f"Fail download {name_json} after {retry_n} retry: {e}"
+                    )
+                    raise
                 time.sleep(min(5 * retry_n, 30))
 
     def get_page_text(self, name: str, allow_cache=True, clear_tag=True):
         name = self.norm_key(name)
         if not name:
             # print('name empty')
-            return None
+            return name
         key = unquote(name.strip())
         if key.startswith("#"):
             logger.warning(f"wiki page title startwith #: {key}")
@@ -141,7 +168,7 @@ class WikiTool:
         # if result:
         #     print(f'{key}: use cached')
         if result is None:
-            page = self._call_request(name)
+            page = self._call_request_page(name)
             if page:
                 result = page.text
         result = result or ""
@@ -167,6 +194,11 @@ class WikiTool:
                 self._download_image(origin_url, filepath)
         return url
 
+    def hash_file_url(self, filename: str) -> str:
+        filename = unquote(filename).replace(" ", "_")
+        _hash = md5(filename.encode()).hexdigest()
+        return f"{self.img_url_prefix}/{_hash[:1]}/{_hash[:2]}/{filename}"
+
     @sleep_and_retry
     @limits(2, 5)
     @retry_decorator()
@@ -176,17 +208,21 @@ class WikiTool:
         filepath.write_bytes(requests.get(url).content)
         logger.info(f"Download image {filepath} from {url}")
 
-    def get_file_url(self, name: str):
+    def get_file_url(self, name: str) -> str:
         name = self.norm_key(name)
         if not name:
-            return None
+            return name
         cached = self.cache.images.get(name)
         if cached and cached.imageinfo.get("url"):
             return self._process_url(cached)
-        image = self._call_request(name, True)
+        image = self._call_request_img(name)
         if not image or not image.imageinfo:
-            return None
+            return self.hash_file_url(name)
         return self._process_url(image)
+
+    def get_file_url_null(self, name: str | None) -> str | None:
+        if name:
+            return self.get_file_url(name)
 
     def get_cache(self, name: str) -> NoneStr:
         name = self.norm_key(name)
@@ -203,7 +239,7 @@ class WikiTool:
             return page.text
 
     @staticmethod
-    def get_timestamp(s: str, tz: KnownTimeZone) -> Optional[int]:
+    def get_timestamp(s: str | None, tz: KnownTimeZone) -> Optional[int]:
         if not s:
             return None
         m = re.match(r"^(\d+)-(\d+)-(\d+)\s+(\d+):(\d+)", s)

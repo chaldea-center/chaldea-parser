@@ -29,57 +29,8 @@ from app.schemas.raw import MstCv, MstIllustrator
 from pydantic import BaseModel
 
 from ..utils import sort_dict
-from .common import MappingBase, MappingInt, MappingStr
 from .const_data import BuffActionDetail, CardInfo, GrailCostDetail, MasterUserLvDetail
-
-
-class MappingData(BaseModel):
-    item_names: dict[str, MappingStr] = {}  # jp_name
-    # item_detail: dict[int, MappingStr] = {}  # item.id
-    mc_names: dict[str, MappingStr] = {}
-    costume_names: dict[str, MappingStr] = {}  # collection id, including shortname
-    cv_names: dict[str, MappingStr] = {}
-    illustrator_names: dict[str, MappingStr] = {}
-    cc_names: dict[str, MappingStr] = {}
-    svt_names: dict[str, MappingStr] = {}  # svt.id
-    ce_names: dict[str, MappingStr] = {}
-    event_names: dict[str, MappingStr] = {}  # including shortname
-    war_names: dict[str, MappingStr] = {}  # including longname
-    quest_names: dict[str, MappingStr] = {}
-    spot_names: dict[str, MappingStr] = {}
-    entity_names: dict[str, MappingStr] = {}  # only for QuestEnemy.svt.collectionNo==0
-    td_types: dict[str, MappingStr] = {}  # jp->
-    bgm_names: dict[str, MappingStr] = {}
-    summon_names: dict[str, MappingStr] = {}
-    chara_names: dict[str, MappingStr] = {}
-
-    buff_names: dict[str, MappingStr] = {}
-    buff_detail: dict[str, MappingStr] = {}
-    func_popuptext: dict[str, MappingStr] = {}
-    skill_names: dict[str, MappingStr] = {}
-    # skill_ruby: dict[int, MappingStr] = {}
-    skill_detail: dict[str, MappingStr] = {}
-    td_names: dict[str, MappingStr] = {}
-    td_ruby: dict[str, MappingStr] = {}
-    td_detail: dict[str, MappingStr] = {}
-
-    trait: dict[int, MappingStr] = {}  # trait.id
-    svt_class: dict[int, MappingStr] = {}
-
-    # additional strings
-    # ce_comment: dict[int, MappingStr] = {}  # in w
-    # cc_comment: dict[int, MappingStr] = {}  # in w
-    mc_detail: dict[int, MappingStr] = {}
-    costume_detail: dict[int, MappingStr] = {}  # collection no
-
-    # ignored when copy to mapping folder
-    # <svt_id, region:<skill_id, strengthenState>>
-    skill_state: dict[int, MappingBase[dict[int, int]]] = {}
-    # <svt_id, region:<td_id, strengthenState>>
-    td_state: dict[int, MappingBase[dict[int, int]]] = {}
-    svt_release: dict[int, MappingInt] = {}
-    ce_release: dict[int, MappingInt] = {}
-    cc_release: dict[int, MappingInt] = {}
+from .mappings import MappingData
 
 
 class ExchangeTicket(BaseModel):

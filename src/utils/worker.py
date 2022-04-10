@@ -50,7 +50,7 @@ class Worker:
             self._tasks.append(_executor.submit(fn, *args))
 
     @staticmethod
-    def from_map(fn, *iterables, name: str = None) -> "Worker":
+    def from_map(fn, *iterables, name: str | None = None) -> "Worker":
         worker = Worker(name)
         worker.map_add(fn, *iterables)
         return worker
