@@ -7,6 +7,8 @@ from app.schemas.common import Region
 from app.schemas.enums import Attribute, SvtClass, Trait
 from app.schemas.gameenums import NiceBuffAction, NiceCardType
 from app.schemas.nice import (
+    NiceBaseFunction,
+    NiceBaseSkill,
     NiceBgm,
     NiceBuff,
     NiceCommandCode,
@@ -81,6 +83,10 @@ class MasterData(BaseModelORJson):
     mappingData: MappingData = MappingData()
     exchangeTickets: list[ExchangeTicket] = []
 
+    # base
+    base_skills: dict[int, NiceBaseSkill] = {}
+    base_functions: dict[int, NiceBaseFunction] = {}
+
     class Config:
         keep_untouched = (cached_property,)
 
@@ -98,6 +104,8 @@ class MasterData(BaseModelORJson):
         self.fixedDrops = sort_dict(self.fixedDrops)
         self.mappingData.costume_detail = sort_dict(self.mappingData.costume_detail)
         self.mappingData.trait = sort_dict(self.mappingData.trait)
+        self.base_skills = sort_dict(self.base_skills)
+        self.base_functions = sort_dict(self.base_functions)
 
     @cached_property
     def svt_dict(self) -> dict[int, NiceServant]:
@@ -159,8 +167,8 @@ class MasterData(BaseModelORJson):
     def war_dict(self) -> dict[int, NiceWar]:
         return {x.id: x for x in self.nice_war}
 
-    @cached_property
-    def skill_dict(self) -> dict[int, NiceSkill]:
+    def skill_dict_no_cache(self):
+        # don't include trigger skill, enemy skills
         d: dict[int, NiceSkill] = {}
         skills: list[NiceSkill] = []
         for svt in self.nice_servant_lore:
@@ -180,6 +188,10 @@ class MasterData(BaseModelORJson):
         return d
 
     @cached_property
+    def skill_dict(self) -> dict[int, NiceSkill]:
+        return self.skill_dict_no_cache()
+
+    @cached_property
     def td_dict(self) -> dict[int, NiceTd]:
         d: dict[int, NiceTd] = {}
         for svt in self.nice_servant_lore:
@@ -187,16 +199,19 @@ class MasterData(BaseModelORJson):
                 d[td.id] = td
         return d
 
-    @cached_property
-    def func_dict(self) -> dict[int, NiceFunction]:
+    def func_dict_no_cache(self):
         d: dict[int, NiceFunction] = {}
-        for skill in self.skill_dict.values():
+        for skill in self.skill_dict_no_cache().values():
             for func in skill.functions:
                 d[func.funcId] = func
         for td in self.td_dict.values():
             for func in td.functions:
                 d[func.funcId] = func
         return d
+
+    @cached_property
+    def func_dict(self) -> dict[int, NiceFunction]:
+        return self.func_dict_no_cache()
 
     @cached_property
     def buff_dict(self) -> dict[int, NiceBuff]:

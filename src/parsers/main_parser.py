@@ -33,6 +33,7 @@ from app.schemas.nice import (
     NiceBaseFunction,
     NiceBaseSkill,
     NiceBgm,
+    NiceBuffType,
     NiceEquip,
     NiceEventLotteryBox,
     NiceEventMission,
@@ -106,8 +107,6 @@ class MainParser:
     def __init__(self):
         self.jp_data = MasterData(region=Region.JP)
         self.wiki_data = WikiData()
-        self.base_skills: dict[int, NiceBaseSkill] = {}
-        self.base_functions: dict[int, NiceBaseFunction] = {}
         self.payload: Payload = Payload.parse_obj(load_json("payload.json") or {})
         logger.info(f"Payload: {self.payload}")
 
@@ -179,7 +178,7 @@ class MainParser:
         logger.debug(f"Exported files updated:\n{dump_json(info_remote)}")
 
     @staticmethod
-    def load_master_data(region: Region) -> MasterData:
+    def load_master_data(region: Region, add_trigger: bool = True) -> MasterData:
         logger.info(f"loading {region} master data")
         data = {}
         for k in MasterData.__fields__:
@@ -200,6 +199,46 @@ class MainParser:
                 NiceEventType.questCampaign,
             )
         ]
+        if not add_trigger:
+            return master_data
+
+        def _add_trigger_skill(skill_id: int | None):
+            if not skill_id or skill_id in master_data.base_skills:
+                return
+            skill = AtlasApi.api_model(
+                f"/nice/{region}/skill/{skill_id}", NiceBaseSkill
+            )
+            if skill:
+                master_data.base_skills[skill_id] = skill
+
+        worker = Worker(f"base_skill_{region}", _add_trigger_skill)
+        for func in master_data.func_dict_no_cache().values():
+            if not func.buffs or not func.svals:
+                continue
+            buff = func.buffs[0]
+            if buff.type == NiceBuffType.npattackPrevBuff:
+                worker.add_default(func.svals[0].SkillID)
+            elif buff.type == NiceBuffType.counterFunction:
+                worker.add_default(func.svals[0].CounterId)
+            elif buff.type in [
+                NiceBuffType.reflectionFunction,
+                NiceBuffType.attackFunction,
+                NiceBuffType.commandattackFunction,
+                NiceBuffType.commandattackBeforeFunction,
+                NiceBuffType.damageFunction,
+                NiceBuffType.deadFunction,
+                NiceBuffType.delayFunction,
+                NiceBuffType.selfturnendFunction,
+                NiceBuffType.wavestartFunction,
+                NiceBuffType.commandcodeattackFunction,
+                NiceBuffType.commandcodeattackAfterFunction,
+                NiceBuffType.gutsFunction,
+                NiceBuffType.attackBeforeFunction,
+                NiceBuffType.entryFunction,
+            ]:
+                worker.add_default(func.svals[0].Value)
+        worker.wait()
+        logger.info(f"{region}: loaded {len(master_data.base_skills)} trigger skills")
         return master_data
 
     def filter_quests(self):
@@ -545,10 +584,10 @@ class MainParser:
         _normal_dump(list(wiki_data.summons.values()), "wiki.summons")
         _dump_file(settings.output_wiki / "webcrowMapping.json", "wiki.webcrowMapping")
         _dump_file(settings.output_wiki / "dropRate.json", "dropRate")
-        base_skills = list(self.base_skills.values())
+        base_skills = list(self.jp_data.base_skills.values())
         base_skills.sort(key=lambda x: x.id)
         _normal_dump(base_skills, "baseSkills")
-        base_functions = list(self.base_functions.values())
+        base_functions = list(self.jp_data.base_functions.values())
         base_functions.sort(key=lambda x: x.funcId)
         _normal_dump(base_functions, "baseFunctions")
 
@@ -581,8 +620,8 @@ class MainParser:
     def _encoder(self, obj):
         exclude = {"originalName"}
         if isinstance(obj, NiceSkill):
-            if obj.id not in self.base_skills:
-                self.base_skills[obj.id] = NiceBaseSkill.parse_obj(obj.dict())
+            if obj.id not in self.jp_data.base_skills:
+                self.jp_data.base_skills[obj.id] = NiceBaseSkill.parse_obj(obj.dict())
             exclude.update(NiceBaseSkill.__fields__.keys())
             exclude.remove("id")
             if obj.ruby in ("", "-"):
@@ -590,8 +629,10 @@ class MainParser:
         elif isinstance(obj, NiceBaseSkill):
             exclude.add("detail")
         elif isinstance(obj, NiceFunction):
-            if obj.funcId not in self.base_functions:
-                self.base_functions[obj.funcId] = NiceBaseFunction.parse_obj(obj.dict())
+            if obj.funcId not in self.jp_data.base_functions:
+                self.jp_data.base_functions[obj.funcId] = NiceBaseFunction.parse_obj(
+                    obj.dict()
+                )
             exclude.update(NiceBaseFunction.__fields__.keys())
             exclude.remove("funcId")
         elif isinstance(obj, NiceBaseFunction):
@@ -829,6 +870,8 @@ class MainParser:
             event_extra = self.wiki_data.events.setdefault(
                 event_jp.id, EventW(id=event_jp.id, name=event_jp.name)
             )
+            event_extra.startTime.JP = event_jp.startedAt
+            event_extra.endTime.JP = event_jp.endedAt
             mappings.event_names.setdefault(event_jp.name, MappingBase())
             mappings.event_names.setdefault(event_jp.shortName, MappingBase())
             event = data.event_dict.get(event_jp.id)
