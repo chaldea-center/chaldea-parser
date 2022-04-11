@@ -308,11 +308,18 @@ class MainParser:
                 )
 
         worker = Worker("quest", func=_check_one_quest)
-        _now = int(time.time()) + 60 * 24 * 3600
+        # _now = int(time.time()) + 60 * 24 * 3600
+        hunting_quests = set(
+            [
+                q
+                for event in self.wiki_data.events.values()
+                for q in event.huntingQuestIds
+            ]
+        )
         for war in self.jp_data.nice_war:
             if war.id == 9999:  # Chaldea Gate
                 for spot in war.spots:
-                    spot.quests.clear()
+                    spot.quests = [q for q in spot.quests if q.id in hunting_quests]
                 continue
             if war.id == 1002:  # 曜日クエスト
                 # remove closed quests

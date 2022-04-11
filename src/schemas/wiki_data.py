@@ -75,8 +75,8 @@ class CommandCodeW(BaseModel):
 
 class EventExtraItems(BaseModel):
     id: int
-    detail: NoneStr = None
-    items: dict[int, str] = {}
+    detail: MappingStr = MappingStr()
+    items: dict[int, str] = {}  # <itemId, ap or drop rate or hint>
 
 
 class EventWBase(BaseModel):
@@ -86,8 +86,8 @@ class EventWBase(BaseModel):
     fandomLink: NoneStr = None
     titleBanner: MappingBase[str] = MappingBase()
     noticeLink: MappingStr = MappingStr()
+    huntingId: int = 0
     huntingQuestIds: list[int] = []
-    # item_id: hint, ${var_name}
     extraItems: list[EventExtraItems] = []
 
 
