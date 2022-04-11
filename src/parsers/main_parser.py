@@ -120,6 +120,7 @@ class MainParser:
         self.update_exported_files()
         self.wiki_data = WikiData.parse_dir(full_version=True)
         self.jp_data = self.load_master_data(Region.JP)
+        self.jp_data.sort()
         self.merge_all_mappings()
         if settings.skip_quests:
             logger.warning("skip checking quests data")
@@ -715,14 +716,6 @@ class MainParser:
 
     def merge_all_mappings(self):
         logger.info("merge all mappings")
-        if self.payload.regions:
-            try:
-                self.jp_data.mappingData = MappingData.parse_file(
-                    settings.output_dist / "mappingData.json"
-                )
-            except Exception as e:
-                logger.error(f"failed to load mapping data from last build: {e}")
-                self.payload.regions.clear()
         self._add_enum_mappings()
         self._merge_official_mappings(Region.CN)
         self._fix_cn_translation()
@@ -881,7 +874,12 @@ class MainParser:
 
         for svt_jp in jp_data.nice_servant_lore:
             svt = data.svt_id_dict.get(svt_jp.id)
-            _update_mapping(mappings.svt_names, svt_jp.name, svt.name if svt else None)
+            _update_mapping(
+                mappings.svt_names,
+                svt_jp.name,
+                svt.name if svt else None,
+                skip_exists=True,
+            )
             __update_assension_add(
                 mappings.svt_names,
                 svt_jp.ascensionAdd.overWriteServantName,
