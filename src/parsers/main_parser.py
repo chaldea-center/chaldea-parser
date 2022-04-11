@@ -928,41 +928,47 @@ class MainParser:
                 costume_jp.shortName,
                 costume.shortName if costume else None,
             )
-            mappings.costume_detail.setdefault(
+            cos_w = mappings.costume_detail.setdefault(
                 costume_jp.costumeCollectionNo, MappingStr()
-            ).update(region, costume.detail if costume else None)
+            )
+            cos_w.JP = costume_jp.detail
+            if costume and costume.detail and costume.detail != costume_jp.detail:
+                cos_w.update(region, costume.detail)
         for ce_jp in jp_data.nice_equip_lore:
             ce = data.ce_id_dict.get(ce_jp.id)
             _update_mapping(mappings.ce_names, ce_jp.name, ce.name if ce else None)
+            ce_w = self.wiki_data.craftEssences.setdefault(
+                ce_jp.collectionNo, CraftEssenceW(collectionNo=ce_jp.collectionNo)
+            )
+            if ce_jp.profile and ce_jp.profile.comments:
+                ce_w.profile.update(Region.JP, ce_jp.profile.comments[0].comment)
             if not ce:
                 continue
             if region != Region.JP and ce.profile and ce.profile.comments:
-                ce_w = self.wiki_data.craftEssences.setdefault(
-                    ce_jp.collectionNo, CraftEssenceW(collectionNo=ce.collectionNo)
-                )
-                ce_w.profile.update(region, ce.profile.comments[0].comment)
+                comment = ce.profile.comments[0].comment
+                if comment != ce_w.profile.JP:
+                    ce_w.profile.update(region, comment)
 
         for cc_jp in jp_data.nice_command_code:
             cc = data.cc_id_dict.get(cc_jp.id)
             _update_mapping(mappings.cc_names, cc_jp.name, cc.name if cc else None)
+            cc_w = self.wiki_data.commandCodes.setdefault(
+                cc_jp.collectionNo, CommandCodeW(collectionNo=cc_jp.collectionNo)
+            )
+            cc_w.profile.update(Region.JP, cc_jp.comment)
             if not cc:
                 continue
-            if region != Region.JP and cc.comment:
-                cc_w = self.wiki_data.commandCodes.setdefault(
-                    cc_jp.collectionNo, CommandCodeW(collectionNo=cc.collectionNo)
-                )
+            if cc.comment and cc.comment != cc_jp.comment:
                 cc_w.profile.update(region, cc.comment)
         for mc_jp in jp_data.nice_mystic_code:
             mc = data.mc_dict.get(mc_jp.id)
             _update_mapping(mappings.mc_names, mc_jp.name, mc.name if mc else None)
-            if mc and region != Region.JP and mc.detail:
-                # mc_w = self.wiki_data.mysticCodes.setdefault(mc_jp.id, MysticCodeW(id=mc_jp.id))
-                # mc_w.detail.update(region, mc.detail)
-                mappings.mc_detail.setdefault(mc_jp.id, MappingStr()).update(
-                    region, mc.detail
-                )
+            mc_w = mappings.mc_detail.setdefault(mc_jp.id, MappingStr())
+            mc_w.JP = mc_jp.detail
+            if mc and mc.detail and mc.detail != mc_jp.detail:
+                mc_w.update(region, mc.detail)
 
-        def _process_detail(detail: str | None):
+        def _process_effect_detail(detail: str | None):
             if not detail:
                 return detail
             return detail.replace("[g][o]▲[/o][/g]", "▲")
@@ -979,13 +985,13 @@ class MainParser:
             )
             if not skill:
                 continue
-            detail_jp = _process_detail(skill_jp.unmodifiedDetail)
+            detail_jp = _process_effect_detail(skill_jp.unmodifiedDetail)
             if not detail_jp:
                 continue
             _update_mapping(
                 mappings.skill_detail,
                 detail_jp,
-                _process_detail(skill.unmodifiedDetail),
+                _process_effect_detail(skill.unmodifiedDetail),
             )
         for td_jp in jp_data.td_dict.values():
             td = data.td_dict.get(td_jp.id)
@@ -995,13 +1001,13 @@ class MainParser:
             _update_mapping(mappings.td_types, td_jp.type, td.type if td else None)
             if not td:
                 continue
-            detail_jp = _process_detail(td_jp.unmodifiedDetail)
+            detail_jp = _process_effect_detail(td_jp.unmodifiedDetail)
             if not detail_jp:
                 continue
             _update_mapping(
                 mappings.td_detail,
                 detail_jp,
-                _process_detail(td.unmodifiedDetail),
+                _process_effect_detail(td.unmodifiedDetail),
             )
         for func_jp in jp_data.func_dict.values():
             if func_jp.funcPopupText in ["", "-", "なし"]:
