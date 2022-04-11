@@ -1,5 +1,6 @@
 import datetime
 import hashlib
+import itertools
 import re
 import shutil
 import time
@@ -119,7 +120,6 @@ class MainParser:
         self.update_exported_files()
         self.wiki_data = WikiData.parse_dir(full_version=True)
         self.jp_data = self.load_master_data(Region.JP)
-        self.jp_data.sort()
         self.merge_all_mappings()
         if settings.skip_quests:
             logger.warning("skip checking quests data")
@@ -199,6 +199,7 @@ class MainParser:
                 NiceEventType.questCampaign,
             )
         ]
+        master_data.sort()
         if not add_trigger:
             return master_data
 
@@ -212,14 +213,16 @@ class MainParser:
                 master_data.base_skills[skill_id] = skill
 
         worker = Worker(f"base_skill_{region}", _add_trigger_skill)
-        for func in master_data.func_dict_no_cache().values():
+        for func in master_data.func_list_no_cache():
             if not func.buffs or not func.svals:
                 continue
             buff = func.buffs[0]
             if buff.type == NiceBuffType.npattackPrevBuff:
                 worker.add_default(func.svals[0].SkillID)
             elif buff.type == NiceBuffType.counterFunction:
-                worker.add_default(func.svals[0].CounterId)
+                # this is TD
+                # worker.add_default(func.svals[0].CounterId)
+                ...
             elif buff.type in [
                 NiceBuffType.reflectionFunction,
                 NiceBuffType.attackFunction,
@@ -819,7 +822,7 @@ class MainParser:
             m: dict[_KT, MappingBase[_KV]],
             _key: _KT,
             value: _KV | None,
-            skip_exists=False,
+            skip_exists=True,
             skip_unknown_key=False,
         ):
             if _key is None:
@@ -1021,13 +1024,17 @@ class MainParser:
                 return detail
             return detail.replace("[g][o]▲[/o][/g]", "▲")
 
-        for skill_jp in jp_data.skill_dict.values():
+        for skill_jp in itertools.chain(
+            jp_data.skill_dict.values(), jp_data.base_skills.values()
+        ):
             if skill_jp.name in mappings.ce_names or skill_jp.name in mappings.cc_names:
                 continue
             for skill_add in skill_jp.skillAdd:
                 # manually add
                 _update_mapping(mappings.skill_names, skill_add.name, None)
-            skill = data.skill_dict.get(skill_jp.id)
+            skill = data.skill_dict.get(skill_jp.id) or data.base_skills.get(
+                skill_jp.id
+            )
             _update_mapping(
                 mappings.skill_names, skill_jp.name, skill.name if skill else None
             )

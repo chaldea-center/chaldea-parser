@@ -167,9 +167,8 @@ class MasterData(BaseModelORJson):
     def war_dict(self) -> dict[int, NiceWar]:
         return {x.id: x for x in self.nice_war}
 
-    def skill_dict_no_cache(self):
+    def skill_list_no_cache(self):
         # don't include trigger skill, enemy skills
-        d: dict[int, NiceSkill] = {}
         skills: list[NiceSkill] = []
         for svt in self.nice_servant_lore:
             skills.extend(svt.skills)
@@ -183,13 +182,11 @@ class MasterData(BaseModelORJson):
             skills.extend(cc.skills)
         for mc in self.nice_mystic_code:
             skills.extend(mc.skills)
-        for skill in skills:
-            d[skill.id] = skill
-        return d
+        return skills
 
     @cached_property
     def skill_dict(self) -> dict[int, NiceSkill]:
-        return self.skill_dict_no_cache()
+        return {skill.id: skill for skill in self.skill_list_no_cache()}
 
     @cached_property
     def td_dict(self) -> dict[int, NiceTd]:
@@ -199,19 +196,17 @@ class MasterData(BaseModelORJson):
                 d[td.id] = td
         return d
 
-    def func_dict_no_cache(self):
-        d: dict[int, NiceFunction] = {}
-        for skill in self.skill_dict_no_cache().values():
-            for func in skill.functions:
-                d[func.funcId] = func
+    def func_list_no_cache(self):
+        funcs: list[NiceFunction] = []
+        for skill in self.skill_list_no_cache():
+            funcs.extend(skill.functions)
         for td in self.td_dict.values():
-            for func in td.functions:
-                d[func.funcId] = func
-        return d
+            funcs.extend(td.functions)
+        return funcs
 
     @cached_property
     def func_dict(self) -> dict[int, NiceFunction]:
-        return self.func_dict_no_cache()
+        return {func.funcId: func for func in self.func_list_no_cache()}
 
     @cached_property
     def buff_dict(self) -> dict[int, NiceBuff]:
