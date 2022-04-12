@@ -1027,17 +1027,20 @@ class MainParser:
         for skill_jp in itertools.chain(
             jp_data.skill_dict.values(), jp_data.base_skills.values()
         ):
-            if skill_jp.name in mappings.ce_names or skill_jp.name in mappings.cc_names:
-                continue
+
             for skill_add in skill_jp.skillAdd:
                 # manually add
                 _update_mapping(mappings.skill_names, skill_add.name, None)
             skill = data.skill_dict.get(skill_jp.id) or data.base_skills.get(
                 skill_jp.id
             )
-            _update_mapping(
-                mappings.skill_names, skill_jp.name, skill.name if skill else None
-            )
+            if (
+                skill_jp.name not in mappings.ce_names
+                and skill_jp.name not in mappings.cc_names
+            ):
+                _update_mapping(
+                    mappings.skill_names, skill_jp.name, skill.name if skill else None
+                )
             if not skill:
                 continue
             detail_jp = _process_effect_detail(skill_jp.unmodifiedDetail)
