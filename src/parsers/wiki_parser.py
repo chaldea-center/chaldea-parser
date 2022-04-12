@@ -66,6 +66,14 @@ class WikiParser:
 
     def init_wiki_data(self):
         self.wiki_data = WikiData.parse_dir(full_version=False)
+        mc_transl = self.wiki_data.mcTransl
+        for k in list(mc_transl.svt_names.keys()):
+            mc_transl.svt_names.pop(k)
+        for k in list(mc_transl.ce_names.keys()):
+            mc_transl.ce_names.pop(k)
+        for k in list(mc_transl.cc_names.keys()):
+            mc_transl.cc_names.pop(k)
+
         chara_names: dict = (
             load_json(settings.output_mapping / "chara_names.json") or {}
         )
@@ -86,9 +94,12 @@ class WikiParser:
 
             wikitext = mwparse(MOONCELL.get_page_text(svt_add.mcLink))
             params = parse_template(wikitext, r"^{{基础数值")
-            name_cn = params.get("中文名")
-            if name_cn:
-                self.wiki_data.mcTransl.svt_names[svt_add.collectionNo] = name_cn
+            name_cn, name_cn2 = params.get2("中文名"), params.get2("中文名2")
+            name_jp, name_jp2 = params.get2("日文名"), params.get2("日文名2")
+            if name_cn and name_jp:
+                self.wiki_data.mcTransl.svt_names[name_jp] = name_cn
+            if name_cn2 and name_jp2:
+                self.wiki_data.mcTransl.svt_names[name_jp2] = name_cn2
             svt_add.nameOther.extend(re.split(r"[,，&]", params.get2("昵称") or ""))
             svt_add.nameOther = [s for s in sorted(set(svt_add.nameOther)) if s]
 
@@ -155,8 +166,9 @@ class WikiParser:
             wikitext = mwparse(MOONCELL.get_page_text(ce_add.mcLink))
             params = parse_template(wikitext, r"^{{概念礼装")
             name_cn = params.get2("名称")
-            if name_cn:
-                self.wiki_data.mcTransl.ce_names[ce_add.collectionNo] = name_cn
+            name_jp = params.get2("日文名称")
+            if name_cn and name_jp:
+                self.wiki_data.mcTransl.ce_names[name_jp] = name_cn
             profile_cn = params.get2("解说")
             if profile_cn:
                 ce_add.profile.CN = profile_cn
@@ -187,8 +199,9 @@ class WikiParser:
             wikitext = mwparse(MOONCELL.get_page_text(cc_add.mcLink))
             params = parse_template(wikitext, r"^{{指令纹章")
             name_cn = params.get2("名称")
-            if name_cn:
-                self.wiki_data.mcTransl.cc_names[cc_add.collectionNo] = name_cn
+            name_jp = params.get2("日文名称")
+            if name_cn and name_jp:
+                self.wiki_data.mcTransl.cc_names[name_jp] = name_cn
             profile_cn = params.get2("解说")
             if profile_cn:
                 cc_add.profile.CN = profile_cn

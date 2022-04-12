@@ -20,12 +20,12 @@ class MooncellTranslation(BaseModelORJson):
     <id/jp_name, cn_name>
     """
 
-    svt_names: dict[int, str] = {}
+    svt_names: dict[str, str] = {}
     skill_names: dict[str, str] = {}
     td_names: dict[str, str] = {}
     td_ruby: dict[str, str] = {}
-    ce_names: dict[int, str] = {}
-    cc_names: dict[int, str] = {}
+    ce_names: dict[str, str] = {}
+    cc_names: dict[str, str] = {}
     event_names: dict[str, str] = {}
 
     def sort(self):

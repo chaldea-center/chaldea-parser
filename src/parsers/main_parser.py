@@ -1126,24 +1126,18 @@ class MainParser:
         mc_transl = MooncellTranslation.parse_obj(
             load_json(settings.output_wiki / "mcTransl.json", {})
         )
-        for svt_no, name in mc_transl.svt_names.items():
-            svt = self.jp_data.svt_dict.get(svt_no)
-            if svt:
-                _update_mapping(mappings.svt_names, svt.name, name, True, True)
+        for name_jp, name_cn in mc_transl.svt_names.items():
+            _update_mapping(mappings.svt_names, name_jp, name_cn, True, True)
         for skill_jp, skill_cn in mc_transl.skill_names.items():
             _update_mapping(mappings.skill_names, skill_jp, skill_cn, True, True)
         for td_name_jp, td_name_cn in mc_transl.td_names.items():
             _update_mapping(mappings.td_names, td_name_jp, td_name_cn, True, True)
         for td_ruby_jp, td_ruby_cn in mc_transl.td_ruby.items():
             _update_mapping(mappings.td_ruby, td_ruby_jp, td_ruby_cn, True, True)
-        for ce_no, name in mc_transl.ce_names.items():
-            ce = self.jp_data.ce_dict.get(ce_no)
-            if ce:
-                _update_mapping(mappings.ce_names, ce.name, name, True, True)
-        for cc_no, name in mc_transl.cc_names.items():
-            cc = self.jp_data.cc_dict.get(cc_no)
-            if cc:
-                _update_mapping(mappings.cc_names, cc.name, name, True, True)
+        for name_jp, name_cn in mc_transl.ce_names.items():
+            _update_mapping(mappings.ce_names, name_jp, name_cn, True, True)
+        for name_jp, name_cn in mc_transl.cc_names.items():
+            _update_mapping(mappings.cc_names, name_jp, name_cn, True, True)
         for name_jp, name_cn in mc_transl.event_names.items():
             _update_mapping(mappings.event_names, name_jp, name_cn, True, True)
 
