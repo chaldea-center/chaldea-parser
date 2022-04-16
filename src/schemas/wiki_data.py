@@ -40,7 +40,7 @@ class MooncellTranslation(BaseModelORJson):
 
 class ServantW(BaseModel):
     collectionNo: int
-    nameOther: list[str] = []
+    nicknames: MappingBase[list[str]] = MappingBase()
     obtains: list[SvtObtain] = []
     aprilFoolAssets: list[str] = []
     aprilFoolProfile: MappingStr = MappingStr()

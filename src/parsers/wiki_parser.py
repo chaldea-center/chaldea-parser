@@ -23,6 +23,7 @@ from ..schemas.wiki_data import (
     WikiData,
 )
 from ..utils import Worker, count_time, dump_json, load_json, logger
+from ..utils.helper import sort_dict
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.template import mwparse, parse_template, parse_template_list, remove_tag
 
@@ -87,8 +88,13 @@ class WikiParser:
         def _parse_one(record: dict):
             svt_add = self.wiki_data.get_svt(int(record["id"]))
             svt_add.mcLink = record["name_link"]
-            svt_add.nameOther = [s.strip() for s in record["name_other"].split("&")]
-            obtains = [SvtObtain.from_cn(m) for m in record["method"].split("<br>")]
+            nicknames: set[str] = set()
+            nicknames.update([s.strip() for s in record["name_other"].split("&")])
+            obtains = [
+                SvtObtain.from_cn(m)
+                for m in record["method"].split("<br>")
+                if m != "活动通关奖励"
+            ]
             svt_add.obtains = sorted(set(obtains))
             # profile
 
@@ -100,8 +106,14 @@ class WikiParser:
                 self.wiki_data.mcTransl.svt_names[name_jp] = name_cn
             if name_cn2 and name_jp2:
                 self.wiki_data.mcTransl.svt_names[name_jp2] = name_cn2
-            svt_add.nameOther.extend(re.split(r"[,，&]", params.get2("昵称") or ""))
-            svt_add.nameOther = [s for s in sorted(set(svt_add.nameOther)) if s]
+            nicknames.update(re.split(r"[,，&]", params.get2("昵称") or ""))
+            if svt_add.nicknames.CN:
+                nicknames.update(svt_add.nicknames.CN)
+            nicknames = set([s for s in nicknames if s])
+            if nicknames:
+                svt_add.nicknames.CN = sorted(nicknames)
+            else:
+                svt_add.nicknames.CN = None
 
             for index in range(1, 15):
                 if "愚人节" in (params.get(f"立绘{index}") or ""):
@@ -186,7 +198,7 @@ class WikiParser:
                     ce_add.unknownCharacters.append(chara)
                     self.unknown_chara_mapping.setdefault(chara, MappingStr())
 
-        worker = Worker.from_map(_parse_one, index_data, name="mc_cc")
+        worker = Worker.from_map(_parse_one, index_data, name="mc_ce")
         worker.wait()
 
     def mc_cc(self):
@@ -465,12 +477,13 @@ class WikiParser:
         self.sort()
         self.wiki_data.save(full_version=True)
         dump_json(
-            self.unknown_chara_mapping, settings.output_mapping / "chara_names.json"
+            sort_dict(self.unknown_chara_mapping),
+            settings.output_mapping / "chara_names.json",
         )
 
 
 def _mc_index_data(page: str) -> list[dict[str, Optional[str]]]:
-    text = MOONCELL.get_page_text(page)
+    text = MOONCELL.get_page_text(page, allow_cache=settings.is_debug)
     data: list[dict[str, Optional[str]]] = []
     for block in text.split("\n\n"):
         d = {}

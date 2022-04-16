@@ -12,16 +12,16 @@ NEVER_CLOSED_TIMESTAMP = 1800000000  # 1893423600
 
 AtlasApi = HttpApiUtil(
     api_server="https://api.atlasacademy.io",
-    rate_calls=90,
-    rate_period=5,
+    rate_calls=10,
+    rate_period=1,
     db_path=str(Path(settings.cache_dir).joinpath("http_cache/atlas")),
     expire_after=-1,
 )
 
 McApi = HttpApiUtil(
     api_server="https://fgo.wiki/api.php",
-    rate_calls=90,
-    rate_period=5,
+    rate_calls=3,
+    rate_period=1,
     db_path=str(Path(settings.cache_dir).joinpath("http_cache/mooncell")),
     expire_after=-1,
 )

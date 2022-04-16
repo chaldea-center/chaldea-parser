@@ -64,7 +64,7 @@ def dump_json(
     non_str_keys: bool = True,
     append_newline: bool = True,
     option: Optional[int] = None,
-    sort_keys: Optional[int] = None,
+    sort_keys: Optional[bool] = None,
 ) -> Optional[str]:
     if option is None:
         option = 0

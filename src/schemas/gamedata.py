@@ -30,7 +30,7 @@ from app.schemas.nice import (
 from app.schemas.raw import MstCv, MstIllustrator
 from pydantic import BaseModel
 
-from ..utils import sort_dict
+from ..utils import NEVER_CLOSED_TIMESTAMP, sort_dict
 from .const_data import BuffActionDetail, CardInfo, GrailCostDetail, MasterUserLvDetail
 from .mappings import MappingData
 
@@ -237,7 +237,7 @@ class MasterData(BaseModelORJson):
                     if (
                         war.id < 999
                         or war.id in (1001, 1003)
-                        or (war.id == 1002 and quest.closedAt > 1893420000)
+                        or (war.id == 1002 and quest.closedAt > NEVER_CLOSED_TIMESTAMP)
                     ):
                         d[quest.id] = quest
         return d

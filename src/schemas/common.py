@@ -70,7 +70,6 @@ class SvtObtain(str, Enum):
 
     @staticmethod
     def from_cn(s: str) -> "SvtObtain":
-        s = s.strip()
         return {
             "友情点召唤": SvtObtain.friendPoint,
             "剧情限定": SvtObtain.story,

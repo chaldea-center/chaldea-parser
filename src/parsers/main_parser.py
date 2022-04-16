@@ -538,7 +538,8 @@ class MainParser:
         _normal_dump(data.basic_svt, "entities")
         _normal_dump(data.exchangeTickets, "exchangeTickets")
         _normal_dump(data.nice_bgm, "bgms", encoder=pydantic_encoder)
-        _normal_dump(data.mappingData.dict(exclude_none=True), "mappingData")
+        data.mappingData._iter(exclude_none=True)
+        _normal_dump(self._encode_mapping_data(data.mappingData), "mappingData")
         _dump_by_ranges(
             data.event_dict,
             ranges=[
@@ -619,6 +620,18 @@ class MainParser:
         from .update_mapping import run_mapping_update
 
         run_mapping_update()
+
+    @staticmethod
+    def _encode_mapping_data(data: MappingData) -> dict:
+        r = {}
+        for k, v in data._iter(exclude_none=True):
+            if isinstance(v, MappingBase):
+                r[k] = v.dict(exclude_none=True)
+            elif isinstance(v, dict):
+                r[k] = sort_dict(v)
+            else:
+                r[k] = v
+        return r
 
     def _encoder(self, obj):
         exclude = {"originalName"}

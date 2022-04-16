@@ -15,7 +15,6 @@ from src.utils.helper import dump_json
 
 def run_mapping_update():
     _update_mapping_files()
-    ...
 
 
 def _update_mapping_files():
