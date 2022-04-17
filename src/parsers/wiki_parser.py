@@ -212,7 +212,8 @@ class WikiParser:
             params = parse_template(wikitext, r"^{{指令纹章")
             name_cn = params.get2("名称")
             name_jp = params.get2("日文名称")
-            if name_cn and name_jp:
+            if name_cn and name_jp and cc_add.collectionNo != 113:
+                # 113-小犭贪
                 self.wiki_data.mcTransl.cc_names[name_jp] = name_cn
             profile_cn = params.get2("解说")
             if profile_cn:

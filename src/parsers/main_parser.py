@@ -1223,12 +1223,14 @@ class MainParser:
             "war_names.json": mappings.war_names,
         }
         for src_fn, dest in src_mapping.items():
-            source = load_json(na_folder / src_fn, {})
+            source: dict[str, str] = load_json(na_folder / src_fn) or {}
             if not source:
                 continue
             for key, trans in dest.items():
                 value = source.get(key)
                 if value and value == key:
+                    continue
+                if value and "\n" in value and "\n" not in key:
                     continue
                 if re.findall(r"20[1-2][0-9]", str(value)) and trans.NA:
                     continue
