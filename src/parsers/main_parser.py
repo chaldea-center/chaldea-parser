@@ -861,7 +861,7 @@ class MainParser:
         for cv_jp in jp_data.nice_cv:
             cv = data.cv_dict.get(cv_jp.id)
             _update_mapping(mappings.cv_names, cv_jp.name, cv.name if cv else None)
-            cv_names = [str(s).strip() for s in re.split(r"[&＆\s]+", cv_jp.name) if s]
+            cv_names = [str(s).strip() for s in re.split(r"[&＆]+", cv_jp.name) if s]
             if len(cv_names) > 1:
                 for one_name in cv_names:
                     mappings.cv_names.setdefault(one_name, MappingBase())
@@ -873,7 +873,7 @@ class MainParser:
                 illustrator.name if illustrator else None,
             )
             illustrator_names = [
-                str(s).strip() for s in re.split(r"[&＆\s]+", illustrator_jp.name) if s
+                str(s).strip() for s in re.split(r"[&＆]+", illustrator_jp.name) if s
             ]
             if len(illustrator_names) > 1:
                 for one_name in illustrator_names:

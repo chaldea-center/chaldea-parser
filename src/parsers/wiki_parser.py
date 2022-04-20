@@ -93,7 +93,7 @@ class WikiParser:
             obtains = [
                 SvtObtain.from_cn(m)
                 for m in record["method"].split("<br>")
-                if m != "活动通关奖励"
+                if m not in ("活动通关奖励", "事前登录赠送")
             ]
             svt_add.obtains = sorted(set(obtains))
             # profile
