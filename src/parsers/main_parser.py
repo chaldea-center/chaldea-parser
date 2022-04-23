@@ -24,6 +24,7 @@ from app.schemas.gameenums import (
     NiceGender,
     NiceGiftType,
     NiceItemType,
+    NiceMissionProgressType,
     NiceQuestAfterClearType,
 )
 from app.schemas.nice import (
@@ -66,6 +67,7 @@ from ..schemas.common import (
     CEObtain,
     DataVersion,
     FileVersion,
+    ItemCategory,
     MappingBase,
     MappingStr,
     OpenApiInfo,
@@ -819,6 +821,12 @@ class MainParser:
             enums.svt_obtain.setdefault(v.value, MappingStr())
         for v in CEObtain.__members__.values():
             enums.ce_obtain.setdefault(v.value, MappingStr())
+            enums.svt_obtain.setdefault(v.value, MappingStr())
+        for v in NiceMissionProgressType.__members__.values():
+            enums.mission_progress_type.setdefault(v.value, MappingStr())
+            enums.svt_obtain.setdefault(v.value, MappingStr())
+        for v in ItemCategory.__members__.values():
+            enums.item_category.setdefault(v.value, MappingStr())
 
     def _merge_official_mappings(self, region: Region):
         logger.info(f"merging official translations from {region}")

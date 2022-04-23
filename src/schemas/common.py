@@ -124,6 +124,15 @@ class SummonType(str, Enum):
     unknown = "unknown"
 
 
+class ItemCategory(str, Enum):
+    normal = "normal"
+    ascension = "ascension"
+    skill = "skill"
+    special = "special"
+    event = "event"
+    other = "other"
+
+
 class OpenApiInfo(BaseModel):
     # title: str
     # description: str
