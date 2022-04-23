@@ -14,7 +14,10 @@ class EnumMapping(BaseModel):
     svt_obtain: dict[str, MappingStr] = {}
     ce_obtain: dict[str, MappingStr] = {}
     mission_progress_type: dict[str, MappingStr] = {}
+    mission_type: dict[str, MappingStr] = {}
     item_category: dict[str, MappingStr] = {}
+    custom_mission_type: dict[str, MappingStr] = {}
+    np_damage_type: dict[str, MappingStr] = {}
 
 
 class MappingData(BaseModel):

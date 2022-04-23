@@ -25,6 +25,7 @@ from app.schemas.gameenums import (
     NiceGiftType,
     NiceItemType,
     NiceMissionProgressType,
+    NiceMissionType,
     NiceQuestAfterClearType,
 )
 from app.schemas.nice import (
@@ -65,11 +66,13 @@ from ..config import settings
 from ..schemas.common import (
     AtlasExportFile,
     CEObtain,
+    CustomMissionType,
     DataVersion,
     FileVersion,
     ItemCategory,
     MappingBase,
     MappingStr,
+    NpDamageType,
     OpenApiInfo,
     Payload,
     SvtObtain,
@@ -825,8 +828,15 @@ class MainParser:
         for v in NiceMissionProgressType.__members__.values():
             enums.mission_progress_type.setdefault(v.value, MappingStr())
             enums.svt_obtain.setdefault(v.value, MappingStr())
+        for v in NiceMissionType.__members__.values():
+            enums.mission_type.setdefault(v.value, MappingStr())
+        # custom enums
         for v in ItemCategory.__members__.values():
             enums.item_category.setdefault(v.value, MappingStr())
+        for v in CustomMissionType.__members__.values():
+            enums.custom_mission_type.setdefault(v.value, MappingStr())
+        for v in NpDamageType.__members__.values():
+            enums.np_damage_type.setdefault(v.value, MappingStr())
 
     def _merge_official_mappings(self, region: Region):
         logger.info(f"merging official translations from {region}")

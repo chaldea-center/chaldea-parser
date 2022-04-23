@@ -133,6 +133,22 @@ class ItemCategory(str, Enum):
     other = "other"
 
 
+class CustomMissionType(str, Enum):
+    trait = "trait"
+    questTrait = "questTrait"
+    quest = "quest"
+    enemy = "enemy"
+    servantClass = "servantClass"
+    enemyClass = "enemyClass"
+    enemyNotServantClass = "enemyNotServantClass"
+
+
+class NpDamageType(str, Enum):
+    support = "support"
+    singleTarget = "singleTarget"
+    aoe = "aoe"
+
+
 class OpenApiInfo(BaseModel):
     # title: str
     # description: str
