@@ -106,7 +106,8 @@ class WikiTool:
                 if self._count > 100:
                     self._count = 0
                     self.save_cache()
-                self.active_requests.remove(name)
+                if name in self.active_requests:
+                    self.active_requests.remove(name)
                 return cached
             except Exception as e:
                 retry_n += 1
@@ -142,7 +143,8 @@ class WikiTool:
                 if self._count > 100:
                     self._count = 0
                     self.save_cache()
-                self.active_requests.remove(name)
+                if name in self.active_requests:
+                    self.active_requests.remove(name)
                 return cached
             except Exception as e:
                 retry_n += 1
