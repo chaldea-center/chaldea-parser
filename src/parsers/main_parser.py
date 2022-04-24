@@ -118,9 +118,13 @@ class MainParser:
 
     @count_time
     def start(self):
-        if self.payload.clearCache:
-            logger.warning("clear all caches: exported files, api cache, wiki cache")
-            shutil.rmtree(settings.cache_dir, ignore_errors=True)
+        if self.payload.clearCacheHttp:
+            logger.warning("clear all http_cache")
+            shutil.rmtree(settings.cache_http_cache, ignore_errors=True)
+        if self.payload.clearCacheWiki:
+            logger.warning("clear all wiki cache")
+            shutil.rmtree(settings.cache_wiki, ignore_errors=True)
+
         logger.info("update_exported_files")
         self.update_exported_files()
         self.wiki_data = WikiData.parse_dir(full_version=True)

@@ -52,6 +52,14 @@ class Settings(BaseSettings):
     def output_mapping(self) -> Path:
         return Path(self.output_dir) / "mappings"
 
+    @property
+    def cache_http_cache(self) -> Path:
+        return Path(self.cache_dir) / "http_cache"
+
+    @property
+    def cache_wiki(self) -> Path:
+        return Path(self.cache_dir) / "wiki"
+
 
 settings = Settings()
 

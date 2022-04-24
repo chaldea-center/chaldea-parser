@@ -218,4 +218,5 @@ class DataVersion(BaseModel):
 
 class Payload(BaseModel):
     regions: set[Region] = set()  # from atlas
-    clearCache: bool = False
+    clearCacheHttp: bool = False
+    clearCacheWiki: bool = False

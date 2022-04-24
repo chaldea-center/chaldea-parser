@@ -37,7 +37,7 @@ class WikiTool:
         self.pwd = pwd
         self.site: mwclient.Site = mwclient.Site(host=host, path=path)
         self.site2 = pywikibot.Site(url=f"https://{host}/api.php")
-        self._fp = Path(settings.cache_dir) / "wiki" / f"{host}.json"
+        self._fp = Path(settings.cache_wiki) / f"{host}.json"
         _now = int(time.time())
         self.cache = WikiCache(host=self.host, created=_now, updated=_now)
         self._temp_disabled = False
