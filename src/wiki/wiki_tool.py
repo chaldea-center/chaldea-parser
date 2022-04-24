@@ -63,6 +63,10 @@ class WikiTool:
             finally:
                 ...
 
+    def clear(self):
+        self.cache.pages.clear()
+        self.cache.images.clear()
+
     @sleep_and_retry
     @limits(3, 4)
     def _call_request_page(self, name: str) -> WikiPageInfo:

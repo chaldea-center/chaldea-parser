@@ -90,6 +90,7 @@ from ..schemas.wiki_data import (
 from ..utils import (
     NEVER_CLOSED_TIMESTAMP,
     AtlasApi,
+    McApi,
     NumDict,
     Worker,
     count_time,
@@ -98,6 +99,7 @@ from ..utils import (
     logger,
     sort_dict,
 )
+from ..wiki import FANDOM, MOONCELL
 
 
 _KT = TypeVar("_KT", str, int)
@@ -120,10 +122,12 @@ class MainParser:
     def start(self):
         if self.payload.clearCacheHttp:
             logger.warning("clear all http_cache")
-            shutil.rmtree(settings.cache_http_cache, ignore_errors=True)
+            AtlasApi.cache_storage.clear()
+            McApi.cache_storage.clear()
         if self.payload.clearCacheWiki:
             logger.warning("clear all wiki cache")
-            shutil.rmtree(settings.cache_wiki, ignore_errors=True)
+            MOONCELL.clear()
+            FANDOM.clear()
 
         logger.info("update_exported_files")
         self.update_exported_files()

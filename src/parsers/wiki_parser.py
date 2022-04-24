@@ -26,7 +26,6 @@ from ..utils import Worker, count_time, dump_json, load_json, logger
 from ..utils.helper import sort_dict
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.template import mwparse, parse_template, parse_template_list, remove_tag
-
 from ..wiki.wiki_tool import KnownTimeZone
 
 
