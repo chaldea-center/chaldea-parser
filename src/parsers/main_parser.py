@@ -50,6 +50,7 @@ from app.schemas.nice import (
     NiceLore,
     NiceMap,
     NiceQuest,
+    NiceQuestPhase,
     NiceQuestType,
     NiceServant,
     NiceShop,
@@ -682,6 +683,9 @@ class MainParser:
             exclude.update({"mapGimmicks"})
         elif isinstance(obj, NiceTd):
             exclude.add("detail")
+        elif isinstance(obj, NiceQuestPhase):
+            if obj.afterClear == NiceQuestAfterClearType.repeatLast:
+                exclude.update({"supportServants"})
         elif isinstance(obj, NiceQuest):
             # exclude.update({"warLongName"})
             pass
