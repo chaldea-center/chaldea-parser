@@ -10,7 +10,7 @@ So make sure all changes here have been token affect in distribution before `upd
 """
 from src.config import settings
 from src.schemas.gamedata import MappingData
-from src.utils.helper import dump_json
+from src.utils.helper import dump_json, load_json, sort_dict, logger
 
 
 def run_mapping_update():
@@ -32,10 +32,11 @@ def _update_mapping_files():
         ):
             # release->MappingBase[list[int]]
             continue
-        if key == "chara_names":
-            continue
         fp = folder / f"{key}.json"
-        print(f"writing to {fp}")
+        if key in ("chara_names", "trait_redirect"):
+            dump_json(sort_dict(load_json(fp) or {}), fp)
+            continue
+        logger.debug(f"writing to {fp}")
         dump_json(trans, fp)
 
 

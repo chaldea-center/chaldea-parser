@@ -36,6 +36,7 @@ from app.schemas.nice import (
     NiceBaseFunction,
     NiceBaseSkill,
     NiceBgm,
+    NiceBuff,
     NiceBuffType,
     NiceEquip,
     NiceEventLotteryBox,
@@ -108,10 +109,9 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
-MIN_APP = "1.6.9"
+MIN_APP = "1.8.0"
 
 
-# noinspection DuplicatedCode
 class MainParser:
     def __init__(self):
         self.jp_data = MasterData(region=Region.JP)
@@ -217,7 +217,10 @@ class MainParser:
         if not add_trigger:
             return master_data
 
-        def _add_trigger_skill(skill_id: int | None):
+        def _add_trigger_skill(buff: NiceBuff, skill_id: int | None):
+            master_data.mappingData.func_popuptext.setdefault(
+                buff.type.value, MappingStr()
+            )
             if not skill_id or skill_id in master_data.base_skills:
                 return
             skill = AtlasApi.api_model(
@@ -232,11 +235,11 @@ class MainParser:
                 continue
             buff = func.buffs[0]
             if buff.type == NiceBuffType.npattackPrevBuff:
-                worker.add_default(func.svals[0].SkillID)
+                worker.add_default(buff, func.svals[0].SkillID)
             elif buff.type == NiceBuffType.counterFunction:
                 # this is TD
                 # worker.add_default(func.svals[0].CounterId)
-                ...
+                worker.add_default(buff, None)
             elif buff.type in [
                 NiceBuffType.reflectionFunction,
                 NiceBuffType.attackFunction,
@@ -253,7 +256,7 @@ class MainParser:
                 NiceBuffType.attackBeforeFunction,
                 NiceBuffType.entryFunction,
             ]:
-                worker.add_default(func.svals[0].Value)
+                worker.add_default(buff, func.svals[0].Value)
         worker.wait()
         logger.info(f"{region}: loaded {len(master_data.base_skills)} trigger skills")
         return master_data
