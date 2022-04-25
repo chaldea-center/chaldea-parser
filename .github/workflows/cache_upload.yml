@@ -1,0 +1,39 @@
+name: Upload Cache
+on:
+  workflow_dispatch:
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    env:
+      cache_dir: "cache/"
+    steps:
+      - name: Get Date
+        id: get-date
+        run: |
+          /bin/date
+          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d%H%M")"
+        shell: bash
+
+      - name: Cache Atlas and wiki data
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.cache_dir }}
+          key: api-cache-${{ runner.os }}-${{ steps.get-date.outputs.date }}
+          restore-keys: |
+            api-cache-${{ runner.os }}-
+            api-cache-
+
+      - uses: yizhoumo/setup-ossutil@v1
+        with:
+          ossutil-version: "1.7.9"
+          endpoint: ${{ secrets.OSS_ENDPOINT }}
+          access-key-id: ${{ secrets.OSS_ACCESS_KEY_ID }}
+          access-key-secret: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
+
+      - name: Compress cache
+        run: tar --exclude ".*"  -cvzf $GITHUB_WORKSPACE/chaldea_parser_cache.tar.gz wiki http_cache
+        working-directory: ${{ env.cache_dir }}
+
+      - name: Upload to OSS
+        run: ossutil cp chaldea_parser_cache.tar.gz oss://${{ secrets.OSS_BUCKET_NAME }}/chaldea_parser_cache.tar.gz -f
