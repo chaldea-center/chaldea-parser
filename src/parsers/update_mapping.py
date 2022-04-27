@@ -10,7 +10,7 @@ So make sure all changes here have been token affect in distribution before `upd
 """
 from src.config import settings
 from src.schemas.gamedata import MappingData
-from src.utils.helper import dump_json, load_json, sort_dict, logger
+from src.utils.helper import dump_json, load_json, logger, sort_dict
 
 
 def run_mapping_update():

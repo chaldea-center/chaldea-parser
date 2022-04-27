@@ -27,6 +27,7 @@ from app.schemas.gameenums import (
     NiceMissionProgressType,
     NiceMissionType,
     NiceQuestAfterClearType,
+    NiceSvtVoiceType,
 )
 from app.schemas.nice import (
     AscensionAdd,
@@ -57,6 +58,8 @@ from app.schemas.nice import (
     NiceShop,
     NiceSkill,
     NiceTd,
+    NiceVoiceGroup,
+    NiceVoiceLine,
     QuestEnemy,
 )
 from pydantic import BaseModel
@@ -135,7 +138,7 @@ class MainParser:
         self.wiki_data = WikiData.parse_dir(full_version=True)
         self.jp_data = self.load_master_data(Region.JP)
         self.merge_all_mappings()
-        if settings.skip_quests:
+        if settings.is_debug and settings.skip_quests:
             logger.warning("skip checking quests data")
         else:
             self.filter_quests()
@@ -756,6 +759,12 @@ class MainParser:
                     obj.pop(k)
             # print('ended encoding ', type(obj))
             return obj
+        elif isinstance(obj, NiceVoiceLine):
+            if obj.svtVoiceType == NiceSvtVoiceType.eventDigging:
+                obj.svtVoiceType = NiceSvtVoiceType.eventShop
+        elif isinstance(obj, NiceVoiceGroup):
+            if obj.type == NiceSvtVoiceType.eventDigging:
+                obj.type = NiceSvtVoiceType.eventShop
 
         if isinstance(obj, BaseModel):
             # noinspection PyProtectedMember
