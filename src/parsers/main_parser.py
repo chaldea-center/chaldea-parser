@@ -1139,8 +1139,8 @@ class MainParser:
             _update_mapping(
                 mappings.buff_detail, buff_jp.detail, buff.detail if buff else None
             )
-        for quest_jp in jp_data.main_free_quest_dict.values():
-            quest = data.main_free_quest_dict.get(quest_jp.id)
+        for quest_jp in jp_data.quest_dict.values():
+            quest = data.quest_dict.get(quest_jp.id)
             _update_mapping(
                 mappings.quest_names, quest_jp.name, quest.name if quest else None
             )
@@ -1160,8 +1160,6 @@ class MainParser:
             m: dict[_KT, MappingBase[_KV]],
             _key: _KT,
             value: _KV,
-            skip_exists=False,
-            skip_unknown_key=False,
         ):
             if (
                 re.findall(r"20[1-2][0-9]", str(value))
@@ -1173,8 +1171,8 @@ class MainParser:
                 key_mapping=m,
                 _key=_key,
                 value=value,
-                skip_exists=skip_exists,
-                skip_unknown_key=skip_unknown_key,
+                skip_exists=True,
+                skip_unknown_key=True,
             )
 
         mappings = self.jp_data.mappingData
@@ -1182,19 +1180,25 @@ class MainParser:
             load_json(settings.output_wiki / "mcTransl.json", {})
         )
         for name_jp, name_cn in mc_transl.svt_names.items():
-            _update_mapping(mappings.svt_names, name_jp, name_cn, True, True)
+            _update_mapping(mappings.svt_names, name_jp, name_cn)
         for skill_jp, skill_cn in mc_transl.skill_names.items():
-            _update_mapping(mappings.skill_names, skill_jp, skill_cn, True, True)
+            _update_mapping(mappings.skill_names, skill_jp, skill_cn)
         for td_name_jp, td_name_cn in mc_transl.td_names.items():
-            _update_mapping(mappings.td_names, td_name_jp, td_name_cn, True, True)
+            _update_mapping(mappings.td_names, td_name_jp, td_name_cn)
         for td_ruby_jp, td_ruby_cn in mc_transl.td_ruby.items():
-            _update_mapping(mappings.td_ruby, td_ruby_jp, td_ruby_cn, True, True)
+            _update_mapping(mappings.td_ruby, td_ruby_jp, td_ruby_cn)
         for name_jp, name_cn in mc_transl.ce_names.items():
-            _update_mapping(mappings.ce_names, name_jp, name_cn, True, True)
+            _update_mapping(mappings.ce_names, name_jp, name_cn)
         for name_jp, name_cn in mc_transl.cc_names.items():
-            _update_mapping(mappings.cc_names, name_jp, name_cn, True, True)
+            _update_mapping(mappings.cc_names, name_jp, name_cn)
         for name_jp, name_cn in mc_transl.event_names.items():
-            _update_mapping(mappings.event_names, name_jp, name_cn, True, True)
+            _update_mapping(mappings.event_names, name_jp, name_cn)
+            name_jp = name_jp.replace("･", "・")
+            _update_mapping(mappings.event_names, name_jp, name_cn)
+        for name_jp, name_cn in mc_transl.quest_names.items():
+            _update_mapping(mappings.quest_names, name_jp, name_cn)
+        for name_jp, name_cn in mc_transl.spot_names.items():
+            _update_mapping(mappings.spot_names, name_jp, name_cn)
 
     def _fix_cn_translation(self):
         logger.info("fix Chinese translations")

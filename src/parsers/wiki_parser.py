@@ -33,6 +33,7 @@ class WikiParser:
     def __init__(self):
         self.wiki_data: WikiData = WikiData()
         self.unknown_chara_mapping: dict[str, MappingStr] = {}
+        self._chara_cache: dict[str, int] = {}
 
     @count_time
     def start(self):
@@ -47,9 +48,10 @@ class WikiParser:
         self.mc_ce()
         logger.info("[Mooncell] parsing command code data")
         self.mc_cc()
-        logger.info("[Mooncell] parsing event/war data")
+        logger.info("[Mooncell] parsing event/war/quest data")
         self.mc_events()
         self.mc_wars()
+        self.mc_quests()
         logger.info("[Mooncell] parsing summon data")
         self.mc_summon()
         logger.info("[Fandom] parsing servant data")
@@ -187,14 +189,11 @@ class WikiParser:
                 chara = params.get2(key)
                 if not chara:
                     continue
-                svt_text = MOONCELL.get_page_text(chara)
-                param_svt = parse_template(svt_text, r"^{{基础数值")
-                svt_no = param_svt.get_cast("序号", cast=int)
-                if svt_no:
-                    ce_add.characters.append(svt_no)
+                parsed_chara = self._parse_chara(chara)
+                if parsed_chara:
+                    ce_add.characters.append(parsed_chara)
                 else:
                     ce_add.unknownCharacters.append(chara)
-                    self.unknown_chara_mapping.setdefault(chara, MappingStr())
 
         worker = Worker.from_map(_parse_one, index_data, name="mc_ce")
         worker.wait()
@@ -221,17 +220,25 @@ class WikiParser:
                 chara = params.get2(key)
                 if not chara:
                     continue
-                svt_text = MOONCELL.get_page_text(chara)
-                param_svt = parse_template(svt_text, r"^{{基础数值")
-                svt_no = param_svt.get_cast("序号", cast=int)
-                if svt_no:
-                    cc_add.characters.append(svt_no)
+                parsed_chara = self._parse_chara(chara)
+                if parsed_chara:
+                    cc_add.characters.append(parsed_chara)
                 else:
                     cc_add.unknownCharacters.append(chara)
-                    self.unknown_chara_mapping.setdefault(chara, MappingStr())
 
         worker = Worker.from_map(_parse_one, index_data, name="mc_cc")
         worker.wait()
+
+    def _parse_chara(self, chara: str) -> int | None:
+        if chara in self._chara_cache:
+            return self._chara_cache[chara]
+        svt_text = MOONCELL.get_page_text(chara)
+        param_svt = parse_template(svt_text, r"^{{基础数值")
+        svt_no = param_svt.get_cast("序号", cast=int)
+        if svt_no:
+            self._chara_cache[chara] = svt_no
+            return svt_no
+        self.unknown_chara_mapping.setdefault(chara, MappingStr())
 
     def fandom_svt(self):
         def _parse_one(collection_no: int, link: str):
@@ -382,7 +389,28 @@ class WikiParser:
             war.noticeLink.JP = params.get("官网链接jp")
             self.wiki_data.wars[war.id] = war
 
-        worker = Worker.from_map(_parse_one, self.wiki_data.wars.values())
+        worker = Worker.from_map(
+            _parse_one, self.wiki_data.wars.values(), name="mc_war"
+        )
+        worker.wait()
+
+    def mc_quests(self):
+        def _parse_one(title: str):
+            wikitext = mwparse(MOONCELL.get_page_text(title))
+            for params in parse_template_list(wikitext, r"^{{关卡配置"):
+                quest_jp = params.get2("名称jp")
+                quest_cn = params.get2("名称cn")
+                if quest_jp and quest_cn:
+                    self.wiki_data.mcTransl.quest_names[quest_jp] = quest_cn
+                for phase in "一二三四五六七八":
+                    spot_jp = params.get2(phase + "地点jp")
+                    spot_cn = params.get2(phase + "地点cn")
+                    if spot_jp and spot_cn:
+                        self.wiki_data.mcTransl.spot_names[spot_jp] = spot_cn
+
+        worker = Worker("mc_quests")
+        for answer in MOONCELL.ask_query("[[分类:主线关卡 || 活动关卡]]"):
+            worker.add(_parse_one, answer["fulltext"])
         worker.wait()
 
     def mc_summon(self):

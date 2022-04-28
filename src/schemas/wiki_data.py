@@ -27,6 +27,8 @@ class MooncellTranslation(BaseModelORJson):
     ce_names: dict[str, str] = {}
     cc_names: dict[str, str] = {}
     event_names: dict[str, str] = {}
+    quest_names: dict[str, str] = {}
+    spot_names: dict[str, str] = {}
 
     def sort(self):
         self.svt_names = sort_dict(self.svt_names)
@@ -36,6 +38,8 @@ class MooncellTranslation(BaseModelORJson):
         self.ce_names = sort_dict(self.ce_names)
         self.cc_names = sort_dict(self.cc_names)
         self.event_names = sort_dict(self.event_names)
+        self.quest_names = sort_dict(self.quest_names)
+        self.spot_names = sort_dict(self.spot_names)
 
 
 class ServantW(BaseModel):

@@ -225,21 +225,20 @@ class MasterData(BaseModelORJson):
         return d
 
     @cached_property
-    def main_free_quest_dict(self) -> dict[int, NiceQuest]:
+    def quest_dict(self) -> dict[int, NiceQuest]:
         """
-        Main Story: main+free+svt_quests
-        Event: free only
+        Main Story+Event: main+free+svt_quests
+        Daily quests: only not closed
         """
         d: dict[int, NiceQuest] = {}
         for war in self.nice_war:
+            if war.id == 9999:
+                continue
             for spot in war.spots:
                 for quest in spot.quests:
-                    if (
-                        war.id < 999
-                        or war.id in (1001, 1003)
-                        or (war.id == 1002 and quest.closedAt > NEVER_CLOSED_TIMESTAMP)
-                    ):
-                        d[quest.id] = quest
+                    if war.id == 1002 and quest.closedAt < NEVER_CLOSED_TIMESTAMP:
+                        continue
+                    d[quest.id] = quest
         return d
 
     @cached_property
