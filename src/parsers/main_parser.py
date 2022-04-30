@@ -47,6 +47,7 @@ from app.schemas.nice import (
     NiceEventReward,
     NiceEventTowerReward,
     NiceFunction,
+    NiceFuncType,
     NiceGift,
     NiceItemAmount,
     NiceLore,
@@ -861,6 +862,10 @@ class MainParser:
             enums.custom_mission_type.setdefault(v.value, MappingStr())
         for v in NpDamageType.__members__.values():
             enums.np_damage_type.setdefault(v.value, MappingStr())
+        for v in NiceFuncType.__members__.values():
+            enums.func_type.setdefault(v.value, MappingStr())
+        for v in NiceBuffType.__members__.values():
+            enums.buff_type.setdefault(v.value, MappingStr())
 
     def _merge_official_mappings(self, region: Region):
         logger.info(f"merging official translations from {region}")

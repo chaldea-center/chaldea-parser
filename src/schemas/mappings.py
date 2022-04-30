@@ -18,6 +18,9 @@ class EnumMapping(BaseModel):
     item_category: dict[str, MappingStr] = {}
     custom_mission_type: dict[str, MappingStr] = {}
     np_damage_type: dict[str, MappingStr] = {}
+    effect_type: dict[str, MappingStr] = {}
+    func_type: dict[str, MappingStr] = {}
+    buff_type: dict[str, MappingStr] = {}
 
 
 class MappingData(BaseModel):

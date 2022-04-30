@@ -1,5 +1,5 @@
 from app.schemas.base import BaseModelORJson
-from pydantic import BaseModel, NoneStr
+from pydantic import BaseModel, Field, NoneStr
 
 from ..config import settings
 from ..schemas.common import (
@@ -80,7 +80,7 @@ class CommandCodeW(BaseModel):
 class EventExtraItems(BaseModel):
     id: int
     detail: MappingStr = MappingStr()
-    items: dict[int, str] = {}  # <itemId, ap or drop rate or hint>
+    items: dict[int, MappingStr] = {}  # <itemId, ap or drop rate or hint>
 
 
 class EventWBase(BaseModel):
@@ -92,7 +92,7 @@ class EventWBase(BaseModel):
     noticeLink: MappingStr = MappingStr()
     huntingId: int = 0
     huntingQuestIds: list[int] = []
-    extraItems: list[EventExtraItems] = []
+    extraItems2: list[EventExtraItems] = Field([], alias="extraItems")
 
 
 class WarW(BaseModel):
