@@ -79,7 +79,7 @@ class CommandCodeW(BaseModel):
 
 class EventExtraItems(BaseModel):
     id: int
-    detail: MappingStr = MappingStr()
+    detail: MappingStr | None = None
     items: dict[int, MappingStr] = {}  # <itemId, ap or drop rate or hint>
 
 

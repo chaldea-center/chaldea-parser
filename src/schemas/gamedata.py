@@ -8,7 +8,6 @@ from app.schemas.enums import Attribute, SvtClass, Trait
 from app.schemas.gameenums import NiceBuffAction, NiceCardType
 from app.schemas.nice import (
     NiceBaseFunction,
-    NiceBaseSkill,
     NiceBgm,
     NiceBuff,
     NiceCommandCode,
@@ -26,9 +25,16 @@ from app.schemas.nice import (
     NiceSpot,
     NiceTd,
     NiceWar,
+    NpGain,
+    NiceTrait,
+    NiceSkillScript,
+    NiceSkillType,
+    ExtraPassive,
+    NiceSkillAdd,
+    AiType,
 )
 from app.schemas.raw import MstCv, MstIllustrator
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 
 from ..utils import NEVER_CLOSED_TIMESTAMP, sort_dict
 from .const_data import BuffActionDetail, CardInfo, GrailCostDetail, MasterUserLvDetail
@@ -45,6 +51,41 @@ class ExchangeTicket(BaseModel):
 class FixedDrop(BaseModel):
     id: int  # quest phase key
     items: dict[int, int]
+
+
+class NiceBaseTd(BaseModelORJson):
+    id: int
+    card: NiceCardType
+    name: str
+    originalName: str
+    ruby: str
+    icon: Optional[HttpUrl] = None
+    rank: str
+    type: str
+    detail: Optional[str] = None
+    unmodifiedDetail: Optional[str] = None
+    npGain: NpGain
+    npDistribution: list[int]
+    individuality: list[NiceTrait]
+    script: NiceSkillScript
+    functions: list[NiceFunction]
+
+
+class NiceBaseSkill(BaseModelORJson):
+    id: int
+    name: str
+    ruby: str = ""
+    detail: Optional[str] = None
+    unmodifiedDetail: Optional[str] = None
+    type: NiceSkillType
+    icon: Optional[HttpUrl] = None
+    coolDown: list[int] = []
+    actIndividuality: list[NiceTrait] = []
+    script: NiceSkillScript = NiceSkillScript()
+    extraPassive: list[ExtraPassive] = []
+    skillAdd: list[NiceSkillAdd] = []
+    aiIds: Optional[dict[AiType, list[int]]] = None
+    functions: list[NiceFunction]
 
 
 class MasterData(BaseModelORJson):
@@ -84,6 +125,7 @@ class MasterData(BaseModelORJson):
     exchangeTickets: list[ExchangeTicket] = []
 
     # base
+    base_tds: dict[int, NiceBaseTd] = {}
     base_skills: dict[int, NiceBaseSkill] = {}
     base_functions: dict[int, NiceBaseFunction] = {}
 
@@ -104,6 +146,7 @@ class MasterData(BaseModelORJson):
         self.fixedDrops = sort_dict(self.fixedDrops)
         self.mappingData.costume_detail = sort_dict(self.mappingData.costume_detail)
         self.mappingData.trait = sort_dict(self.mappingData.trait)
+        self.base_tds = sort_dict(self.base_tds)
         self.base_skills = sort_dict(self.base_skills)
         self.base_functions = sort_dict(self.base_functions)
 

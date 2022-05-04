@@ -35,7 +35,6 @@ from app.schemas.nice import (
     EnemyDrop,
     ExtraAssets,
     NiceBaseFunction,
-    NiceBaseSkill,
     NiceBgm,
     NiceBuff,
     NiceBuffType,
@@ -84,7 +83,14 @@ from ..schemas.common import (
     SvtObtain,
 )
 from ..schemas.const_data import ConstGameData
-from ..schemas.gamedata import ExchangeTicket, FixedDrop, MappingData, MasterData
+from ..schemas.gamedata import (
+    ExchangeTicket,
+    FixedDrop,
+    MappingData,
+    MasterData,
+    NiceBaseSkill,
+    NiceBaseTd,
+)
 from ..schemas.wiki_data import (
     CommandCodeW,
     CraftEssenceW,
@@ -113,7 +119,7 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
-MIN_APP = "1.8.0"
+MIN_APP = "1.8.5"
 
 
 class MainParser:
@@ -221,17 +227,27 @@ class MainParser:
         if not add_trigger:
             return master_data
 
-        def _add_trigger_skill(buff: NiceBuff, skill_id: int | None):
+        def _add_trigger_skill(buff: NiceBuff, skill_id: int | None, is_td=False):
             master_data.mappingData.func_popuptext.setdefault(
                 buff.type.value, MappingStr()
             )
-            if not skill_id or skill_id in master_data.base_skills:
+            if not skill_id:
                 return
-            skill = AtlasApi.api_model(
-                f"/nice/{region}/skill/{skill_id}", NiceBaseSkill
-            )
-            if skill:
-                master_data.base_skills[skill_id] = skill
+            if is_td:
+                if skill_id in master_data.base_tds:
+                    return
+                td = AtlasApi.api_model(f"/nice/{region}/NP/{skill_id}", NiceBaseTd)
+                if td:
+                    master_data.base_tds[skill_id] = td
+
+            else:
+                if skill_id in master_data.base_skills:
+                    return
+                skill = AtlasApi.api_model(
+                    f"/nice/{region}/skill/{skill_id}", NiceBaseSkill
+                )
+                if skill:
+                    master_data.base_skills[skill_id] = skill
 
         worker = Worker(f"base_skill_{region}", _add_trigger_skill)
         for func in master_data.func_list_no_cache():
@@ -242,8 +258,7 @@ class MainParser:
                 worker.add_default(buff, func.svals[0].SkillID)
             elif buff.type == NiceBuffType.counterFunction:
                 # this is TD
-                # worker.add_default(func.svals[0].CounterId)
-                worker.add_default(buff, None)
+                worker.add_default(buff, func.svals[0].CounterId, True)
             elif buff.type in [
                 NiceBuffType.reflectionFunction,
                 NiceBuffType.attackFunction,
@@ -251,6 +266,7 @@ class MainParser:
                 NiceBuffType.commandattackBeforeFunction,
                 NiceBuffType.damageFunction,
                 NiceBuffType.deadFunction,
+                NiceBuffType.deadattackFunction,
                 NiceBuffType.delayFunction,
                 NiceBuffType.selfturnendFunction,
                 NiceBuffType.wavestartFunction,
@@ -262,7 +278,9 @@ class MainParser:
             ]:
                 worker.add_default(buff, func.svals[0].Value)
         worker.wait()
-        logger.info(f"{region}: loaded {len(master_data.base_skills)} trigger skills")
+        logger.info(
+            f"{region}: loaded {len(master_data.base_skills)} trigger skills, {len(master_data.base_tds)} trigger TD"
+        )
         return master_data
 
     def filter_quests(self):
@@ -587,7 +605,7 @@ class MainParser:
         if data.fixedDrops:
             _normal_dump(list(data.fixedDrops.values()), "fixedDrops")
         if data.cachedQuestPhases:
-            _dump_by_count(list(data.cachedQuestPhases.values()), 50, "questPhases")
+            _dump_by_count(list(data.cachedQuestPhases.values()), 100, "questPhases")
         _normal_dump(
             ConstGameData(
                 attributeRelation=data.NiceAttributeRelation,
@@ -609,6 +627,9 @@ class MainParser:
         _normal_dump(list(wiki_data.summons.values()), "wiki.summons")
         _dump_file(settings.output_wiki / "webcrowMapping.json", "wiki.webcrowMapping")
         _dump_file(settings.output_wiki / "dropRate.json", "dropRate")
+        base_tds = list(self.jp_data.base_tds.values())
+        base_tds.sort(key=lambda x: x.id)
+        _normal_dump(base_tds, "baseTds")
         base_skills = list(self.jp_data.base_skills.values())
         base_skills.sort(key=lambda x: x.id)
         _normal_dump(base_skills, "baseSkills")
@@ -665,6 +686,15 @@ class MainParser:
                 exclude.add("ruby")
         elif isinstance(obj, NiceBaseSkill):
             exclude.add("detail")
+        elif isinstance(obj, NiceTd):
+            if obj.id not in self.jp_data.base_tds:
+                self.jp_data.base_tds[obj.id] = NiceBaseTd.parse_obj(obj.dict())
+            exclude.update(NiceBaseTd.__fields__.keys())
+            exclude.remove("id")
+            if obj.ruby in ("", "-"):
+                exclude.add("ruby")
+        elif isinstance(obj, NiceBaseTd):
+            exclude.add("detail")
         elif isinstance(obj, NiceFunction):
             if obj.funcId not in self.jp_data.base_functions:
                 self.jp_data.base_functions[obj.funcId] = NiceBaseFunction.parse_obj(
@@ -688,8 +718,6 @@ class MainParser:
             exclude.update({"comments", "voices"})
         elif isinstance(obj, NiceMap):
             exclude.update({"mapGimmicks"})
-        elif isinstance(obj, NiceTd):
-            exclude.add("detail")
         elif isinstance(obj, NiceQuestPhase):
             if obj.afterClear == NiceQuestAfterClearType.repeatLast:
                 exclude.update({"supportServants"})
@@ -931,7 +959,7 @@ class MainParser:
 
         for event_jp in jp_data.nice_event:
             event_extra = self.wiki_data.events.setdefault(
-                event_jp.id, EventW(id=event_jp.id, name=event_jp.name)
+                event_jp.id, EventW(id=event_jp.id, name=event_jp.name)  # type: ignore
             )
             event_extra.startTime.JP = event_jp.startedAt
             event_extra.endTime.JP = event_jp.endedAt
@@ -1087,7 +1115,6 @@ class MainParser:
         for skill_jp in itertools.chain(
             jp_data.skill_dict.values(), jp_data.base_skills.values()
         ):
-
             for skill_add in skill_jp.skillAdd:
                 # manually add
                 _update_mapping(mappings.skill_names, skill_add.name, None)
@@ -1111,8 +1138,10 @@ class MainParser:
                 detail_jp,
                 _process_effect_detail(skill.unmodifiedDetail),
             )
-        for td_jp in jp_data.td_dict.values():
-            td = data.td_dict.get(td_jp.id)
+        for td_jp in itertools.chain(
+            jp_data.td_dict.values(), jp_data.base_tds.values()
+        ):
+            td = data.td_dict.get(td_jp.id) or data.base_tds.get(td_jp.id)
             _update_mapping(mappings.td_names, td_jp.name, td.name if td else None)
             if region != Region.NA:  # always empty for NA
                 _update_mapping(mappings.td_ruby, td_jp.ruby, td.ruby if td else None)
