@@ -1302,8 +1302,19 @@ class MainParser:
             "spot_names.json": mappings.spot_names,
             "war_names.json": mappings.war_names,
         }
+
+        def _read_json(fn: str) -> dict:
+            if settings.is_debug:
+                return load_json(na_folder / fn) or {}
+            else:
+                url = (
+                    "https://cdn.jsdelivr.net/gh/atlasacademy/fgo-game-data-api/app/data/mappings/"
+                    + fn
+                )
+                return requests.get(url).json()
+
         for src_fn, dest in src_mapping.items():
-            source: dict[str, str] = load_json(na_folder / src_fn) or {}
+            source: dict[str, str] = _read_json(src_fn)
             if not source:
                 continue
             for key, trans in dest.items():

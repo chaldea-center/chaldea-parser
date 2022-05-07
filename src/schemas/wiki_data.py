@@ -92,7 +92,7 @@ class EventWBase(BaseModel):
     noticeLink: MappingStr = MappingStr()
     huntingId: int = 0
     huntingQuestIds: list[int] = []
-    extraItems2: list[EventExtraItems] = Field([], alias="extraItems")
+    extraItems: list[EventExtraItems] = Field([], alias="extraItems")
 
 
 class WarW(BaseModel):

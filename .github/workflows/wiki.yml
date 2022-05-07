@@ -73,13 +73,6 @@ jobs:
       - name: Run wiki parser
         run: python main.py wiki
 
-      - name: Publish wiki data
-        working-directory: ${{ env.output_dir }}
-        run: |
-          git add .
-          git commit -m "wiki parser: update data" || echo "Nothing to update"
-          git push
-
       - name: Publish static
         working-directory: ${{ env.static_dir }}
         run: |
@@ -87,7 +80,7 @@ jobs:
           git commit -m "update static files" || echo "Nothing to update"
           git push
 
-      - name: Run atlas parser
+      - name: Run Atlas parser
         run: python main.py atlas
 
       - name: Publish data
