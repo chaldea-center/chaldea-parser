@@ -285,7 +285,7 @@ class MainParser:
 
     def filter_quests(self):
         """
-        1. add main story's free quests + daily quests' phase data to game_data.questPhases
+        1. add main story's free quests + QP quest(10AP)' phase data to game_data.questPhases
         2. count each war's one-off questPhase's fixed drop
         """
         logger.info("processing quest data")
@@ -420,12 +420,15 @@ class MainParser:
                     worker.add_default(_quest)
                     continue
                 if _quest.warId == 1002:
-                    if (
-                        _quest.closedAt > NEVER_CLOSED_TIMESTAMP
-                        and _quest.afterClear == NiceQuestAfterClearType.repeatLast
-                    ):
+                    if _quest.id == 94061636:  # 宝物庫の扉を開け 初級
                         worker.add_default(_quest)
                         continue
+                    # if (
+                    #     _quest.closedAt > NEVER_CLOSED_TIMESTAMP
+                    #     and _quest.afterClear == NiceQuestAfterClearType.repeatLast
+                    # ):
+                    #     worker.add_default(_quest)
+                    #     continue
                 if _quest.afterClear not in (
                     NiceQuestAfterClearType.close,
                     NiceQuestAfterClearType.resetInterval,
