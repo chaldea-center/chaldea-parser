@@ -1183,9 +1183,19 @@ class MainParser:
             )
         for entity_jp in jp_data.basic_svt:
             entity = data.entity_dict.get(entity_jp.id)
-            _update_mapping(
-                mappings.entity_names, entity_jp.name, entity.name if entity else None
-            )
+            if entity_jp.name in mappings.svt_names:
+                _update_mapping(
+                    mappings.svt_names,
+                    entity_jp.name,
+                    entity.name if entity else None,
+                    skip_exists=True,
+                )
+            else:
+                _update_mapping(
+                    mappings.entity_names,
+                    entity_jp.name,
+                    entity.name if entity else None,
+                )
 
         self.jp_data.mappingData = mappings
         del data
