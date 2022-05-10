@@ -657,7 +657,7 @@ class MainParser:
         dump_json(cur_version, dist_folder / "version.json")
         logger.info(dump_json(cur_version))
         self.copy_static()
-        msg = f"Ver {cur_version.minimalApp}, {cur_version.utc}"
+        msg = f"{cur_version.minimalApp}, {cur_version.utc}"
         if len(self.payload.regions) not in (0, len(Region.__members__)):
             msg = "[" + ",".join([r.value for r in self.payload.regions]) + "] " + msg
         Path(settings.output_dir).joinpath("commit-msg.txt").write_text(msg)

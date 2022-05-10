@@ -77,7 +77,7 @@ jobs:
         working-directory: ${{ env.output_dir }}
         run: |
           git add .
-          git commit -m "wiki parser: update data" || echo "Nothing to update"
+          git commit -m "update wiki parser" || echo "Nothing to update"
 
       - name: Publish static
         working-directory: ${{ env.static_dir }}
