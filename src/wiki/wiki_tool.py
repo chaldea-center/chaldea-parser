@@ -1,4 +1,5 @@
 import contextlib
+from functools import cached_property
 import re
 import time
 from datetime import datetime
@@ -32,10 +33,11 @@ class WikiTool:
         from ..config import settings
 
         self.host: str = host
+        self._path:str = path
         self.img_url_prefix: str = img_url_prefix
         self.user = user
         self.pwd = pwd
-        self.site: mwclient.Site = mwclient.Site(host=host, path=path)
+        # self.site: mwclient.Site = mwclient.Site(host=host, path=path)
         self.site2 = pywikibot.Site(url=f"https://{host}/api.php")
         self._fp = Path(settings.cache_wiki) / f"{host}.json"
         _now = int(time.time())
@@ -44,6 +46,10 @@ class WikiTool:
         self._count = 0
 
         self.active_requests: set[str] = set()
+
+    @cached_property
+    def site(self):
+        return mwclient.Site(host=self.host, path=self._path)
 
     def load(self):
         self._fp.resolve().parent.mkdir(exist_ok=True, parents=True)
