@@ -119,7 +119,7 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
-MIN_APP = "1.8.6"
+MIN_APP = "1.8.7"
 
 
 class MainParser:
