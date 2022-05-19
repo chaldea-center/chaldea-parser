@@ -80,7 +80,8 @@ class CommandCodeW(BaseModel):
 class EventExtraItems(BaseModel):
     id: int
     detail: MappingStr | None = None
-    items: dict[int, MappingStr] = {}  # <itemId, ap or drop rate or hint>
+    fixedItems: dict[int, int] = {}  # <itemId, count>
+    items: dict[int, MappingStr | None] = {}  # <itemId, ap or drop rate or hint>
 
 
 class EventWBase(BaseModel):

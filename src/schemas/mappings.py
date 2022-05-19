@@ -21,6 +21,7 @@ class EnumMapping(BaseModel):
     effect_type: dict[str, MappingStr] = {}
     func_type: dict[str, MappingStr] = {}
     buff_type: dict[str, MappingStr] = {}
+    svt_voice_type: dict[str, MappingStr] = {}
 
 
 class MappingData(BaseModel):

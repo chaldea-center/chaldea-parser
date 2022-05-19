@@ -227,10 +227,13 @@ class MainParser:
         if not add_trigger:
             return master_data
 
-        def _add_trigger_skill(buff: NiceBuff, skill_id: int | None, is_td=False):
-            master_data.mappingData.func_popuptext.setdefault(
-                buff.type.value, MappingStr()
-            )
+        def _add_trigger_skill(
+            buff: NiceBuff | None, skill_id: int | None, is_td=False
+        ):
+            if buff:
+                master_data.mappingData.func_popuptext.setdefault(
+                    buff.type.value, MappingStr()
+                )
             if not skill_id:
                 return
             if is_td:
@@ -277,6 +280,10 @@ class MainParser:
                 NiceBuffType.entryFunction,
             ]:
                 worker.add_default(buff, func.svals[0].Value)
+        for svt in master_data.nice_servant_lore:
+            for skills in (svt.script.SkillRankUp or {}).values():
+                for skill in skills:
+                    worker.add_default(None, skill)
         worker.wait()
         logger.info(
             f"{region}: loaded {len(master_data.base_skills)} trigger skills, {len(master_data.base_tds)} trigger TD"
@@ -791,6 +798,7 @@ class MainParser:
                     obj.pop(k)
             # print('ended encoding ', type(obj))
             return obj
+        # TODO: removed
         elif isinstance(obj, NiceVoiceLine):
             if obj.svtVoiceType == NiceSvtVoiceType.eventDigging:
                 obj.svtVoiceType = NiceSvtVoiceType.eventShop
@@ -897,6 +905,8 @@ class MainParser:
             enums.func_type.setdefault(v.value, MappingStr())
         for v in NiceBuffType.__members__.values():
             enums.buff_type.setdefault(v.value, MappingStr())
+        for v in NiceSvtVoiceType.__members__.values():
+            enums.svt_voice_type.setdefault(v.value, MappingStr())
 
     def _merge_official_mappings(self, region: Region):
         logger.info(f"merging official translations from {region}")
