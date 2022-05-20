@@ -25,16 +25,9 @@ from app.schemas.nice import (
     NiceSpot,
     NiceTd,
     NiceWar,
-    NpGain,
-    NiceTrait,
-    NiceSkillScript,
-    NiceSkillType,
-    ExtraPassive,
-    NiceSkillAdd,
-    AiType,
 )
 from app.schemas.raw import MstCv, MstIllustrator
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, Field
 
 from ..utils import NEVER_CLOSED_TIMESTAMP, sort_dict
 from .const_data import BuffActionDetail, CardInfo, GrailCostDetail, MasterUserLvDetail
@@ -53,39 +46,22 @@ class FixedDrop(BaseModel):
     items: dict[int, int]
 
 
-class NiceBaseTd(BaseModelORJson):
-    id: int
-    card: NiceCardType
-    name: str
-    originalName: str
-    ruby: str
-    icon: Optional[HttpUrl] = None
-    rank: str
-    type: str
-    detail: Optional[str] = None
-    unmodifiedDetail: Optional[str] = None
-    npGain: NpGain
-    npDistribution: list[int]
-    individuality: list[NiceTrait]
-    script: NiceSkillScript
-    functions: list[NiceFunction]
+class NiceBaseTd(NiceTd):
+    num: int = Field(0, exclude=True)
+    strengthStatus: int = Field(0, exclude=True)
+    priority: int = Field(0, exclude=True)
+    condQuestId: int = Field(0, exclude=True)
+    condQuestPhase: int = Field(0, exclude=True)
 
 
-class NiceBaseSkill(BaseModelORJson):
-    id: int
-    name: str
-    ruby: str = ""
-    detail: Optional[str] = None
-    unmodifiedDetail: Optional[str] = None
-    type: NiceSkillType
-    icon: Optional[HttpUrl] = None
-    coolDown: list[int] = []
-    actIndividuality: list[NiceTrait] = []
-    script: NiceSkillScript = NiceSkillScript()
-    extraPassive: list[ExtraPassive] = []
-    skillAdd: list[NiceSkillAdd] = []
-    aiIds: Optional[dict[AiType, list[int]]] = None
-    functions: list[NiceFunction]
+class NiceBaseSkill(NiceSkill):
+    num: int = Field(0, exclude=True)
+    strengthStatus: int = Field(0, exclude=True)
+    priority: int = Field(0, exclude=True)
+    condQuestId: int = Field(0, exclude=True)
+    condQuestPhase: int = Field(0, exclude=True)
+    condLv: int = Field(0, exclude=True)
+    condLimitCount: int = Field(0, exclude=True)
 
 
 class MasterData(BaseModelORJson):
@@ -225,25 +201,31 @@ class MasterData(BaseModelORJson):
             skills.extend(cc.skills)
         for mc in self.nice_mystic_code:
             skills.extend(mc.skills)
+        skills.extend(self.base_skills.values())
         return skills
 
     @cached_property
     def skill_dict(self) -> dict[int, NiceSkill]:
+        assert self.base_skills
         return {skill.id: skill for skill in self.skill_list_no_cache()}
+
+    def td_list_no_cache(self):
+        tds: list[NiceTd] = []
+        for svt in self.nice_servant_lore:
+            for td in svt.noblePhantasms:
+                tds.append(td)
+        tds.extend(self.base_tds.values())
+        return tds
 
     @cached_property
     def td_dict(self) -> dict[int, NiceTd]:
-        d: dict[int, NiceTd] = {}
-        for svt in self.nice_servant_lore:
-            for td in svt.noblePhantasms:
-                d[td.id] = td
-        return d
+        return {td.id: td for td in self.td_list_no_cache()}
 
     def func_list_no_cache(self):
         funcs: list[NiceFunction] = []
         for skill in self.skill_list_no_cache():
             funcs.extend(skill.functions)
-        for td in self.td_dict.values():
+        for td in self.td_list_no_cache():
             funcs.extend(td.functions)
         return funcs
 

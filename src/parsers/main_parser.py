@@ -60,6 +60,7 @@ from app.schemas.nice import (
     NiceTd,
     NiceVoiceGroup,
     NiceVoiceLine,
+    NiceWar,
     QuestEnemy,
 )
 from pydantic import BaseModel
@@ -687,24 +688,57 @@ class MainParser:
 
     def _encoder(self, obj):
         exclude = {"originalName"}
-        if isinstance(obj, NiceSkill):
+        if isinstance(obj, NiceBaseSkill):
+            exclude.add("detail")
+        elif isinstance(obj, NiceSkill):
             if obj.id not in self.jp_data.base_skills:
                 self.jp_data.base_skills[obj.id] = NiceBaseSkill.parse_obj(obj.dict())
-            exclude.update(NiceBaseSkill.__fields__.keys())
-            exclude.remove("id")
-            if obj.ruby in ("", "-"):
-                exclude.add("ruby")
-        elif isinstance(obj, NiceBaseSkill):
-            exclude.add("detail")
-        elif isinstance(obj, NiceTd):
-            if obj.id not in self.jp_data.base_tds:
-                self.jp_data.base_tds[obj.id] = NiceBaseTd.parse_obj(obj.dict())
-            exclude.update(NiceBaseTd.__fields__.keys())
-            exclude.remove("id")
+            exclude.update(
+                {
+                    "name",
+                    "originalName",
+                    "ruby",
+                    "detail",
+                    "unmodifiedDetail",
+                    "type",
+                    "icon",
+                    "coolDown",
+                    "actIndividuality",
+                    "script",
+                    "extraPassive",
+                    "skillAdd",
+                    "aiIds",
+                    "functions",
+                }
+            )
             if obj.ruby in ("", "-"):
                 exclude.add("ruby")
         elif isinstance(obj, NiceBaseTd):
             exclude.add("detail")
+        elif isinstance(obj, NiceTd):
+            if obj.id not in self.jp_data.base_tds:
+                self.jp_data.base_tds[obj.id] = NiceBaseTd.parse_obj(obj.dict())
+            exclude.update(
+                {
+                    "card",
+                    "name",
+                    "originalName",
+                    "ruby",
+                    "icon",
+                    "rank",
+                    "type",
+                    "effectFlags",
+                    "detail",
+                    "unmodifiedDetail",
+                    "npGain",
+                    "npDistribution",
+                    "individuality",
+                    "script",
+                    "functions",
+                }
+            )
+            if obj.ruby in ("", "-"):
+                exclude.add("ruby")
         elif isinstance(obj, NiceFunction):
             if obj.funcId not in self.jp_data.base_functions:
                 self.jp_data.base_functions[obj.funcId] = NiceBaseFunction.parse_obj(
@@ -726,6 +760,8 @@ class MainParser:
         elif isinstance(obj, NiceLore):
             # print("ignore lore comments&voices")
             exclude.update({"comments", "voices"})
+        elif isinstance(obj, NiceWar):
+            exclude.update({"emptyMessage"})
         elif isinstance(obj, NiceMap):
             exclude.update({"mapGimmicks"})
         elif isinstance(obj, NiceQuestPhase):
@@ -1006,7 +1042,7 @@ class MainParser:
                 mappings.spot_names, spot_jp.name, spot.name if spot else None
             )
 
-        def __update_assension_add(
+        def __update_ascension_add(
             m: dict[str, MappingStr],
             jp_entry: AscensionAddEntryStr,
             entry: AscensionAddEntryStr | None,
@@ -1034,22 +1070,22 @@ class MainParser:
                 svt.name if svt else None,
                 skip_exists=True,
             )
-            __update_assension_add(
+            __update_ascension_add(
                 mappings.svt_names,
                 svt_jp.ascensionAdd.overWriteServantName,
                 svt.ascensionAdd.overWriteServantName if svt else None,
             )
-            __update_assension_add(
+            __update_ascension_add(
                 mappings.td_names,
                 svt_jp.ascensionAdd.overWriteTDName,
                 svt.ascensionAdd.overWriteTDName if svt else None,
             )
-            __update_assension_add(
+            __update_ascension_add(
                 mappings.td_ruby,
                 svt_jp.ascensionAdd.overWriteTDRuby,
                 svt.ascensionAdd.overWriteTDRuby if svt else None,
             )
-            __update_assension_add(
+            __update_ascension_add(
                 mappings.td_types,
                 svt_jp.ascensionAdd.overWriteTDTypeText,
                 svt.ascensionAdd.overWriteTDTypeText if svt else None,

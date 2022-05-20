@@ -1,9 +1,9 @@
 import contextlib
-from functools import cached_property
 import re
 import time
 from datetime import datetime
 from enum import Enum
+from functools import cached_property
 from hashlib import md5, sha1
 from pathlib import Path
 from typing import Optional
@@ -33,7 +33,7 @@ class WikiTool:
         from ..config import settings
 
         self.host: str = host
-        self._path:str = path
+        self._path: str = path
         self.img_url_prefix: str = img_url_prefix
         self.user = user
         self.pwd = pwd
