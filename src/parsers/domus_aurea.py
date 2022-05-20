@@ -3,6 +3,7 @@ Drop data from fgo domus aurea
 
 free counts: quest_id -> war -> checkbox
 """
+import time
 from io import StringIO
 
 import numpy
@@ -35,6 +36,7 @@ legacy_sheet_url = (
 
 def run_drop_rate_update():
     data = DropRateData(
+        updatedAt=int(time.time()),
         legacyData=_parse_sheet_data(*legacy_sheet_url),
         newData=_parse_sheet_data(*sheet_url),
     )

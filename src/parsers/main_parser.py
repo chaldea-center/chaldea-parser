@@ -120,7 +120,7 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
-MIN_APP = "1.8.7"
+MIN_APP = "1.8.8"
 
 
 class MainParser:
@@ -1205,15 +1205,6 @@ class MainParser:
                 detail_jp,
                 _process_effect_detail(td.unmodifiedDetail),
             )
-        for func_jp in jp_data.func_dict.values():
-            if func_jp.funcPopupText in ["", "-", "なし"]:
-                _update_mapping(mappings.func_popuptext, func_jp.funcType.value, None)
-            func = data.func_dict.get(func_jp.funcId)
-            _update_mapping(
-                mappings.func_popuptext,
-                func_jp.funcPopupText,
-                func.funcPopupText if func else None,
-            )
         for buff_jp in jp_data.buff_dict.values():
             buff = data.buff_dict.get(buff_jp.id)
             _update_mapping(
@@ -1221,6 +1212,17 @@ class MainParser:
             )
             _update_mapping(
                 mappings.buff_detail, buff_jp.detail, buff.detail if buff else None
+            )
+        for func_jp in jp_data.func_dict.values():
+            if func_jp.funcPopupText in ["", "-", "なし"]:
+                _update_mapping(mappings.func_popuptext, func_jp.funcType.value, None)
+            if func_jp.funcPopupText in mappings.buff_names:
+                continue
+            func = data.func_dict.get(func_jp.funcId)
+            _update_mapping(
+                mappings.func_popuptext,
+                func_jp.funcPopupText,
+                func.funcPopupText if func else None,
             )
         for quest_jp in jp_data.quest_dict.values():
             quest = data.quest_dict.get(quest_jp.id)

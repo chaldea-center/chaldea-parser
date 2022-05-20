@@ -10,5 +10,6 @@ class DropRateSheet(BaseModel):
 
 
 class DropRateData(BaseModel):
+    updatedAt: int
     newData: DropRateSheet
     legacyData: DropRateSheet
