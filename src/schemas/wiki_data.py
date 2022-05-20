@@ -84,6 +84,12 @@ class EventExtraItems(BaseModel):
     items: dict[int, MappingStr | None] = {}  # <itemId, ap or drop rate or hint>
 
 
+class EventExtraFixedItems(BaseModel):
+    id: int
+    detail: MappingStr | None = None
+    items: dict[int, int] = {}
+
+
 class EventWBase(BaseModel):
     id: int
     name: str
@@ -93,7 +99,8 @@ class EventWBase(BaseModel):
     noticeLink: MappingStr = MappingStr()
     huntingId: int = 0
     huntingQuestIds: list[int] = []
-    extraItems: list[EventExtraItems] = Field([], alias="extraItems")
+    extraFixedItems: list[EventExtraFixedItems] = []
+    extraItems: list[EventExtraItems] = []
 
 
 class WarW(BaseModel):
