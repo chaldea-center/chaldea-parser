@@ -24,8 +24,8 @@ def _update_mapping_files():
     mapping_dict = mappings.dict()
     for key, trans in mapping_dict.items():
         if not settings.is_debug and key in (
-            "skill_state",
-            "td_state",
+            "skill_priority",
+            "td_priority",
             "svt_release",
             "ce_release",
             "cc_release",

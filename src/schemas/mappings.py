@@ -65,9 +65,9 @@ class MappingData(BaseModel):
 
     # ignored when copy to mapping folder
     # <svt_id, region:<skill_id, strengthenState>>
-    skill_state: dict[int, MappingBase[dict[int, int]]] = {}
+    skill_priority: dict[int, MappingBase[dict[int, int]]] = {}
     # <svt_id, region:<td_id, strengthenState>>
-    td_state: dict[int, MappingBase[dict[int, int]]] = {}
+    td_priority: dict[int, MappingBase[dict[int, int]]] = {}
 
     svt_release: MappingBase[list[int]] = MappingBase()
     ce_release: MappingBase[list[int]] = MappingBase()

@@ -1092,13 +1092,13 @@ class MainParser:
             )
             if not svt:
                 continue
-            skill_prog = mappings.skill_state.setdefault(svt_jp.id, MappingBase())
-            skill_prog.update(
-                region, {skill.id: skill.strengthStatus for skill in svt.skills}
+            skill_priority = mappings.skill_priority.setdefault(svt_jp.id, MappingBase())
+            skill_priority.update(
+                region, {skill.id: skill.priority for skill in svt.skills}
             )
-            td_prog = mappings.td_state.setdefault(svt_jp.id, MappingBase())
-            td_prog.update(
-                region, {td.id: td.strengthStatus for td in svt.noblePhantasms}
+            td_priority = mappings.td_priority.setdefault(svt_jp.id, MappingBase())
+            td_priority.update(
+                region, {td.id: td.priority for td in svt.noblePhantasms}
             )
             # if region != Region.JP and svt.profile.comments:
             #     svt_w = self.wiki_data.servants.setdefault(svt_jp.collectionNo,
