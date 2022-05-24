@@ -7,7 +7,7 @@ asyncpg==0.25.0; python_version >= "3.10" and python_version < "4.0" and python_
 attrs==21.4.0; python_version >= "3.7" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.7" and python_version < "4.0" and python_full_version >= "3.5.0"
 cattrs==1.10.0; python_version >= "3.7" and python_version < "4.0"
 certifi==2021.10.8; python_version >= "3.10" and python_full_version >= "3.6.0" and python_version < "4.0" and (python_version >= "3.7" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.7" and python_version < "4.0" and python_full_version >= "3.6.0") and (python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.6.0")
-charset-normalizer==2.0.12; python_full_version >= "3.6.0" and python_version >= "3.10" and python_version < "4.0" and (python_version >= "3.7" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.7" and python_version < "4.0" and python_full_version >= "3.6.0") and (python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.6.0")
+charset-normalizer==2.0.12; python_full_version >= "3.6.0" and python_version >= "3.6" and (python_version >= "3.7" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.7" and python_version < "4.0" and python_full_version >= "3.6.0") and (python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.6.0")
 click==8.0.4; python_version >= "3.10" and python_version < "4.0"
 colorama==0.4.4; python_version >= "3.10" and python_full_version < "3.0.0" and sys_platform == "win32" and python_version < "4.0" and platform_system == "Windows" or sys_platform == "win32" and python_version >= "3.10" and python_version < "4.0" and python_full_version >= "3.5.0" and platform_system == "Windows"
 deprecated==1.2.13; python_version >= "3.10" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.10" and python_version < "4.0" and python_full_version >= "3.4.0"
@@ -21,9 +21,9 @@ greenlet==1.1.2; python_version >= "3" and python_full_version < "3.0.0" and (pl
 gunicorn==20.1.0; python_version >= "3.10" and python_version < "4.0"
 h11==0.12.0; python_version >= "3.10" and python_version < "4.0"
 hiredis==2.0.0; python_version >= "3.10" and python_version < "4.0"
-httpcore==0.14.7; python_version >= "3.10" and python_version < "4.0"
+httpcore==0.15.0; python_version >= "3.10" and python_version < "4.0"
 httptools==0.4.0; python_version >= "3.10" and python_version < "4.0" and python_full_version >= "3.5.0"
-httpx==0.22.0; python_version >= "3.10" and python_version < "4.0"
+httpx==0.23.0; python_version >= "3.10" and python_version < "4.0"
 idna==3.3
 mwclient==0.10.1
 mwparserfromhell==0.6.4; python_version >= "3.6"

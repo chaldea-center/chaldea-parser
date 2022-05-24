@@ -163,6 +163,10 @@ class WikiParser:
                     self.wiki_data.mcTransl.td_names[td_name_jp] = td_name_cn
                 if td_ruby_cn and td_ruby_jp:
                     self.wiki_data.mcTransl.td_ruby[td_ruby_jp] = td_ruby_cn
+            for params in parse_template_list(wikitext, r"^{{战斗形象"):
+                for key, value in params.items():
+                    if "模型" in key or "灵衣" in key and str(value).endswith(".png"):
+                        svt_add.spriteModels.append(MOONCELL.hash_file_url(value))
 
         worker = Worker.from_map(_parse_one, index_data, name="mc_svt")
         worker.wait()

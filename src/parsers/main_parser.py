@@ -14,6 +14,7 @@ from app.schemas.enums import (
     CLASS_NAME,
     OLD_TRAIT_MAPPING,
     Attribute,
+    NiceItemUse,
     ServantPersonality,
     ServantPolicy,
     SvtClass,
@@ -687,6 +688,8 @@ class MainParser:
         return r
 
     def _encoder(self, obj):
+        if obj == NiceItemUse.appendSkill:
+            return NiceItemUse.skill.value
         exclude = {"originalName"}
         if isinstance(obj, NiceBaseSkill):
             exclude.add("detail")
@@ -1092,7 +1095,9 @@ class MainParser:
             )
             if not svt:
                 continue
-            skill_priority = mappings.skill_priority.setdefault(svt_jp.id, MappingBase())
+            skill_priority = mappings.skill_priority.setdefault(
+                svt_jp.id, MappingBase()
+            )
             skill_priority.update(
                 region, {skill.id: skill.priority for skill in svt.skills}
             )

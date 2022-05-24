@@ -48,6 +48,7 @@ class ServantW(BaseModel):
     obtains: list[SvtObtain] = []
     aprilFoolAssets: list[str] = []
     aprilFoolProfile: MappingStr = MappingStr()
+    spriteModels: list[str] = []
     # profileComment: MappingBase[list[NiceLoreComment]] = Field(default_factory=MappingBase)
     mcLink: NoneStr = None
     fandomLink: NoneStr = None
