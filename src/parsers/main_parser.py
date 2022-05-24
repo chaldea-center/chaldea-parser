@@ -34,6 +34,7 @@ from app.schemas.nice import (
     AscensionAdd,
     AscensionAddEntryStr,
     EnemyDrop,
+    NiceItem,
     ExtraAssets,
     NiceBaseFunction,
     NiceBgm,
@@ -688,8 +689,6 @@ class MainParser:
         return r
 
     def _encoder(self, obj):
-        if obj == NiceItemUse.appendSkill:
-            return NiceItemUse.skill.value
         exclude = {"originalName"}
         if isinstance(obj, NiceBaseSkill):
             exclude.add("detail")
@@ -756,6 +755,9 @@ class MainParser:
             exclude.update({"name", "fileName", "notReleased", "audioAsset"})
         elif isinstance(obj, NiceTrait):
             exclude.add("name")
+        elif isinstance(obj, NiceItem):
+            if NiceItemUse.appendSkill in obj.uses:
+                obj.uses.remove(NiceItemUse.appendSkill)
         elif isinstance(obj, NiceItemAmount):
             return {"itemId": obj.item.id, "amount": obj.amount}
         elif isinstance(obj, NiceGift):
