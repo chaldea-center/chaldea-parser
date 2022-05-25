@@ -34,7 +34,6 @@ from app.schemas.nice import (
     AscensionAdd,
     AscensionAddEntryStr,
     EnemyDrop,
-    NiceItem,
     ExtraAssets,
     NiceBaseFunction,
     NiceBgm,
@@ -50,6 +49,7 @@ from app.schemas.nice import (
     NiceFunction,
     NiceFuncType,
     NiceGift,
+    NiceItem,
     NiceItemAmount,
     NiceLore,
     NiceMap,
@@ -1081,6 +1081,11 @@ class MainParser:
                 svt.ascensionAdd.overWriteServantName if svt else None,
             )
             __update_ascension_add(
+                mappings.svt_names,
+                svt_jp.ascensionAdd.overWriteServantBattleName,
+                svt.ascensionAdd.overWriteServantBattleName if svt else None,
+            )
+            __update_ascension_add(
                 mappings.td_names,
                 svt_jp.ascensionAdd.overWriteTDName,
                 svt.ascensionAdd.overWriteTDName if svt else None,
@@ -1095,6 +1100,25 @@ class MainParser:
                 svt_jp.ascensionAdd.overWriteTDTypeText,
                 svt.ascensionAdd.overWriteTDTypeText if svt else None,
             )
+
+            def _svt_change_dict(_svt: NiceServant | None):
+                return {
+                    str(
+                        (
+                            change.priority,
+                            change.condType,
+                            change.condTargetId,
+                            change.condValue,
+                            change.limitCount,
+                        )
+                    ): change.name
+                    for change in (_svt.svtChange if _svt else [])
+                }
+
+            changes_jp, changes = _svt_change_dict(svt_jp), _svt_change_dict(svt)
+            for k, v in changes_jp.items():
+                _update_mapping(mappings.svt_names, v, changes.get(k, None))
+
             if not svt:
                 continue
             skill_priority = mappings.skill_priority.setdefault(
