@@ -146,6 +146,9 @@ class MainParser:
         logger.info("update_exported_files")
         self.update_exported_files()
         self.wiki_data = WikiData.parse_dir(full_version=True)
+        self.huntingQuests = [
+            q for event in self.wiki_data.events.values() for q in event.huntingQuestIds
+        ]
         self.jp_data = self.load_master_data(Region.JP)
         self.merge_all_mappings()
         if settings.is_debug and settings.skip_quests:
@@ -204,8 +207,7 @@ class MainParser:
         dump_json(openapi_remote, fp_openapi)
         logger.debug(f"Exported files updated:\n{dump_json(info_remote)}")
 
-    @staticmethod
-    def load_master_data(region: Region, add_trigger: bool = True) -> MasterData:
+    def load_master_data(self, region: Region, add_trigger: bool = True) -> MasterData:
         logger.info(f"loading {region} master data")
         data = {}
         for k in MasterData.__fields__:
@@ -226,6 +228,11 @@ class MainParser:
                 NiceEventType.questCampaign,
             )
         ]
+        for svt in master_data.nice_servant_lore:
+            master_data.remainedQuestIds.update(svt.relateQuestIds)
+            master_data.remainedQuestIds.update(svt.trialQuestIds)
+        master_data.remainedQuestIds.update(self.huntingQuests)
+
         master_data.sort()
         if not add_trigger:
             return master_data
@@ -400,17 +407,13 @@ class MainParser:
 
         worker = Worker("quest", func=_check_one_quest)
         # _now = int(time.time()) + 60 * 24 * 3600
-        hunting_quests = set(
-            [
-                q
-                for event in self.wiki_data.events.values()
-                for q in event.huntingQuestIds
-            ]
-        )
+
         for war in self.jp_data.nice_war:
             if war.id == 9999:  # Chaldea Gate
                 for spot in war.spots:
-                    spot.quests = [q for q in spot.quests if q.id in hunting_quests]
+                    spot.quests = [
+                        q for q in spot.quests if q.id in self.jp_data.remainedQuestIds
+                    ]
                 continue
             if war.id == 1002:  # 曜日クエスト
                 # remove closed quests
