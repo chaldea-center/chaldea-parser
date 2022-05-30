@@ -34,6 +34,8 @@ class WikiParser:
         self.wiki_data: WikiData = WikiData()
         self.unknown_chara_mapping: dict[str, MappingStr] = {}
         self._chara_cache: dict[str, int] = {}
+        self.invalid_mc_links: list[str] = []
+        self.invalid_fandom_links: list[str] = []
 
     @count_time
     def start(self):
@@ -60,6 +62,7 @@ class WikiParser:
         self.fandom_ce()
         logger.info("[Fandom] parsing command code data")
         self.fandom_cc()
+        self.check_invalid_wikilinks()
         logger.info("Saving data...")
         MOONCELL.save_cache()
         FANDOM.save_cache()
@@ -332,6 +335,7 @@ class WikiParser:
                 return
             text = MOONCELL.get_page_text(event.mcLink)
             if not text:
+                self.invalid_mc_links.append(event.mcLink)
                 logger.warning(
                     f'Mooncell event page not found, may be moved: "{event.mcLink}"'
                 )
@@ -381,6 +385,7 @@ class WikiParser:
                 return
             text = MOONCELL.get_page_text(war.mcLink)
             if not text:
+                self.invalid_mc_links.append(war.mcLink)
                 logger.warning(
                     f'Mooncell main story page not found, may be moved: "{war.mcLink}"'
                 )
@@ -500,6 +505,31 @@ class WikiParser:
         for answer in MOONCELL.ask_query("[[分类:限时召唤]]"):
             worker.add(_parse_one, answer["fulltext"])
         worker.wait()
+
+    def check_invalid_wikilinks(self):
+        def _check_page(title: str | None):
+            if not title:
+                return
+            text = FANDOM.get_page_text(title)
+            if not text:
+                self.invalid_fandom_links.append(title)
+                logger.warning(f'Fandom page not found, may be moved: "{title}"')
+
+        for event in self.wiki_data.events.values():
+            _check_page(event.fandomLink)
+        for war in self.wiki_data.wars.values():
+            _check_page(war.fandomLink)
+        for summon in self.wiki_data.summons.values():
+            _check_page(summon.fandomLink)
+
+        count = len(self.invalid_mc_links) + len(self.invalid_fandom_links)
+        if count > 0:
+            msg = f"{count} wiki pages Not Found!"
+            if self.invalid_mc_links:
+                msg += f"\n  Mooncell pages: {self.invalid_mc_links}"
+            if self.invalid_fandom_links:
+                msg += f"\n  Fandom pages: {self.invalid_fandom_links}"
+            raise ValueError(msg)
 
     def sort(self):
         self.wiki_data.sort()

@@ -122,7 +122,7 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
-MIN_APP = "1.8.8"
+MIN_APP = "2.0.3"
 
 
 class MainParser:
@@ -555,12 +555,13 @@ class MainParser:
                 _normal_dump(obj[i * count : (i + 1) * count], key, _fn_i, encoder)
 
         def _dump_by_ranges(
-            obj: dict[int, Any],
-            ranges: list[Iterable[int]],
+            obj: dict[_KT, Any],
+            ranges: list[Iterable[_KT]],
             save_remained: bool,
             key: str,
             base_fn: str | None = None,
             encoder=None,
+            use_dict=False,
         ):
             if base_fn is None:
                 base_fn = key
@@ -568,13 +569,18 @@ class MainParser:
             i = -1
             for i, id_range in enumerate(ranges):
                 _fn_i = f"{base_fn}.{i + 1}.json"
-                values = [obj.pop(_k) for _k in id_range if _k in obj]
+                if use_dict:
+                    values = {_k: obj.pop(_k) for _k in id_range if _k in obj}
+                else:
+                    values = [obj.pop(_k) for _k in id_range if _k in obj]
                 assert values, f"No value found at range {i}"
                 _normal_dump(values, key, _fn_i, encoder)
             if save_remained:
-                _normal_dump(
-                    list(obj.values()), key, f"{base_fn}.{i + 2}.json", encoder
-                )
+                if use_dict:
+                    values = obj
+                else:
+                    values = list(obj.values())
+                _normal_dump(values, key, f"{base_fn}.{i + 2}.json", encoder)
             else:
                 assert (
                     not obj
@@ -593,8 +599,16 @@ class MainParser:
         _normal_dump(data.basic_svt, "entities")
         _normal_dump(data.exchangeTickets, "exchangeTickets")
         _normal_dump(data.nice_bgm, "bgms", encoder=pydantic_encoder)
-        data.mappingData._iter(exclude_none=True)
-        _normal_dump(self._encode_mapping_data(data.mappingData), "mappingData")
+        _dump_by_ranges(
+            self._encode_mapping_data(data.mappingData),
+            ranges=[
+                ["skill_detail", "td_detail"],
+                ["quest_names", "entity_names"],
+            ],
+            save_remained=True,
+            key="mappingData",
+            use_dict=True,
+        )
         _dump_by_ranges(
             data.event_dict,
             ranges=[
@@ -680,7 +694,7 @@ class MainParser:
         run_mapping_update()
 
     @staticmethod
-    def _encode_mapping_data(data: MappingData) -> dict:
+    def _encode_mapping_data(data: MappingData) -> dict[str, Any]:
         r = {}
         for k, v in data._iter(exclude_none=True):
             if isinstance(v, MappingBase):
@@ -758,9 +772,6 @@ class MainParser:
             exclude.update({"name", "fileName", "notReleased", "audioAsset"})
         elif isinstance(obj, NiceTrait):
             exclude.add("name")
-        elif isinstance(obj, NiceItem):
-            if NiceItemUse.appendSkill in obj.uses:
-                obj.uses.remove(NiceItemUse.appendSkill)
         elif isinstance(obj, NiceItemAmount):
             return {"itemId": obj.item.id, "amount": obj.amount}
         elif isinstance(obj, NiceGift):

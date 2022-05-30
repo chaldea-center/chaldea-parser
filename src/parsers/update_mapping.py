@@ -9,6 +9,7 @@ So make sure all changes here have been token affect in distribution before `upd
   from release/summons.json
 """
 from src.config import settings
+from src.schemas.common import DataVersion
 from src.schemas.gamedata import MappingData
 from src.utils.helper import dump_json, load_json, logger, sort_dict
 
@@ -18,7 +19,12 @@ def run_mapping_update():
 
 
 def _update_mapping_files():
-    mappings = MappingData.parse_file(settings.output_dist / "mappingData.json")
+    version = DataVersion.parse_file(settings.output_dist / "version.json")
+    obj = {}
+    for file in version.files.values():
+        if file.key == "mappingData":
+            obj.update(load_json(settings.output_dist / file.filename))
+    mappings = MappingData.parse_obj(obj)
     folder = settings.output_mapping
     folder.mkdir(exist_ok=True, parents=True)
     mapping_dict = mappings.dict()
