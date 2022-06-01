@@ -28,6 +28,7 @@ from app.schemas.gameenums import (
     NiceMissionProgressType,
     NiceMissionType,
     NiceQuestAfterClearType,
+    NiceSvtType,
     NiceSvtVoiceType,
     NiceWarOverwriteType,
 )
@@ -976,6 +977,8 @@ class MainParser:
             enums.buff_type.setdefault(v.value, MappingStr())
         for v in NiceSvtVoiceType.__members__.values():
             enums.svt_voice_type.setdefault(v.value, MappingStr())
+        for v in NiceSvtType.__members__.values():
+            enums.svt_type.setdefault(v.value, MappingStr())
 
     def _merge_official_mappings(self, region: Region):
         logger.info(f"merging official translations from {region}")
