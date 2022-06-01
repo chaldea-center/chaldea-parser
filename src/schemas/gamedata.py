@@ -29,6 +29,7 @@ from app.schemas.nice import (
 from app.schemas.raw import MstCv, MstIllustrator
 from pydantic import BaseModel, Field
 
+from ..schemas.common import MappingBase
 from ..utils import NEVER_CLOSED_TIMESTAMP, sort_dict
 from .const_data import BuffActionDetail, CardInfo, GrailCostDetail, MasterUserLvDetail
 from .mappings import MappingData
@@ -39,6 +40,7 @@ class ExchangeTicket(BaseModel):
     year: int
     month: int
     items: list[int]
+    replaced: MappingBase[list[int]] | None = None
 
 
 class FixedDrop(BaseModel):

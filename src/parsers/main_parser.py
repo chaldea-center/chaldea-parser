@@ -14,12 +14,12 @@ from app.schemas.enums import (
     CLASS_NAME,
     OLD_TRAIT_MAPPING,
     Attribute,
-    NiceItemUse,
     ServantPersonality,
     ServantPolicy,
     SvtClass,
 )
 from app.schemas.gameenums import (
+    NiceBuffAction,
     NiceEventType,
     NiceFuncTargetType,
     NiceGender,
@@ -29,6 +29,7 @@ from app.schemas.gameenums import (
     NiceMissionType,
     NiceQuestAfterClearType,
     NiceSvtVoiceType,
+    NiceWarOverwriteType,
 )
 from app.schemas.nice import (
     AscensionAdd,
@@ -49,7 +50,6 @@ from app.schemas.nice import (
     NiceFunction,
     NiceFuncType,
     NiceGift,
-    NiceItem,
     NiceItemAmount,
     NiceLore,
     NiceMap,
@@ -63,6 +63,7 @@ from app.schemas.nice import (
     NiceVoiceGroup,
     NiceVoiceLine,
     NiceWar,
+    NiceWarAdd,
     QuestEnemy,
 )
 from pydantic import BaseModel
@@ -249,7 +250,11 @@ class MainParser:
             if is_td:
                 if skill_id in master_data.base_tds:
                     return
-                td = AtlasApi.api_model(f"/nice/{region}/NP/{skill_id}", NiceBaseTd)
+                td = AtlasApi.api_model(
+                    f"/nice/{region}/NP/{skill_id}",
+                    NiceBaseTd,
+                    expire_after=3600 * 24 * 7,
+                )
                 if td:
                     master_data.base_tds[skill_id] = td
 
@@ -257,7 +262,9 @@ class MainParser:
                 if skill_id in master_data.base_skills:
                     return
                 skill = AtlasApi.api_model(
-                    f"/nice/{region}/skill/{skill_id}", NiceBaseSkill
+                    f"/nice/{region}/skill/{skill_id}",
+                    NiceBaseSkill,
+                    expire_after=3600 * 24 * 7,
                 )
                 if skill:
                     master_data.base_skills[skill_id] = skill
@@ -636,6 +643,8 @@ class MainParser:
             _normal_dump(list(data.fixedDrops.values()), "fixedDrops")
         if data.cachedQuestPhases:
             _dump_by_count(list(data.cachedQuestPhases.values()), 100, "questPhases")
+        # TODO: remove in 2.0.4
+        data.NiceBuffList_ActionList.pop(NiceBuffAction.notTargetSkill, None)
         _normal_dump(
             ConstGameData(
                 attributeRelation=data.NiceAttributeRelation,
@@ -707,6 +716,11 @@ class MainParser:
 
     def _encoder(self, obj):
         exclude = {"originalName"}
+        # TODO: remove in 2.0.4
+        if isinstance(obj, NiceWarAdd):
+            if obj.type == NiceWarOverwriteType.effectChangeWhiteMark:
+                obj.type = NiceWarOverwriteType.clearMark
+
         if isinstance(obj, NiceBaseSkill):
             exclude.add("detail")
         elif isinstance(obj, NiceSkill):
