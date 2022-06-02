@@ -96,6 +96,7 @@ class EventWBase(BaseModel):
     name: str
     mcLink: NoneStr = None
     fandomLink: NoneStr = None
+    forceShown: bool = False
     titleBanner: MappingBase[str] = MappingBase()
     noticeLink: MappingStr = MappingStr()
     huntingId: int = 0

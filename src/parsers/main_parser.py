@@ -928,6 +928,13 @@ class MainParser:
         self._merge_official_mappings(Region.TW)
         self._merge_official_mappings(Region.KR)
         self._merge_repo_mapping()
+        self._post_mappings()
+
+    def _post_mappings(self):
+        for key in self.jp_data.mappingData.event_names.keys():
+            self.jp_data.mappingData.war_names.pop(key, None)
+        for key in self.jp_data.mappingData.svt_names.keys():
+            self.jp_data.mappingData.entity_names.pop(key, None)
 
     def _add_enum_mappings(self):
         mappings = self.jp_data.mappingData
