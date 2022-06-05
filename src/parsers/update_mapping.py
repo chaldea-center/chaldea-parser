@@ -23,7 +23,9 @@ def _update_mapping_files():
     obj = {}
     for file in version.files.values():
         if file.key == "mappingData":
-            obj.update(load_json(settings.output_dist / file.filename))
+            part = load_json(settings.output_dist / file.filename)
+            assert part
+            obj.update(part)
     mappings = MappingData.parse_obj(obj)
     folder = settings.output_mapping
     folder.mkdir(exist_ok=True, parents=True)

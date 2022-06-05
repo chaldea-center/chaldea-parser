@@ -92,9 +92,9 @@ class WikiTool:
                     while redirect.isRedirectPage():
                         redirect = redirect.getRedirectTarget()
                 if redirect == page:
-                    self.cache.pages[self.norm_key(page.title())] = WikiPageInfo(
-                        name=page.title(), text=page.text, updated=now
-                    )
+                    result = self.cache.pages[
+                        self.norm_key(page.title())
+                    ] = WikiPageInfo(name=page.title(), text=page.text, updated=now)
                 else:
                     self.cache.pages[self.norm_key(page.title())] = WikiPageInfo(
                         name=page.title(),
@@ -102,10 +102,11 @@ class WikiTool:
                         text=page.text,
                         updated=now,
                     )
-                    self.cache.pages[self.norm_key(redirect.title())] = WikiPageInfo(
+                    result = self.cache.pages[
+                        self.norm_key(redirect.title())
+                    ] = WikiPageInfo(
                         name=redirect.title(), text=redirect.text, updated=now
                     )
-                cached = redirect
                 if retry_n > 0:
                     logger.warning(
                         f"{prefix} downloaded {name_json} after {retry_n} retry"
@@ -118,7 +119,7 @@ class WikiTool:
                     self.save_cache()
                 if name in self.active_requests:
                     self.active_requests.remove(name)
-                return cached
+                return result
             except Exception as e:
                 retry_n += 1
                 if retry_n >= max_retry:
@@ -322,8 +323,9 @@ class WikiTool:
             resp = self._api_call(full_params)
             items.extend(resp["query"][list_name])
             logger.debug(f"Listing {list_name}: {len(items)} items")
-            if resp.get("continue"):
-                full_params.update(resp.get("continue"))
+            ctn = resp.get("continue")
+            if ctn:
+                full_params.update(ctn)
             else:
                 return items
 

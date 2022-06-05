@@ -42,16 +42,20 @@ class MooncellTranslation(BaseModelORJson):
         self.spot_names = sort_dict(self.spot_names)
 
 
-class ServantW(BaseModel):
+class ServantWBase(BaseModel):
     collectionNo: int
     nicknames: MappingBase[list[str]] = MappingBase()
+
+
+class ServantW(ServantWBase):
+    mcLink: NoneStr = None
+    fandomLink: NoneStr = None
     obtains: list[SvtObtain] = []
     aprilFoolAssets: list[str] = []
     aprilFoolProfile: MappingStr = MappingStr()
     spriteModels: list[str] = []
-    # profileComment: MappingBase[list[NiceLoreComment]] = Field(default_factory=MappingBase)
-    mcLink: NoneStr = None
-    fandomLink: NoneStr = None
+    mcProfiles: dict[int, list[str]] = {}
+    fandomProfiles: dict[int, list[str]] = {}
 
 
 class CraftEssenceW(BaseModel):
@@ -191,6 +195,10 @@ class WikiData(BaseModelORJson):
             }
         else:
             data |= {
+                "servants": {
+                    svt["collectionNo"]: ServantWBase.parse_obj(svt).dict()
+                    for svt in load_json(folder / "servants.json") or []
+                },
                 "events": {
                     event["id"]: event
                     for event in load_json(folder / "eventsBase.json") or []

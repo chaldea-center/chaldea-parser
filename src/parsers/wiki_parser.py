@@ -7,12 +7,12 @@ Summon: wiki_data/summons.json + MC data
 import re
 from typing import Optional
 
+import requests
 import wikitextparser
-from app.schemas.gameenums import NiceCondType
-from app.schemas.nice import NiceLoreComment
+from app.schemas.nice import NiceServant
 
 from ..config import settings
-from ..schemas.common import CEObtain, MappingStr, SummonType, SvtObtain
+from ..schemas.common import CEObtain, MappingStr, Region, SummonType, SvtObtain
 from ..schemas.wiki_data import (
     EventW,
     LimitedSummon,
@@ -29,16 +29,34 @@ from ..wiki.template import mwparse, parse_template, parse_template_list, remove
 from ..wiki.wiki_tool import KnownTimeZone
 
 
+class _WikiTemp:
+    def __init__(self, region: Region) -> None:
+        self.region = region
+        self.invalid_links: list[str] = []
+        self.released_svts: dict[int, NiceServant] = {}
+
+    def _get_svts(self):
+        for svt in requests.get(
+            f"https://api.atlasacademy.io/export/{self.region}/nice_servant_lore.json"
+        ).json():
+            self.released_svts[svt["collectionNo"]] = NiceServant.parse_obj(svt)
+        assert self.released_svts, len(self.released_svts)
+
+
 class WikiParser:
     def __init__(self):
         self.wiki_data: WikiData = WikiData()
         self.unknown_chara_mapping: dict[str, MappingStr] = {}
         self._chara_cache: dict[str, int] = {}
-        self.invalid_mc_links: list[str] = []
-        self.invalid_fandom_links: list[str] = []
+        self._mc = _WikiTemp(Region.CN)
+        self._fandom = _WikiTemp(Region.NA)
+        self._jp = _WikiTemp(Region.JP)
 
     @count_time
     def start(self):
+        self._jp._get_svts()
+        self._mc._get_svts()
+        self._fandom._get_svts()
         MOONCELL.load()
         FANDOM.load()
         MOONCELL.remove_recent_changed()
@@ -84,6 +102,33 @@ class WikiParser:
         self.unknown_chara_mapping = {
             k: MappingStr.parse_obj(v) for k, v in chara_names.items()
         }
+
+    def _need_wiki_profile(self, region: Region, collectionNo: int) -> bool:
+        servants = (
+            self._mc.released_svts
+            if region == Region.CN
+            else self._fandom.released_svts
+        )
+        if collectionNo not in servants or collectionNo not in self._jp.released_svts:
+            return True
+        svt = servants[collectionNo]
+        svt_jp = self._jp.released_svts[collectionNo]
+        assert svt.profile and svt_jp.profile
+        comments = {c.id * 10 + c.priority: c for c in svt.profile.comments}
+        comments_jp = {c.id * 10 + c.priority: c for c in svt_jp.profile.comments}
+        if len(comments) != len(comments_jp):
+            return True
+        for key, comment in comments.items():
+            if comment.id != 7:
+                continue
+            comment_jp = comments_jp.get(key)
+            if comment_jp and not comment_jp.comment:
+                continue
+            if region == Region.CN and len(comment.comment) < 20:
+                return True
+            if region == Region.NA and len(comment.comment) < 50:
+                return True
+        return False
 
     def mc_svt(self):
         index_data = _mc_index_data("英灵图鉴/数据")
@@ -138,21 +183,15 @@ class WikiParser:
             if april_profile_cn:
                 svt_add.aprilFoolProfile.CN = "\n\n".join(april_profile_cn)
 
-            # for priority, params in enumerate(parse_template_list(wikitext, r"^{{个人资料")):
-            #     comments: list[NiceLoreComment] = []
-            #     for index in range(8):
-            #         prefix = "详情" if index == 0 else f"资料{index}"
-            #         comments.append(
-            #             NiceLoreComment(
-            #                 id=index,
-            #                 priority=priority,
-            #                 condMessage=params.get2(prefix + "条件", ""),
-            #                 comment=params.get2(prefix, ""),
-            #                 condType=NiceCondType.none,
-            #                 condValue2=0,
-            #             )
-            #         )
-            #     svt_add.profileComment.CN = comments
+            need_profile = self._need_wiki_profile(Region.CN, svt_add.collectionNo)
+            if need_profile:
+                for params in parse_template_list(wikitext, r"^{{个人资料"):
+                    for index in range(8):
+                        prefix = "详情" if index == 0 else f"资料{index}"
+                        comment = params.get2(prefix) or ""
+                        if comment:
+                            profiles = svt_add.mcProfiles.setdefault(index, [])
+                            profiles.append(comment)
 
             for params in parse_template_list(wikitext, r"^{{持有技能"):
                 text_cn, text_jp = params.get2(2), params.get2(3)
@@ -252,31 +291,21 @@ class WikiParser:
             svt_add: ServantW = self.wiki_data.get_svt(collection_no)
             svt_add.fandomLink = link
             text = FANDOM.get_page_text(link)
-            for priority, params in enumerate(
-                parse_template_list(text, r"^{{Biography")
-            ):
-                comments: list[NiceLoreComment] = []
-                for index in range(8):
-                    if index == 0:
-                        suffix = "def"
-                    elif index == 6:
-                        suffix = "ex"
-                    else:
-                        suffix = f"b{index}"
-                    comment = params.get2("n" + suffix) or params.get2(suffix) or ""
-                    comments.append(
-                        NiceLoreComment(
-                            id=index,
-                            priority=priority,
-                            condMessage=(params.get2("exunlock") or "")
-                            if suffix == "ex"
-                            else "",
-                            comment=comment,
-                            condType=NiceCondType.none,
-                            condValue2=0,
-                        )
-                    )
-                # svt_add.profileComment.NA = comments
+
+            need_profile = self._need_wiki_profile(Region.NA, svt_add.collectionNo)
+            for params in parse_template_list(text, r"^{{Biography"):
+                if need_profile:
+                    for index in range(8):
+                        if index == 0:
+                            suffix = "def"
+                        elif index == 6:
+                            suffix = "ex"
+                        else:
+                            suffix = f"b{index}"
+                        comment = params.get2("n" + suffix) or params.get2(suffix) or ""
+                        if comment:
+                            profiles = svt_add.fandomProfiles.setdefault(index, [])
+                            profiles.append(comment)
                 apex = params.get2("apex")
                 if apex:
                     if svt_add.aprilFoolProfile.NA:
@@ -335,7 +364,7 @@ class WikiParser:
                 return
             text = MOONCELL.get_page_text(event.mcLink)
             if not text:
-                self.invalid_mc_links.append(event.mcLink)
+                self._mc.invalid_links.append(event.mcLink)
                 logger.warning(
                     f'Mooncell event page not found, may be moved: "{event.mcLink}"'
                 )
@@ -385,7 +414,7 @@ class WikiParser:
                 return
             text = MOONCELL.get_page_text(war.mcLink)
             if not text:
-                self.invalid_mc_links.append(war.mcLink)
+                self._mc.invalid_links.append(war.mcLink)
                 logger.warning(
                     f'Mooncell main story page not found, may be moved: "{war.mcLink}"'
                 )
@@ -512,7 +541,7 @@ class WikiParser:
                 return
             text = FANDOM.get_page_text(title)
             if not text:
-                self.invalid_fandom_links.append(title)
+                self._fandom.invalid_links.append(title)
                 logger.warning(f'Fandom page not found, may be moved: "{title}"')
 
         for event in self.wiki_data.events.values():
@@ -522,13 +551,13 @@ class WikiParser:
         for summon in self.wiki_data.summons.values():
             _check_page(summon.fandomLink)
 
-        count = len(self.invalid_mc_links) + len(self.invalid_fandom_links)
+        count = len(self._mc.invalid_links) + len(self._fandom.invalid_links)
         if count > 0:
             msg = f"{count} wiki pages Not Found!"
-            if self.invalid_mc_links:
-                msg += f"\n  Mooncell pages: {self.invalid_mc_links}"
-            if self.invalid_fandom_links:
-                msg += f"\n  Fandom pages: {self.invalid_fandom_links}"
+            if self._mc.invalid_links:
+                msg += f"\n  Mooncell pages: {self._mc.invalid_links}"
+            if self._fandom.invalid_links:
+                msg += f"\n  Fandom pages: {self._fandom.invalid_links}"
             raise ValueError(msg)
 
     def sort(self):

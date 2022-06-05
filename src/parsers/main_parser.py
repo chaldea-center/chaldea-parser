@@ -131,6 +131,7 @@ class MainParser:
     def __init__(self):
         self.jp_data = MasterData(region=Region.JP)
         self.wiki_data = WikiData()
+        self.huntingQuests: list[int] = []
         self.payload: Payload = Payload.parse_obj(load_json("payload.json") or {})
         logger.info(f"Payload: {self.payload}")
 
