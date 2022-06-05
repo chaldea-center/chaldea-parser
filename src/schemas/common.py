@@ -48,6 +48,18 @@ class MappingBase(GenericModel, Generic[_KV]):
             self.NA = other.NA or self.NA
             self.KR = other.KR or self.KR
 
+    def of(self, region: Region) -> _KV | None:
+        if region == Region.JP:
+            return self.JP
+        elif region == Region.CN:
+            return self.CN
+        elif region == Region.TW:
+            return self.TW
+        elif region == Region.NA:
+            return self.NA
+        elif region == Region.KR:
+            return self.KR
+
 
 MappingStr = MappingBase[str]
 MappingInt = MappingBase[int]

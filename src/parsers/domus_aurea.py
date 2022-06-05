@@ -57,7 +57,7 @@ def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
     df.drop(index=0, inplace=True)
 
     # drop quest_name, item_name, last rows. EXCEPT first pair
-    rows = [r for r in df.index if df.loc[r, 1] == "クエスト名"]
+    rows = [r for r in df.index if df.loc[r, 1] == "クエスト名"]  # type: ignore
     rows_drop = []
     for r in rows[1:]:
         rows_drop.extend([r, r + 1])
@@ -77,7 +77,7 @@ def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
         inplace=True,
     )
     # drop 重复的quest列
-    cols2 = [c for c in df.columns if df.loc[1, c] == "クエスト名"]
+    cols2 = [c for c in df.columns if df.loc[1, c] == "クエスト名"]  # type: ignore
     df.drop(columns=cols2[1:], inplace=True)
 
     for i, c in enumerate(list(df.columns)):

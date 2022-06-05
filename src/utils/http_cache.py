@@ -114,6 +114,15 @@ class HttpApiUtil(abc.ABC):
 
         return resp
 
+    def api_json(
+        self, url, filter_fn: FILTER_FN | None = None, **kwargs
+    ) -> dict | None:
+        url = self.full_url(url)
+        response = self.call_api(url, filter_fn, **kwargs)
+        if response is None:
+            return None
+        return response.json()
+
     def api_model(
         self, url, model: Type[Model], filter_fn: FILTER_FN | None = None, **kwargs
     ) -> Optional[Model]:

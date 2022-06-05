@@ -53,10 +53,10 @@ class MappingData(BaseModel):
     td_names: dict[str, MappingStr] = {}
     td_ruby: dict[str, MappingStr] = {}
     td_detail: dict[str, MappingStr] = {}
+    voice_line_names: dict[str, MappingStr] = {}
 
     trait: dict[int, MappingStr] = {}  # trait.id
     trait_redirect: dict[int, int] = {}  # event_trait -> normal trait
-    svt_class: dict[int, MappingStr] = {}
 
     # additional strings
     # ce_comment: dict[int, MappingStr] = {}  # in w

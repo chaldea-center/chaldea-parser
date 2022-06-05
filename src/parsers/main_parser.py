@@ -943,10 +943,6 @@ class MainParser:
                 continue
             m_trait = mappings.trait.setdefault(k, MappingStr())
             m_trait.update(Region.NA, v.value, skip_exists=True)
-        # deprecated
-        for class_id, svt_class in CLASS_NAME.items():
-            m_svt_class = mappings.svt_class.setdefault(class_id, MappingStr())
-            m_svt_class.update(Region.NA, svt_class.value, skip_exists=True)
 
         enums = self.jp_data.mappingData.enums
         for v in SvtClass.__members__.values():
@@ -1156,6 +1152,15 @@ class MainParser:
             changes_jp, changes = _svt_change_dict(svt_jp), _svt_change_dict(svt)
             for k, v in changes_jp.items():
                 _update_mapping(mappings.svt_names, v, changes.get(k, None))
+            assert svt_jp.profile is not None
+            for group in svt_jp.profile.voices:
+                for line in group.voiceLines:
+                    if not line.name:
+                        continue
+                    name = line.name.replace("\u3000（ひとつの施策でふたつあるとき）", "")
+                    name = name.replace("（57は欠番）", "")
+                    name = re.sub(r"\d+$", "", name).strip()
+                    mappings.voice_line_names.setdefault(name, MappingStr())
 
             if not svt:
                 continue
@@ -1470,7 +1475,12 @@ class MainParser:
         # mapping files which should override dist one
         self._merge_json(
             mapping_dict,
-            {key: mappings_repo.pop(key) for key in ["trait", "svt_class"]},
+            {
+                key: mappings_repo.pop(key)
+                for key in [
+                    "trait",
+                ]
+            },
         )
         self._merge_json(mappings_repo, mapping_dict)
 
