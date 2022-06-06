@@ -2,11 +2,13 @@ from pydantic import BaseModel, Field
 
 
 class DropRateSheet(BaseModel):
-    questIds: list[int] = Field(default_factory=list)
-    itemIds: list[int] = Field(default_factory=list)
-    apCosts: list[int] = Field(default_factory=list)
-    runs: list[int] = Field(default_factory=list)
-    sparseMatrix: dict[int, dict[int, float]] = Field(default_factory=dict)
+    itemIds: list[int] = []
+    questIds: list[int] = []
+    apCosts: list[int] = []
+    runs: list[int] = []
+    bonds: list[int] = []
+    exps: list[int] = []
+    sparseMatrix: dict[int, dict[int, float]] = {}
 
 
 class DropRateData(BaseModel):

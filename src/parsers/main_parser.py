@@ -11,7 +11,6 @@ import orjson
 import requests
 from app.schemas.common import NiceTrait, Region, RepoInfo
 from app.schemas.enums import (
-    CLASS_NAME,
     OLD_TRAIT_MAPPING,
     Attribute,
     ServantPersonality,
@@ -24,7 +23,6 @@ from app.schemas.gameenums import (
     NiceFuncTargetType,
     NiceGender,
     NiceGiftType,
-    NiceItemType,
     NiceMissionProgressType,
     NiceMissionType,
     NiceQuestAfterClearType,
@@ -89,7 +87,6 @@ from ..schemas.common import (
 )
 from ..schemas.const_data import ConstGameData
 from ..schemas.gamedata import (
-    ExchangeTicket,
     FixedDrop,
     MappingData,
     MasterData,
@@ -117,6 +114,7 @@ from ..utils import (
     sort_dict,
 )
 from ..wiki import FANDOM, MOONCELL
+from .core.ticket import parse_exchange_tickets
 
 
 _KT = TypeVar("_KT", str, int)
@@ -158,7 +156,7 @@ class MainParser:
             logger.warning("skip checking quests data")
         else:
             self.filter_quests()
-        self.exchange_tickets()
+        self.jp_data.exchangeTickets = parse_exchange_tickets(self.jp_data.nice_item)
         if not settings.output_wiki.joinpath("dropRate.json").exists():
             logger.info("dropRate.json not exist, run domus_aurea parser")
             from .domus_aurea import run_drop_rate_update
@@ -888,35 +886,6 @@ class MainParser:
                 )
             )
         return pydantic_encoder(obj)
-
-    def exchange_tickets(self):
-        name_id_map = {item.name: item.id for item in self.jp_data.nice_item}
-        tickets: list[ExchangeTicket] = []
-        for item in self.jp_data.nice_item:
-            if item.type != NiceItemType.itemSelect:
-                continue
-            match = re.search(r"^(\d+)月交換券\((\d+)\)$", item.name)
-            if not match:
-                continue
-            year, month = match.group(2), match.group(1)
-            m2 = re.search(r"^(.+)、(.+)、(.+)の中から一つと交換ができます。$", item.detail)
-            if not m2:
-                continue
-            item_ids = []
-            for i in (1, 2, 3):
-                item_id = name_id_map.get(m2.group(i))
-                if item_id:
-                    item_ids.append(item_id)
-            assert len(item_ids) == 3, f"exchange ticket items!=3: {item_ids}"
-            tickets.append(
-                ExchangeTicket(
-                    id=int(year) * 100 + int(month),
-                    year=int(year),
-                    month=int(month),
-                    items=item_ids,
-                )
-            )
-        self.jp_data.exchangeTickets = tickets
 
     def merge_all_mappings(self):
         logger.info("merge all mappings")

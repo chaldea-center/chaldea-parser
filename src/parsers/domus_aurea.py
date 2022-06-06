@@ -10,11 +10,11 @@ import numpy
 import pandas as pd
 import requests
 from app.schemas.gameenums import NiceQuestAfterClearType, NiceQuestType
-from app.schemas.nice import NiceWar
+from app.schemas.nice import NiceQuestPhase, NiceWar
 
 from src.config import settings
 from src.schemas.drop_data import DropRateData, DropRateSheet
-from src.utils import logger
+from src.utils import AtlasApi, logger
 from src.utils.helper import LocalProxy, dump_json, load_json
 
 
@@ -62,6 +62,10 @@ def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
     for r in rows[1:]:
         rows_drop.extend([r, r + 1])
     rows_drop.extend([r for r in df.index if r > rows_drop[-1]])
+    for i, r in enumerate(df.index):
+        if i > 3 and pd.isna(df.loc[r, 1]):  # type: ignore
+            rows_drop.append(r)
+    rows_drop = list(set(rows_drop))
     # print(rows_drop)
     df.drop(index=rows_drop, inplace=True)
 
@@ -84,7 +88,7 @@ def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
         if df.iloc[0, i] == "猛火":
             df = df.iloc[:, :i]
             break
-    assert not df.iloc[2:, 1].isnull().any()
+    assert not df.iloc[2:, 1].isnull().any(), list(df.iloc[2:, 1])
     assert df.iloc[0, -35] == "輝石"  # (3+2)*7
     settings.tmp_vars[f"df_{legacy}"] = df
 
@@ -117,6 +121,15 @@ def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
             unknown_quests.append(name)
     assert not unknown_quests, f"these quests not found: {unknown_quests}"
     sheet_data.questIds = quest_ids
+    assert len(sheet_data.questIds) == len(sheet_data.apCosts) == len(sheet_data.runs)
+    quests: list[NiceQuestPhase] = []
+    for questId in sheet_data.questIds:
+        q = AtlasApi.quest_phase(questId, 1)
+        assert q
+        quests.append(q)
+    sheet_data.bonds = [q.bond for q in quests]
+    sheet_data.exps = [q.exp for q in quests]
+
     matrix: pd.DataFrame = df.iloc[2:, 4:]
     sparse_matrix: dict[int, dict[int, float]] = {}
     for j, _ in enumerate(matrix.columns):
@@ -303,6 +316,8 @@ _ITEM_MAPPING = (
     ("鉄杭", 6533, "宵哭きの鉄杭"),
     ("火薬", 6534, "励振火薬"),
     ("小鐘", 6549, "赦免の小鐘"),
+    ("剣", 6551, "黄昏の儀式剣"),
+    ("灰", 6552, "忘れじの灰"),
     ("種", 6502, "世界樹の種"),
     ("ﾗﾝﾀﾝ", 6508, "ゴーストランタン"),
     ("八連", 6515, "八連双晶"),
