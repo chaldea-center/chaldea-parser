@@ -905,6 +905,8 @@ class MainParser:
             self.jp_data.mappingData.war_names.pop(key, None)
         for key in self.jp_data.mappingData.svt_names.keys():
             self.jp_data.mappingData.entity_names.pop(key, None)
+        for key in self.jp_data.mappingData.ce_names.keys():
+            self.jp_data.mappingData.entity_names.pop(key, None)
 
     def _add_enum_mappings(self):
         mappings = self.jp_data.mappingData
