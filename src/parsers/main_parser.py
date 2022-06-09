@@ -33,6 +33,7 @@ from app.schemas.gameenums import (
 from app.schemas.nice import (
     AscensionAdd,
     AscensionAddEntryStr,
+    BasicServant,
     EnemyDrop,
     ExtraAssets,
     NiceBaseFunction,
@@ -845,7 +846,9 @@ class MainParser:
                 }
             )
         elif isinstance(obj, NiceServant):
-            exclude.update({"expFeed"})
+            exclude.update({"originalBattleName", "expFeed"})
+        elif isinstance(obj, BasicServant):
+            exclude.update({"originalOverwriteName"})
         elif isinstance(obj, NiceEquip):
             exclude.update({"expFeed", "expGrowth", "atkGrowth", "hpGrowth"})
         elif isinstance(obj, (AscensionAdd, ExtraAssets)):
