@@ -1084,6 +1084,12 @@ class MainParser:
                 svt.name if svt else None,
                 skip_exists=True,
             )
+            _update_mapping(
+                mappings.svt_names,
+                svt_jp.battleName,
+                svt.battleName if svt else None,
+                skip_exists=True,
+            )
             __update_ascension_add(
                 mappings.svt_names,
                 svt_jp.ascensionAdd.overWriteServantName,
