@@ -2,7 +2,5 @@
   "python.formatting.provider": "black",
   "editor.formatOnSave": true,
   "python.linting.enabled": true,
-  "python.analysis.diagnosticMode": "workspace",
-  "python.analysis.extraPaths": ["atlas"],
-  "python.autoComplete.extraPaths": ["atlas"]
+  "python.analysis.diagnosticMode": "workspace"
 }
