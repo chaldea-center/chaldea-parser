@@ -1043,6 +1043,12 @@ class MainParser:
                 self.wiki_data.wars.setdefault(war_jp.id, WarW(id=war_jp.id))
             mappings.war_names.setdefault(war_jp.name, MappingBase())
             mappings.war_names.setdefault(war_jp.longName, MappingBase())
+            for war_add in war_jp.warAdds:
+                if war_add.type in [
+                    NiceWarOverwriteType.longName,
+                    NiceWarOverwriteType.name_,
+                ]:
+                    mappings.war_names.setdefault(war_add.overwriteStr, MappingBase())
             war = data.war_dict.get(war_jp.id)
             if war is None:
                 continue
