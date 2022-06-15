@@ -193,6 +193,8 @@ class MainParser:
             region_changed = not info_local.get(region) or RepoInfo.parse_obj(
                 info_local[region]
             ) != RepoInfo.parse_obj(info)
+            if Region.__members__[region] in self.payload.regions:
+                region_changed = True
 
             for f in AtlasExportFile.__members__.values():  # type:AtlasExportFile
                 fp_export = f.cache_path(region)
