@@ -28,6 +28,7 @@ from app.schemas.gameenums import (
     NiceQuestAfterClearType,
     NiceSvtType,
     NiceSvtVoiceType,
+    NiceVoiceCondType,
     NiceWarOverwriteType,
 )
 from app.schemas.nice import (
@@ -60,6 +61,7 @@ from app.schemas.nice import (
     NiceShop,
     NiceSkill,
     NiceTd,
+    NiceVoiceCond,
     NiceVoiceGroup,
     NiceVoiceLine,
     NiceWar,
@@ -723,6 +725,9 @@ class MainParser:
         if isinstance(obj, NiceWarAdd):
             if obj.type == NiceWarOverwriteType.effectChangeWhiteMark:
                 obj.type = NiceWarOverwriteType.clearMark
+        elif isinstance(obj, NiceVoiceCond):
+            if obj.condType.value.startswith("unknown"):
+                obj.condType = NiceVoiceCondType.spacificShopPurchase
 
         if isinstance(obj, NiceBaseSkill):
             exclude.add("detail")
