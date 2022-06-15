@@ -232,3 +232,4 @@ class Payload(BaseModel):
     regions: set[Region] = set()  # from atlas
     clearCacheHttp: bool = False
     clearCacheWiki: bool = False
+    mainStoryQuestExpire: int = 90

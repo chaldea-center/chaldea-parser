@@ -379,7 +379,7 @@ class WikiParser:
             name_cn = params.get2("名称cn")
             if name_jp and name_cn:
                 self.mc_transl.event_names[name_jp] = name_cn
-                self.mc_transl.event_names[name_jp.replace("・", "･")] = name_cn
+                self.mc_transl.event_names[name_jp.replace("･", "・")] = name_cn
 
             event.titleBanner.CN = MOONCELL.get_file_url_null(params.get("标题图文件名cn"))
             event.titleBanner.JP = MOONCELL.get_file_url_null(params.get("标题图文件名jp"))

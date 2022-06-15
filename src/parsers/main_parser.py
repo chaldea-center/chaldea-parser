@@ -348,7 +348,7 @@ class MainParser:
                     quest.id,
                     last_phase,
                     filter_fn=_check_quest_phase_in_recent,
-                    expire_after=10 * 24 * 3600,
+                    expire_after=self.payload.mainStoryQuestExpire * 24 * 3600,
                 )
                 return
             if quest.warId == 1002:  # 曜日クエスト
