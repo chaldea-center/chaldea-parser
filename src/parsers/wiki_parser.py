@@ -376,7 +376,7 @@ class WikiParser:
                 return
             params = parse_template(text, r"^{{活动信息")
             name_jp = params.get2("名称jp")
-            name_cn = params.get2("名称cn")
+            name_cn = params.get2("名称cn") or params.get2("名称ha")
             if name_jp and name_cn:
                 self.mc_transl.event_names[name_jp] = name_cn
                 self.mc_transl.event_names[name_jp.replace("･", "・")] = name_cn

@@ -233,3 +233,4 @@ class Payload(BaseModel):
     clearCacheHttp: bool = False
     clearCacheWiki: bool = False
     mainStoryQuestExpire: int = 90
+    runWikiParser: bool = False

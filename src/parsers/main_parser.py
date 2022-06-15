@@ -118,6 +118,7 @@ from ..utils import (
 )
 from ..wiki import FANDOM, MOONCELL
 from .core.ticket import parse_exchange_tickets
+from .wiki_parser import WikiParser
 
 
 _KT = TypeVar("_KT", str, int)
@@ -146,6 +147,10 @@ class MainParser:
             logger.warning("clear all wiki cache")
             MOONCELL.clear()
             FANDOM.clear()
+        if self.payload.runWikiParser:
+            logger.warning("run wiki parser")
+            wiki_parser = WikiParser()
+            wiki_parser.start()
 
         logger.info("update_exported_files")
         self.update_exported_files()
