@@ -16,6 +16,7 @@ from ..schemas.common import CEObtain, MappingStr, Region, SummonType, SvtObtain
 from ..schemas.wiki_data import (
     EventW,
     LimitedSummon,
+    MooncellTranslation,
     ProbGroup,
     ServantW,
     SubSummon,
@@ -51,6 +52,10 @@ class WikiParser:
         self._mc = _WikiTemp(Region.CN)
         self._fandom = _WikiTemp(Region.NA)
         self._jp = _WikiTemp(Region.JP)
+
+    @property
+    def mc_transl(self) -> MooncellTranslation:
+        return self.wiki_data.mcTransl
 
     @count_time
     def start(self):
@@ -88,7 +93,7 @@ class WikiParser:
 
     def init_wiki_data(self):
         self.wiki_data = WikiData.parse_dir(full_version=False)
-        mc_transl = self.wiki_data.mcTransl
+        mc_transl = self.mc_transl
         for k in list(mc_transl.svt_names.keys()):
             mc_transl.svt_names.pop(k)
         for k in list(mc_transl.ce_names.keys()):
@@ -151,9 +156,9 @@ class WikiParser:
             name_cn, name_cn2 = params.get2("中文名"), params.get2("中文名2")
             name_jp, name_jp2 = params.get2("日文名"), params.get2("日文名2")
             if name_cn and name_jp:
-                self.wiki_data.mcTransl.svt_names[name_jp] = name_cn
+                self.mc_transl.svt_names[name_jp] = name_cn
             if name_cn2 and name_jp2:
-                self.wiki_data.mcTransl.svt_names[name_jp2] = name_cn2
+                self.mc_transl.svt_names[name_jp2] = name_cn2
             nicknames.update(re.split(r"[,，&]", params.get2("昵称") or ""))
             if svt_add.nicknames.CN:
                 nicknames.update(svt_add.nicknames.CN)
@@ -196,15 +201,15 @@ class WikiParser:
             for params in parse_template_list(wikitext, r"^{{持有技能"):
                 text_cn, text_jp = params.get2(2), params.get2(3)
                 if text_cn and text_jp:
-                    self.wiki_data.mcTransl.skill_names[text_jp] = text_cn
+                    self.mc_transl.skill_names[text_jp] = text_cn
 
             for params in parse_template_list(wikitext, r"^{{宝具"):
                 td_name_cn, td_ruby_cn = params.get2("中文名"), params.get2("国服上标")
                 td_name_jp, td_ruby_jp = params.get2("日文名"), params.get2("日服上标")
                 if td_name_cn and td_name_jp:
-                    self.wiki_data.mcTransl.td_names[td_name_jp] = td_name_cn
+                    self.mc_transl.td_names[td_name_jp] = td_name_cn
                 if td_ruby_cn and td_ruby_jp:
-                    self.wiki_data.mcTransl.td_ruby[td_ruby_jp] = td_ruby_cn
+                    self.mc_transl.td_ruby[td_ruby_jp] = td_ruby_cn
             for params in parse_template_list(wikitext, r"^{{战斗形象"):
                 for key, value in params.items():
                     if "模型" in key or "灵衣" in key and str(value).endswith(".png"):
@@ -226,7 +231,7 @@ class WikiParser:
             name_cn = params.get2("名称")
             name_jp = params.get2("日文名称")
             if name_cn and name_jp:
-                self.wiki_data.mcTransl.ce_names[name_jp] = name_cn
+                self.mc_transl.ce_names[name_jp] = name_cn
             profile_cn = params.get2("解说")
             if profile_cn:
                 ce_add.profile.CN = profile_cn
@@ -257,7 +262,7 @@ class WikiParser:
             name_jp = params.get2("日文名称")
             if name_cn and name_jp and cc_add.collectionNo != 113:
                 # 113-小犭贪
-                self.wiki_data.mcTransl.cc_names[name_jp] = name_cn
+                self.mc_transl.cc_names[name_jp] = name_cn
             profile_cn = params.get2("解说")
             if profile_cn:
                 cc_add.profile.CN = profile_cn
@@ -373,7 +378,8 @@ class WikiParser:
             name_jp = params.get2("名称jp")
             name_cn = params.get2("名称cn")
             if name_jp and name_cn:
-                self.wiki_data.mcTransl.event_names[name_jp] = name_cn
+                self.mc_transl.event_names[name_jp] = name_cn
+                self.mc_transl.event_names[name_jp.replace("・", "･")] = name_cn
 
             event.titleBanner.CN = MOONCELL.get_file_url_null(params.get("标题图文件名cn"))
             event.titleBanner.JP = MOONCELL.get_file_url_null(params.get("标题图文件名jp"))
@@ -439,12 +445,12 @@ class WikiParser:
                 quest_jp = params.get2("名称jp")
                 quest_cn = params.get2("名称cn")
                 if quest_jp and quest_cn:
-                    self.wiki_data.mcTransl.quest_names[quest_jp] = quest_cn
+                    self.mc_transl.quest_names[quest_jp] = quest_cn
                 for phase in "一二三四五六七八":
                     spot_jp = params.get2(phase + "地点jp")
                     spot_cn = params.get2(phase + "地点cn")
                     if spot_jp and spot_cn:
-                        self.wiki_data.mcTransl.spot_names[spot_jp] = spot_cn
+                        self.mc_transl.spot_names[spot_jp] = spot_cn
 
         worker = Worker("mc_quests")
         for answer in MOONCELL.ask_query("[[分类:主线关卡 || 活动关卡]]"):
