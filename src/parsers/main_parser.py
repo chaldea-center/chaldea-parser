@@ -352,7 +352,7 @@ class MainParser:
                 self.jp_data.cachedQuestPhases[last_phase_key] = AtlasApi.quest_phase(
                     quest.id,
                     last_phase,
-                    filter_fn=_check_quest_phase_in_recent,
+                    # filter_fn=_check_quest_phase_in_recent,
                     expire_after=self.payload.mainStoryQuestExpire * 24 * 3600,
                 )
                 return
