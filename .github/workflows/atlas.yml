@@ -61,11 +61,11 @@ jobs:
 
       - run: echo "LAST_AUTHOR=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
         working-directory: ${{ env.output_dir }}
-      - run: echo "LAST_NOT_BOT=${{ !contains(env.LAST_AUTHOR, '[bot]') }}" >> $GITHUB_ENV
+      - run: echo "NEED_WIKI=${{ !contains(env.LAST_AUTHOR, '[bot]') || (github.event.client_payload && github.event.client_payload.runWikiParser) }}" >> $GITHUB_ENV
         working-directory: ${{ env.output_dir }}
 
       - name: Checkout static repo
-        if: env.LAST_NOT_BOT == 'true'
+        if: env.NEED_WIKI == 'true'
         uses: actions/checkout@v2
         with:
           repository: chaldea-center/static-resource
@@ -73,11 +73,11 @@ jobs:
           path: ${{ env.static_dir }}
 
       - name: Run wiki parser
-        if: env.LAST_NOT_BOT == 'true'
+        if: env.NEED_WIKI == 'true'
         run: python main.py wiki
 
       - name: Publish wiki data
-        if: env.LAST_NOT_BOT == 'true'
+        if: env.NEED_WIKI == 'true'
         working-directory: ${{ env.output_dir }}
         run: |
           git add .
@@ -85,7 +85,7 @@ jobs:
           git push
 
       - name: Publish static
-        if: env.LAST_NOT_BOT == 'true'
+        if: env.NEED_WIKI == 'true'
         working-directory: ${{ env.static_dir }}
         run: |
           git add .
