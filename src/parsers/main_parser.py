@@ -1246,15 +1246,13 @@ class MainParser:
                 _update_mapping(
                     mappings.skill_names, skill_jp.name, skill.name if skill else None
                 )
-            if not skill:
-                continue
             detail_jp = _process_effect_detail(skill_jp.unmodifiedDetail)
             if not detail_jp:
                 continue
             _update_mapping(
                 mappings.skill_detail,
                 detail_jp,
-                _process_effect_detail(skill.unmodifiedDetail),
+                _process_effect_detail(skill.unmodifiedDetail if skill else None),
             )
         for td_jp in itertools.chain(
             jp_data.td_dict.values(), jp_data.base_tds.values()
@@ -1264,15 +1262,13 @@ class MainParser:
             if region != Region.NA:  # always empty for NA
                 _update_mapping(mappings.td_ruby, td_jp.ruby, td.ruby if td else None)
             _update_mapping(mappings.td_types, td_jp.type, td.type if td else None)
-            if not td:
-                continue
             detail_jp = _process_effect_detail(td_jp.unmodifiedDetail)
             if not detail_jp:
                 continue
             _update_mapping(
                 mappings.td_detail,
                 detail_jp,
-                _process_effect_detail(td.unmodifiedDetail),
+                _process_effect_detail(td.unmodifiedDetail if td else None),
             )
         for buff_jp in jp_data.buff_dict.values():
             buff = data.buff_dict.get(buff_jp.id)
