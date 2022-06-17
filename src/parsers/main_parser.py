@@ -665,11 +665,13 @@ class MainParser:
             "constData",
         )
         _normal_dump(list(wiki_data.servants.values()), "wiki.servants")
-        _normal_dump(list(wiki_data.craftEssences.values()), "wiki.craftEssences")
+        _dump_by_count(
+            list(wiki_data.craftEssences.values()), 500, "wiki.craftEssences"
+        )
         _normal_dump(list(wiki_data.commandCodes.values()), "wiki.commandCodes")
         _normal_dump(list(wiki_data.events.values()), "wiki.events")
         _normal_dump(list(wiki_data.wars.values()), "wiki.wars")
-        _normal_dump(list(wiki_data.summons.values()), "wiki.summons")
+        _dump_by_count(list(wiki_data.summons.values()), 100, "wiki.summons")
         _dump_file(settings.output_wiki / "webcrowMapping.json", "wiki.webcrowMapping")
         _dump_file(settings.output_wiki / "dropRate.json", "dropRate")
         base_tds = list(self.jp_data.base_tds.values())
