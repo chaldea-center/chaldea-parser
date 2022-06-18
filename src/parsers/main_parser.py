@@ -1399,6 +1399,7 @@ class MainParser:
                 if re.findall(r"Extra|エクストラ", jp_name):
                     for regex in extra_regexes:
                         cn_name2 = regex.sub(_repl, cn_name2)
+                cn_name2 = cn_name2.replace("<过量充能时效果提升>", "<Over Charge时效果提升>")
                 if cn_name2 != cn_name:
                     # print(f"Convert CN: {cn_name} -> {cn_name2}")
                     regions["CN"] = cn_name2
@@ -1409,6 +1410,10 @@ class MainParser:
         logger.info("merging Atlas translations for NA")
 
         mappings = self.jp_data.mappingData
+        for _m in mappings.func_popuptext.values():
+            if _m.NA:
+                _m.NA = _m.NA.replace("\n", " ")
+
         import app as app_lib
 
         na_folder = Path(app_lib.__file__).resolve().parent.joinpath("data/mappings/")
