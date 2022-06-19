@@ -169,8 +169,6 @@ class MainParser:
         self.save_data()
 
     def update_exported_files(self):
-        worker = Worker("exported_file")
-
         def _add_download_task(_url, _fp):
             Path(_fp).write_bytes(
                 requests.get(_url, headers={"cache-control": "no-cache"}).content
@@ -178,7 +176,6 @@ class MainParser:
             logger.info(f"{_fp}: update exported file from {_url}")
 
         fp_openapi = settings.atlas_export_dir / "openapi.json"
-        fp_info = settings.atlas_export_dir / "info.json"
 
         openapi_remote = requests.get(AtlasApi.full_url("openapi.json")).json()
         openapi_local = load_json(fp_openapi)
@@ -189,30 +186,29 @@ class MainParser:
         if api_changed:
             logger.info(f'API changed:\n{dict(openapi_remote["info"], description="")}')
 
-        info_remote = requests.get(AtlasApi.full_url("info")).json()
-        info_local = load_json(fp_info) or {}
+        for region in Region.__members__.values():
+            worker = Worker(f"exported_file_{region}")
+            fp_info = settings.atlas_export_dir / region.value / "info.json"
+            info_local = load_json(fp_info) or {}
+            info_remote = requests.get(
+                AtlasApi.full_url(f"export/{region}/info.json")
+            ).json()
+            region_changed = region in self.payload.regions or info_local != info_remote
 
-        for region, info in info_remote.items():  # type: str, dict
-            region_changed = not info_local.get(region) or RepoInfo.parse_obj(
-                info_local[region]
-            ) != RepoInfo.parse_obj(info)
-            if Region.__members__[region] in self.payload.regions:
-                region_changed = True
-
-            for f in AtlasExportFile.__members__.values():  # type:AtlasExportFile
+            for f in AtlasExportFile.__members__.values():
                 fp_export = f.cache_path(region)
                 fp_export.parent.mkdir(parents=True, exist_ok=True)
                 if api_changed or region_changed or not fp_export.exists():
-                    self.payload.regions.add(Region.__members__[region])
+                    self.payload.regions.add(region)
                     url = f.resolve_link(region)
                     worker.add(_add_download_task, url, fp_export)
                 else:
                     # logger.info(f'{fp_export}: already updated')
                     pass
-        worker.wait()
-        dump_json(info_remote, fp_info)
+            worker.wait()
+            dump_json(info_remote, fp_info)
+            logger.debug(f"Exported files updated:\n{dump_json(info_remote)}")
         dump_json(openapi_remote, fp_openapi)
-        logger.debug(f"Exported files updated:\n{dump_json(info_remote)}")
 
     def load_master_data(self, region: Region, add_trigger: bool = True) -> MasterData:
         logger.info(f"loading {region} master data")
