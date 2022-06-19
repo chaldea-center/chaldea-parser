@@ -16,12 +16,12 @@ from ..schemas.common import CEObtain, MappingStr, Region, SummonType, SvtObtain
 from ..schemas.wiki_data import (
     EventW,
     LimitedSummon,
-    MooncellTranslation,
     ProbGroup,
     ServantW,
     SubSummon,
     WarW,
     WikiData,
+    WikiTranslation,
 )
 from ..utils import Worker, count_time, dump_json, load_json, logger
 from ..utils.helper import sort_dict
@@ -54,8 +54,12 @@ class WikiParser:
         self._jp = _WikiTemp(Region.JP)
 
     @property
-    def mc_transl(self) -> MooncellTranslation:
+    def mc_transl(self) -> WikiTranslation:
         return self.wiki_data.mcTransl
+
+    @property
+    def fandom_transl(self) -> WikiTranslation:
+        return self.wiki_data.fandomTransl
 
     @count_time
     def start(self):
@@ -226,6 +230,15 @@ class WikiParser:
             ce_add.mcLink = record["name_link"]
             ce_add.obtain = CEObtain.from_cn(record["type"])
 
+            des = record.get("des")
+            if des and des != "无效果":
+                des = remove_tag(des).replace("\n", "")
+                self.mc_transl.ce_skill_des[ce_add.collectionNo] = des
+            des_max = record.get("des_max")
+            if des_max and des_max != "无效果":
+                des_max = remove_tag(des_max).replace("\n", "")
+                self.mc_transl.ce_skill_des_max[ce_add.collectionNo] = des_max
+
             wikitext = mwparse(MOONCELL.get_page_text(ce_add.mcLink))
             params = parse_template(wikitext, r"^{{概念礼装")
             name_cn = params.get2("名称")
@@ -255,6 +268,11 @@ class WikiParser:
         def _parse_one(record: dict):
             cc_add = self.wiki_data.get_cc(int(record["id"]))
             cc_add.mcLink = record["name_link"]
+
+            des = record.get("des")
+            if des:
+                des = remove_tag(des).replace("\n", "")
+                self.mc_transl.cc_skill_des[cc_add.collectionNo] = des
 
             wikitext = mwparse(MOONCELL.get_page_text(cc_add.mcLink))
             params = parse_template(wikitext, r"^{{指令纹章")
@@ -333,8 +351,17 @@ class WikiParser:
         def _parse_one(collection_no: int, link: str):
             ce_add = self.wiki_data.get_ce(collection_no)
             ce_add.fandomLink = link
-            params = parse_template(FANDOM.get_page_text(link), r"^{{Craftlore")
+            wikitext = mwparse(FANDOM.get_page_text(link))
+            params = parse_template(wikitext, r"^{{Craftlore")
             ce_add.profile.NA = params.get2("na") or params.get2("en")
+
+            effect_params = parse_template(wikitext, r"^{{ceeffect")
+            effect1 = effect_params.get2("effect1")
+            effect2 = effect_params.get2("effect2")
+            if effect1 and effect1 != "N/A":
+                self.fandom_transl.ce_skill_des[ce_add.collectionNo] = effect1
+            if effect2 and effect2 != "N/A":
+                self.fandom_transl.ce_skill_des_max[ce_add.collectionNo] = effect2
 
         worker = Worker("fandom_ce")
         list_text = FANDOM.get_page_text("Craft Essence List/By ID")
@@ -356,8 +383,14 @@ class WikiParser:
             cc_add.fandomLink = fa_link
             if not fa_link:
                 continue
-            params = parse_template(FANDOM.get_page_text(fa_link), r"^{{Craftlore")
+            wikitext = mwparse(FANDOM.get_page_text(fa_link))
+            params = parse_template(wikitext, r"^{{Craftlore")
             cc_add.profile.NA = params.get2("na") or params.get2("en")
+
+            effect_params = parse_template(wikitext, r"^{{Infoboxcc")
+            effect1 = effect_params.get2("effect1")
+            if effect1 and effect1 != "N/A":
+                self.fandom_transl.cc_skill_des[cc_add.collectionNo] = effect1
 
     def mc_events(self):
         def _parse_one(event: EventW):

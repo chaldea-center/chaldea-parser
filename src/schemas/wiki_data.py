@@ -13,9 +13,9 @@ from ..schemas.common import (
 from ..utils import NEVER_CLOSED_TIMESTAMP, dump_json, load_json, sort_dict
 
 
-class MooncellTranslation(BaseModelORJson):
+class WikiTranslation(BaseModelORJson):
     """
-    Mooncell Translations
+    Mooncell/Fandom Translations
 
     <id/jp_name, cn_name>
     """
@@ -29,6 +29,9 @@ class MooncellTranslation(BaseModelORJson):
     event_names: dict[str, str] = {}
     quest_names: dict[str, str] = {}
     spot_names: dict[str, str] = {}
+    ce_skill_des: dict[int, str] = {}
+    ce_skill_des_max: dict[int, str] = {}
+    cc_skill_des: dict[int, str] = {}
 
     def sort(self):
         self.svt_names = sort_dict(self.svt_names)
@@ -40,6 +43,9 @@ class MooncellTranslation(BaseModelORJson):
         self.event_names = sort_dict(self.event_names)
         self.quest_names = sort_dict(self.quest_names)
         self.spot_names = sort_dict(self.spot_names)
+        self.ce_skill_des = sort_dict(self.ce_skill_des)
+        self.ce_skill_des_max = sort_dict(self.ce_skill_des_max)
+        self.cc_skill_des = sort_dict(self.cc_skill_des)
 
 
 class ServantWBase(BaseModel):
@@ -161,7 +167,8 @@ class WikiData(BaseModelORJson):
     events: dict[int, EventW] = {}
     wars: dict[int, WarW] = {}
     summons: dict[str, LimitedSummon] = {}
-    mcTransl: MooncellTranslation = MooncellTranslation()
+    mcTransl: WikiTranslation = WikiTranslation()
+    fandomTransl: WikiTranslation = WikiTranslation()
 
     @classmethod
     def parse_dir(cls, full_version: bool = False) -> "WikiData":
@@ -169,6 +176,7 @@ class WikiData(BaseModelORJson):
         data = {
             "wars": {war["id"]: war for war in load_json(folder / "wars.json") or []},
             "mcTransl": load_json(folder / "mcTransl.json", {}),
+            "fandomTransl": load_json(folder / "fandomTransl.json", {}),
         }
         if full_version:
             data |= {
@@ -232,6 +240,7 @@ class WikiData(BaseModelORJson):
             dump_json(list(self.events.values()), folder / "events.json")
             dump_json(list(self.summons.values()), folder / "summons.json")
             dump_json(self.mcTransl, settings.output_wiki / "mcTransl.json")
+            dump_json(self.fandomTransl, settings.output_wiki / "fandomTransl.json")
 
         dump_json(list(self.wars.values()), folder / "wars.json")
         events_base = [

@@ -26,6 +26,7 @@ from app.schemas.gameenums import (
     NiceMissionProgressType,
     NiceMissionType,
     NiceQuestAfterClearType,
+    NiceSvtFlag,
     NiceSvtType,
     NiceSvtVoiceType,
     NiceVoiceCondType,
@@ -100,9 +101,9 @@ from ..schemas.wiki_data import (
     CommandCodeW,
     CraftEssenceW,
     EventW,
-    MooncellTranslation,
     WarW,
     WikiData,
+    WikiTranslation,
 )
 from ..utils import (
     NEVER_CLOSED_TIMESTAMP,
@@ -901,10 +902,24 @@ class MainParser:
     def merge_all_mappings(self):
         logger.info("merge all mappings")
         self._add_enum_mappings()
+
         self._merge_official_mappings(Region.CN)
-        self._merge_mc_translation()
+        self._merge_wiki_translation(
+            Region.CN,
+            WikiTranslation.parse_obj(
+                load_json(settings.output_wiki / "mcTransl.json", {})
+            ),
+        )
+
         self._merge_official_mappings(Region.NA)
         self._add_na_mapping()
+        self._merge_wiki_translation(
+            Region.NA,
+            WikiTranslation.parse_obj(
+                load_json(settings.output_wiki / "fandomTransl.json", {})
+            ),
+        )
+
         self._merge_official_mappings(Region.TW)
         self._merge_official_mappings(Region.KR)
         self._merge_repo_mapping()
@@ -1229,11 +1244,6 @@ class MainParser:
             if mc and mc.detail and mc.detail != mc_jp.detail:
                 mc_w.update(region, mc.detail)
 
-        def _process_effect_detail(detail: str | None):
-            if not detail:
-                return detail
-            return detail.replace("[g][o]▲[/o][/g]", "▲")
-
         for skill_jp in itertools.chain(
             jp_data.skill_dict.values(), jp_data.base_skills.values()
         ):
@@ -1250,13 +1260,13 @@ class MainParser:
                 _update_mapping(
                     mappings.skill_names, skill_jp.name, skill.name if skill else None
                 )
-            detail_jp = _process_effect_detail(skill_jp.unmodifiedDetail)
+            detail_jp = self._process_effect_detail(skill_jp.unmodifiedDetail)
             if not detail_jp:
                 continue
             _update_mapping(
                 mappings.skill_detail,
                 detail_jp,
-                _process_effect_detail(skill.unmodifiedDetail if skill else None),
+                self._process_effect_detail(skill.unmodifiedDetail if skill else None),
             )
         for td_jp in itertools.chain(
             jp_data.td_dict.values(), jp_data.base_tds.values()
@@ -1266,13 +1276,13 @@ class MainParser:
             if region != Region.NA:  # always empty for NA
                 _update_mapping(mappings.td_ruby, td_jp.ruby, td.ruby if td else None)
             _update_mapping(mappings.td_types, td_jp.type, td.type if td else None)
-            detail_jp = _process_effect_detail(td_jp.unmodifiedDetail)
+            detail_jp = self._process_effect_detail(td_jp.unmodifiedDetail)
             if not detail_jp:
                 continue
             _update_mapping(
                 mappings.td_detail,
                 detail_jp,
-                _process_effect_detail(td.unmodifiedDetail if td else None),
+                self._process_effect_detail(td.unmodifiedDetail if td else None),
             )
         for buff_jp in jp_data.buff_dict.values():
             buff = data.buff_dict.get(buff_jp.id)
@@ -1317,21 +1327,29 @@ class MainParser:
         self.jp_data.mappingData = mappings
         del data
 
-    def _merge_mc_translation(self):
-        logger.info("merging Mooncell translations for CN")
+    @staticmethod
+    def _process_effect_detail(detail: str | None):
+        if not detail:
+            return detail
+        return detail.replace("[g][o]▲[/o][/g]", "▲")
+
+    def _merge_wiki_translation(self, region: Region, transl: WikiTranslation):
+        logger.info(f"merging Wiki translations for {region}")
 
         def _update_mapping(
             m: dict[_KT, MappingBase[_KV]],
             _key: _KT,
-            value: _KV,
+            value: _KV | None,
         ):
+            if value is None:
+                return
             if (
                 re.findall(r"20[1-2][0-9]", str(value))
                 and m.get(_key, MappingBase()).CN
             ):
                 return
             return self._update_key_mapping(
-                Region.CN,
+                region,
                 key_mapping=m,
                 _key=_key,
                 value=value,
@@ -1340,29 +1358,62 @@ class MainParser:
             )
 
         mappings = self.jp_data.mappingData
-        mc_transl = MooncellTranslation.parse_obj(
-            load_json(settings.output_wiki / "mcTransl.json", {})
-        )
-        for name_jp, name_cn in mc_transl.svt_names.items():
+
+        for name_jp, name_cn in transl.svt_names.items():
             _update_mapping(mappings.svt_names, name_jp, name_cn)
-        for skill_jp, skill_cn in mc_transl.skill_names.items():
+        for skill_jp, skill_cn in transl.skill_names.items():
             _update_mapping(mappings.skill_names, skill_jp, skill_cn)
-        for td_name_jp, td_name_cn in mc_transl.td_names.items():
+        for td_name_jp, td_name_cn in transl.td_names.items():
             _update_mapping(mappings.td_names, td_name_jp, td_name_cn)
-        for td_ruby_jp, td_ruby_cn in mc_transl.td_ruby.items():
+        for td_ruby_jp, td_ruby_cn in transl.td_ruby.items():
             _update_mapping(mappings.td_ruby, td_ruby_jp, td_ruby_cn)
-        for name_jp, name_cn in mc_transl.ce_names.items():
+        for name_jp, name_cn in transl.ce_names.items():
             _update_mapping(mappings.ce_names, name_jp, name_cn)
-        for name_jp, name_cn in mc_transl.cc_names.items():
+        for name_jp, name_cn in transl.cc_names.items():
             _update_mapping(mappings.cc_names, name_jp, name_cn)
-        for name_jp, name_cn in mc_transl.event_names.items():
+        for name_jp, name_cn in transl.event_names.items():
             _update_mapping(mappings.event_names, name_jp, name_cn)
             name_jp = name_jp.replace("･", "・")
             _update_mapping(mappings.event_names, name_jp, name_cn)
-        for name_jp, name_cn in mc_transl.quest_names.items():
+        for name_jp, name_cn in transl.quest_names.items():
             _update_mapping(mappings.quest_names, name_jp, name_cn)
-        for name_jp, name_cn in mc_transl.spot_names.items():
+        for name_jp, name_cn in transl.spot_names.items():
             _update_mapping(mappings.spot_names, name_jp, name_cn)
+
+        # ce/cc skill des
+        for ce in self.jp_data.nice_equip_lore:
+            if (
+                ce.collectionNo <= 0
+                or ce.valentineEquipOwner is not None
+                or ce.flag == NiceSvtFlag.svtEquipExp
+            ):
+                continue
+            skills = [s for s in ce.skills if s.num == 1]
+            assert len(skills) in (1, 2)
+            for skill in skills:
+                assert skill.condLimitCount in (0, 4)
+                is_max = skill.condLimitCount != 0
+                detail = self._process_effect_detail(skill.unmodifiedDetail)
+                if not detail:
+                    continue
+                des = transl.ce_skill_des_max if is_max else transl.ce_skill_des
+                _update_mapping(
+                    mappings.skill_detail,
+                    detail,
+                    des.get(ce.collectionNo),
+                )
+        for cc in self.jp_data.nice_command_code:
+            if cc.collectionNo <= 0:
+                continue
+            assert len(cc.skills) == 1
+            detail = self._process_effect_detail(cc.skills[0].unmodifiedDetail)
+            if not detail:
+                continue
+            _update_mapping(
+                mappings.skill_detail,
+                detail,
+                transl.cc_skill_des.get(cc.collectionNo),
+            )
 
     def _fix_cn_translation(self):
         logger.info("fix Chinese translations")

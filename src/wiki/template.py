@@ -26,6 +26,7 @@ kAllTags = (
     "bold",
     "html_tag",
     "event",
+    "fandom",
 )
 
 _T = TypeVar("_T")
@@ -147,6 +148,10 @@ def remove_tag(string: str, tags: Iterable[str] = kAllTags, console=False):
             string = string.replace(
                 str(template), params.get("1") or params.get("2") or ""
             )
+    if "fandom" in tags:
+        for template in code.filter_templates(matches=r"^{{Seffect"):
+            params = parse_template(template)
+            string = string.replace(str(template), "")
     if "html_tag" in tags:
         for tag_node in code.filter_tags(recursive=False):
             string = string.replace(str(tag_node), str(tag_node.contents))
