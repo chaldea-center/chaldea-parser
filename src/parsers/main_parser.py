@@ -193,7 +193,9 @@ class MainParser:
             info_remote = requests.get(
                 AtlasApi.full_url(f"export/{region}/info.json")
             ).json()
-            region_changed = region in self.payload.regions or info_local != info_remote
+            region_changed = (
+                region in self.payload.regions and self.payload.forceUpdateExport
+            ) or info_local != info_remote
 
             for f in AtlasExportFile.__members__.values():
                 fp_export = f.cache_path(region)
@@ -1399,8 +1401,7 @@ class MainParser:
                 if re.findall(r"Extra|エクストラ", jp_name):
                     for regex in extra_regexes:
                         cn_name2 = regex.sub(_repl, cn_name2)
-                cn_name2 = cn_name2.replace("<过量充能时效果提升>", "<Over Charge时效果提升>")
-                cn_name2 = cn_name2.replace("<过量充能时特攻威力提升>", "<Over Charge时特攻威力提升>")
+                cn_name2 = cn_name2.replace("<过量充能时", "<Over Charge时")
                 if cn_name2 != cn_name:
                     # print(f"Convert CN: {cn_name} -> {cn_name2}")
                     regions["CN"] = cn_name2

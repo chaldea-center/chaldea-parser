@@ -133,7 +133,8 @@ def remove_tag(string: str, tags: Iterable[str] = kAllTags, console=False):
     if "link" in tags:
         # remove [[File:a.jpg|b|c]] - it show img
         string = re.sub(r"\[\[(文件|File):([^\[\]]*?)]]", "", string)
-        for wiki_link in code.filter_wikilinks():  # type: Wikilink
+        for wiki_link in code.filter_wikilinks():
+            wiki_link: Wikilink
             # [[语音关联从者::somebody]]
             link = re.split(r":+", str(wiki_link.title))[-1]
             shown_text = wiki_link.text
@@ -192,7 +193,8 @@ def parse_template(template: Wikitext, matches: str | None = None) -> Params:
     else:
         tmpl = template
     params = Params()
-    for p in tmpl.params:  # type:Parameter
+    for p in tmpl.params:
+        p: Parameter
         value = trim(p.value)
         if value not in ("-", "—", ""):
             params[trim(p.name)] = value

@@ -230,6 +230,7 @@ class DataVersion(BaseModel):
 
 class Payload(BaseModel):
     regions: set[Region] = set()  # from atlas
+    forceUpdateExport: bool = False
     clearCacheHttp: bool = False
     clearCacheWiki: bool = False
     mainStoryQuestExpire: int = 90
