@@ -161,6 +161,7 @@ class MainParser:
             logger.warning("skip checking quests data")
         else:
             self.filter_quests()
+        self._post_mappings()
         self.jp_data.exchangeTickets = parse_exchange_tickets(self.jp_data.nice_item)
         if not settings.output_wiki.joinpath("dropRate.json").exists():
             logger.info("dropRate.json not exist, run domus_aurea parser")
@@ -932,7 +933,6 @@ class MainParser:
         self._merge_official_mappings(Region.KR)
         self._merge_repo_mapping()
         self._fix_cn_translation()
-        self._post_mappings()
 
     def _post_mappings(self):
         mappings = self.jp_data.mappingData
