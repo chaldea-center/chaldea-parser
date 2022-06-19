@@ -344,12 +344,20 @@ class MainParser:
             last_phase_key = quest.id * 100 + last_phase
             # war 9033 極東乖離結界「帝都」 also use FREE ???
             if quest.type == NiceQuestType.free and quest.warId < 1000:
-                self.jp_data.cachedQuestPhases[last_phase_key] = AtlasApi.quest_phase(
+                phase_data = AtlasApi.quest_phase(
                     quest.id,
                     last_phase,
                     # filter_fn=_check_quest_phase_in_recent,
                     expire_after=self.payload.mainStoryQuestExpire * 24 * 3600,
                 )
+                if phase_data:
+                    for stage in phase_data.stages:
+                        for enemy in stage.enemies:
+                            name = re.sub(r"(\s*)([A-Z\uff21-\uff3a])$", "", enemy.name)
+                            self.jp_data.mappingData.entity_names.setdefault(
+                                name, MappingStr()
+                            )
+                self.jp_data.cachedQuestPhases[last_phase_key] = phase_data
                 return
             if quest.warId == 1002:  # 曜日クエスト
                 self.jp_data.cachedQuestPhases[last_phase_key] = AtlasApi.quest_phase(
