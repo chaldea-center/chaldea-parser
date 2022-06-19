@@ -900,22 +900,26 @@ class MainParser:
         logger.info("merge all mappings")
         self._add_enum_mappings()
         self._merge_official_mappings(Region.CN)
-        self._fix_cn_translation()
         self._merge_mc_translation()
         self._merge_official_mappings(Region.NA)
         self._add_na_mapping()
         self._merge_official_mappings(Region.TW)
         self._merge_official_mappings(Region.KR)
         self._merge_repo_mapping()
+        self._fix_cn_translation()
         self._post_mappings()
 
     def _post_mappings(self):
+        mappings = self.jp_data.mappingData
         for key in self.jp_data.mappingData.event_names.keys():
-            self.jp_data.mappingData.war_names.pop(key, None)
+            mappings.war_names.pop(key, None)
         for key in self.jp_data.mappingData.svt_names.keys():
-            self.jp_data.mappingData.entity_names.pop(key, None)
+            mappings.entity_names.pop(key, None)
         for key in self.jp_data.mappingData.ce_names.keys():
-            self.jp_data.mappingData.entity_names.pop(key, None)
+            mappings.entity_names.pop(key, None)
+            mappings.skill_names.pop(key, None)
+        for key in self.jp_data.mappingData.cc_names.keys():
+            mappings.skill_names.pop(key, None)
 
     def _add_enum_mappings(self):
         mappings = self.jp_data.mappingData
@@ -1396,10 +1400,11 @@ class MainParser:
                     for regex in extra_regexes:
                         cn_name2 = regex.sub(_repl, cn_name2)
                 cn_name2 = cn_name2.replace("<过量充能时效果提升>", "<Over Charge时效果提升>")
+                cn_name2 = cn_name2.replace("<过量充能时特攻威力提升>", "<Over Charge时特攻威力提升>")
                 if cn_name2 != cn_name:
                     # print(f"Convert CN: {cn_name} -> {cn_name2}")
                     regions["CN"] = cn_name2
-        self.test_mapping_dict = mappings_dict
+        # self.test_mapping_dict = mappings_dict
         self.jp_data.mappingData = MappingData.parse_obj(mappings_dict)
 
     def _add_na_mapping(self):
