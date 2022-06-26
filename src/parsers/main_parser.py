@@ -94,6 +94,7 @@ from ..schemas.gamedata import (
     FixedDrop,
     MappingData,
     MasterData,
+    MstViewEnemy,
     NiceBaseSkill,
     NiceBaseTd,
 )
@@ -239,6 +240,20 @@ class MainParser:
             master_data.remainedQuestIds.update(svt.relateQuestIds)
             master_data.remainedQuestIds.update(svt.trialQuestIds)
         master_data.remainedQuestIds.update(self.huntingQuests)
+        # raw
+        raw_fmt = "https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}/master/{name}.json"
+        master_data.viewEnemy = [
+            MstViewEnemy.parse_obj(o)
+            for o in requests.get(
+                raw_fmt.format(region=region, name="viewEnemy")
+            ).json()
+        ]
+        master_data.mstConstant = {
+            e["name"]: e["value"]
+            for e in requests.get(
+                raw_fmt.format(region=region, name="mstConstant")
+            ).json()
+        }
 
         master_data.sort()
         if not add_trigger:
@@ -1087,6 +1102,8 @@ class MainParser:
             war = data.war_dict.get(war_jp.id)
             if war is None:
                 continue
+            if data.mstConstant["LAST_WAR_ID"] < war.id < 1000:
+                continue
             # if war.id < 11000 and war.lastQuestId == 0:  # not released wars
             #     continue
             _update_mapping(mappings.war_names, war_jp.name, war.name)
@@ -1323,7 +1340,6 @@ class MainParser:
                     mappings.svt_names,
                     entity_jp.name,
                     entity.name if entity else None,
-                    skip_exists=True,
                 )
             else:
                 _update_mapping(
@@ -1331,6 +1347,20 @@ class MainParser:
                     entity_jp.name,
                     entity.name if entity else None,
                 )
+
+        for quest_id, enemies in jp_data.view_enemy_names.items():
+            quest = jp_data.quest_dict.get(quest_id)
+            if not quest:
+                continue
+            if quest.warId != 1002 and not (
+                quest.warId < 1000
+                and quest.type == NiceQuestType.free
+                and quest.afterClear == NiceQuestAfterClearType.repeatLast
+            ):
+                continue
+            for svt_id, name_jp in enemies.items():
+                name = data.view_enemy_names.get(quest_id, {}).get(svt_id)
+                _update_mapping(mappings.entity_names, name_jp, name)
 
         self.jp_data.mappingData = mappings
         del data
@@ -1402,25 +1432,28 @@ class MainParser:
                 assert skill.condLimitCount in (0, 4)
                 is_max = skill.condLimitCount != 0
                 detail = self._process_effect_detail(skill.unmodifiedDetail)
-                if not detail:
+                des = (transl.ce_skill_des_max if is_max else transl.ce_skill_des).get(
+                    ce.collectionNo
+                )
+                if not detail or des == detail:
                     continue
-                des = transl.ce_skill_des_max if is_max else transl.ce_skill_des
                 _update_mapping(
                     mappings.skill_detail,
                     detail,
-                    des.get(ce.collectionNo),
+                    des,
                 )
         for cc in self.jp_data.nice_command_code:
             if cc.collectionNo <= 0:
                 continue
             assert len(cc.skills) == 1
             detail = self._process_effect_detail(cc.skills[0].unmodifiedDetail)
-            if not detail:
+            des = transl.cc_skill_des.get(cc.collectionNo)
+            if not detail or des == detail:
                 continue
             _update_mapping(
                 mappings.skill_detail,
                 detail,
-                transl.cc_skill_des.get(cc.collectionNo),
+                des,
             )
 
     def _fix_cn_translation(self):
@@ -1461,6 +1494,7 @@ class MainParser:
                     for regex in extra_regexes:
                         cn_name2 = regex.sub(_repl, cn_name2)
                 cn_name2 = cn_name2.replace("<过量充能时", "<Over Charge时")
+                cn_name2 = cn_name2.replace("宝具值", "NP")
                 if cn_name2 != cn_name:
                     # print(f"Convert CN: {cn_name} -> {cn_name2}")
                     regions["CN"] = cn_name2

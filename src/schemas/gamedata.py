@@ -35,6 +35,19 @@ from .const_data import BuffActionDetail, CardInfo, GrailCostDetail, MasterUserL
 from .mappings import MappingData
 
 
+class MstViewEnemy(BaseModelORJson):
+    questId: int
+    enemyId: int
+    name: str
+    classId: int
+    svtId: int
+    limitCount: int
+    iconId: int
+    displayType: int
+    # missionIds: list[int]
+    npcSvtId: int | None
+
+
 class ExchangeTicket(BaseModel):
     id: int
     year: int
@@ -93,6 +106,10 @@ class MasterData(BaseModelORJson):
     NiceConstant: dict[str, int] = {}
     NiceSvtGrailCost: dict[int, dict[int, GrailCostDetail]] = {}
     NiceUserLevel: dict[int, MasterUserLvDetail] = {}
+
+    # raw mst data
+    viewEnemy: list[MstViewEnemy] = []
+    mstConstant: dict[str, int] = {}
 
     # extra
     cachedQuests: dict[int, NiceQuest] = {}
@@ -272,3 +289,10 @@ class MasterData(BaseModelORJson):
     @cached_property
     def entity_dict(self) -> dict[int, BasicServant]:
         return {x.id: x for x in self.basic_svt}
+
+    @cached_property
+    def view_enemy_names(self):
+        d: dict[int, dict[int, str]] = {}
+        for enemy in self.viewEnemy:
+            d.setdefault(enemy.questId, {}).setdefault(enemy.svtId, enemy.name)
+        return d
