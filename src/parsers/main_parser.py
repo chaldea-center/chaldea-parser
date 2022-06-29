@@ -748,6 +748,20 @@ class MainParser:
     def _encoder(self, obj):
         exclude = {"originalName"}
 
+        # TODO: remove in 2.0.7
+        if isinstance(obj, NiceWarAdd):
+            if obj.type == NiceWarOverwriteType.effectChangeWhiteMark:
+                obj.type = NiceWarOverwriteType.clearMark
+        elif isinstance(obj, NiceVoiceCond):
+            if obj.condType.value.startswith("unknown"):
+                obj.condType = NiceVoiceCondType.spacificShopPurchase
+        elif isinstance(obj, NiceVoiceLine):
+            if obj.svtVoiceType == NiceSvtVoiceType.eventExpedition:
+                obj.svtVoiceType = NiceSvtVoiceType.eventReward
+        elif isinstance(obj, NiceVoiceGroup):
+            if obj.type == NiceSvtVoiceType.eventExpedition:
+                obj.type = NiceSvtVoiceType.eventReward
+
         if isinstance(obj, NiceBaseSkill):
             exclude.add("detail")
         elif isinstance(obj, NiceSkill):
