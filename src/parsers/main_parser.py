@@ -128,7 +128,7 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
-MIN_APP = "2.0.3"
+MIN_APP = "2.0.6"
 
 
 class MainParser:
@@ -747,13 +747,6 @@ class MainParser:
 
     def _encoder(self, obj):
         exclude = {"originalName"}
-        # TODO: remove in 2.0.4
-        if isinstance(obj, NiceWarAdd):
-            if obj.type == NiceWarOverwriteType.effectChangeWhiteMark:
-                obj.type = NiceWarOverwriteType.clearMark
-        elif isinstance(obj, NiceVoiceCond):
-            if obj.condType.value.startswith("unknown"):
-                obj.condType = NiceVoiceCondType.spacificShopPurchase
 
         if isinstance(obj, NiceBaseSkill):
             exclude.add("detail")
