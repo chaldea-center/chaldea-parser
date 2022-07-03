@@ -5,7 +5,7 @@ on:
   #      - main
   workflow_dispatch:
   schedule:
-    - cron: "15 10 * * *"
+    - cron: "15 12 * * *"
 
 jobs:
   wiki:
