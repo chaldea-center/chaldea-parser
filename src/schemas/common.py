@@ -181,7 +181,7 @@ class AtlasExportFile(str, Enum):
     nice_command_code = "nice_command_code"
     nice_mystic_code = "nice_mystic_code"
     nice_item = "nice_item"
-    nice_master_mission = "nice_master_mission"
+    # nice_master_mission = "nice_master_mission"
     nice_illustrator = "nice_illustrator"
     nice_cv = "nice_cv"
     nice_bgm = "nice_bgm"

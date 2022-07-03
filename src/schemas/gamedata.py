@@ -91,7 +91,7 @@ class MasterData(BaseModelORJson):
     nice_equip_lore: list[NiceEquip] = []
     nice_illustrator: list[MstIllustrator] = []
     nice_item: list[NiceItem] = []
-    nice_master_mission: list[NiceMasterMission] = []
+    # nice_master_mission: list[NiceMasterMission] = []
     nice_mystic_code: list[NiceMysticCode] = []
     # nice_servant: list[NiceServant]
     nice_servant_lore: list[NiceServant] = []

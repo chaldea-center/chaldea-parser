@@ -20,7 +20,7 @@ from typing import (
 import orjson
 from pydantic import BaseModel
 from pydantic.json import pydantic_encoder
-
+from jsbeautifier import beautify, BeautifierOptions
 from .log import logger
 
 
@@ -62,28 +62,29 @@ def dump_json(
     default: Optional[Callable[[Any], Any]] = pydantic_encoder,
     indent2: bool = True,
     non_str_keys: bool = True,
-    append_newline: bool = True,
     option: Optional[int] = None,
     sort_keys: Optional[bool] = None,
 ) -> Optional[str]:
     if option is None:
         option = 0
-    if indent2:
-        option = option | orjson.OPT_INDENT_2
     if non_str_keys:
         option = option | orjson.OPT_NON_STR_KEYS
-    if append_newline:
-        option = option | orjson.OPT_APPEND_NEWLINE
     if sort_keys:
         option = option | orjson.OPT_SORT_KEYS
     _bytes = orjson.dumps(obj, default=default, option=option)
+    text = _bytes.decode()
+    if indent2:
+        text = beautify(
+            text, BeautifierOptions({"indent_size": 2, "end_with_newline": True})
+        )
+        _bytes = text.encode()
     if fp is not None:
         fp = Path(fp)
         if not fp.parent.exists():
             fp.parent.mkdir(parents=True)
         fp.write_bytes(_bytes)
     else:
-        return _bytes.decode()
+        return text
 
 
 def json_xpath(data: Union[dict, list], path: Union[str, Sequence], default=None):

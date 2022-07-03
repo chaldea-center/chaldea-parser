@@ -553,13 +553,9 @@ class MainParser:
             if _fn is None:
                 _fn = f"{key}.json"
             if _bytes is None:
-                _bytes = orjson.dumps(
-                    obj,
-                    default=encoder or self._encoder,
-                    option=orjson.OPT_NON_STR_KEYS
-                    | orjson.OPT_INDENT_2
-                    | orjson.OPT_APPEND_NEWLINE,
-                )
+                _text = dump_json(obj, default=encoder or self._encoder)
+                assert _text
+                _bytes = _text.encode()
             md5 = hashlib.md5()
             md5.update(_bytes)
             _hash = md5.hexdigest()[:6]
