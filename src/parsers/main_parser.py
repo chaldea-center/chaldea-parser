@@ -1166,11 +1166,12 @@ class MainParser:
                 svt_jp.ascensionAdd.overWriteTDName,
                 svt.ascensionAdd.overWriteTDName if svt else None,
             )
-            __update_ascension_add(
-                mappings.td_ruby,
-                svt_jp.ascensionAdd.overWriteTDRuby,
-                svt.ascensionAdd.overWriteTDRuby if svt else None,
-            )
+            if region != Region.NA:
+                __update_ascension_add(
+                    mappings.td_ruby,
+                    svt_jp.ascensionAdd.overWriteTDRuby,
+                    svt.ascensionAdd.overWriteTDRuby if svt else None,
+                )
             __update_ascension_add(
                 mappings.td_types,
                 svt_jp.ascensionAdd.overWriteTDTypeText,
@@ -1539,7 +1540,7 @@ class MainParser:
                 return load_json(na_folder / fn) or {}
             else:
                 url = (
-                    "https://cdn.jsdelivr.net/gh/atlasacademy/fgo-game-data-api/app/data/mappings/"
+                    "https://raw.githubusercontent.com/atlasacademy/fgo-game-data-api/master/app/data/mappings/"
                     + fn
                 )
                 return requests.get(url).json()

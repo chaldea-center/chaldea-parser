@@ -104,6 +104,7 @@ class CEObtain(str, Enum):
     eventReward = "eventReward"
     campaign = "campaign"
     bond = "bond"
+    drop = "drop"
     unknown = "unknown"  # should not be included in db
 
     @staticmethod
@@ -119,6 +120,7 @@ class CEObtain(str, Enum):
             "活动奖励": CEObtain.eventReward,
             "纪念": CEObtain.campaign,
             "羁绊": CEObtain.bond,
+            "掉落加成": CEObtain.drop,
         }.get(s, CEObtain.unknown)
 
 

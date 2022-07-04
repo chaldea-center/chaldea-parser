@@ -18,9 +18,10 @@ from typing import (
 )
 
 import orjson
+from jsbeautifier import BeautifierOptions, beautify
 from pydantic import BaseModel
 from pydantic.json import pydantic_encoder
-from jsbeautifier import beautify, BeautifierOptions
+
 from .log import logger
 
 

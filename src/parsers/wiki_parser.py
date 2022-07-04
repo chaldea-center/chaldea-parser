@@ -618,7 +618,7 @@ def _mc_index_data(page: str) -> list[dict[str, Optional[str]]]:
         d = {}
         for row in block.split("\n"):
             key, value = row.split("=", 1)
-            d[key] = value
+            d[key] = value.strip()
         data.append(d)
     return data
 
