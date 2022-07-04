@@ -66,8 +66,8 @@ class WikiTool:
                     f"wiki {self.host}: loaded {len(self.cache.pages)} pages, "
                     f"{len(self.cache.images)} images"
                 )
-            finally:
-                ...
+            except Exception as e:
+                logger.error(f"[{self.host}] failed to load wiki cache: {e}")
 
     def clear(self):
         self.cache.pages.clear()
