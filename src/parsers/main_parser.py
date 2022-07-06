@@ -18,7 +18,6 @@ from app.schemas.enums import (
     SvtClass,
 )
 from app.schemas.gameenums import (
-    NiceBuffAction,
     NiceEventType,
     NiceFuncTargetType,
     NiceGender,
@@ -29,7 +28,6 @@ from app.schemas.gameenums import (
     NiceSvtFlag,
     NiceSvtType,
     NiceSvtVoiceType,
-    NiceVoiceCondType,
     NiceWarOverwriteType,
 )
 from app.schemas.nice import (
@@ -55,6 +53,7 @@ from app.schemas.nice import (
     NiceItemAmount,
     NiceLore,
     NiceMap,
+    NiceMasterMission,
     NiceQuest,
     NiceQuestPhase,
     NiceQuestType,
@@ -62,11 +61,7 @@ from app.schemas.nice import (
     NiceShop,
     NiceSkill,
     NiceTd,
-    NiceVoiceCond,
-    NiceVoiceGroup,
-    NiceVoiceLine,
     NiceWar,
-    NiceWarAdd,
     QuestEnemy,
 )
 from pydantic import BaseModel
@@ -240,6 +235,9 @@ class MainParser:
             master_data.remainedQuestIds.update(svt.relateQuestIds)
             master_data.remainedQuestIds.update(svt.trialQuestIds)
         master_data.remainedQuestIds.update(self.huntingQuests)
+        master_data.extraMasterMission = [
+            mm for mm in master_data.nice_master_mission if mm.id == 10001
+        ]
         # raw
         raw_fmt = "https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}/master/{name}.json"
         master_data.viewEnemy = [
@@ -668,8 +666,7 @@ class MainParser:
             _normal_dump(list(data.fixedDrops.values()), "fixedDrops")
         if data.cachedQuestPhases:
             _dump_by_count(list(data.cachedQuestPhases.values()), 100, "questPhases")
-        # TODO: remove in 2.0.4
-        data.NiceBuffList_ActionList.pop(NiceBuffAction.notTargetSkill, None)
+        _normal_dump(data.extraMasterMission, "extraMasterMission")
         _normal_dump(
             ConstGameData(
                 attributeRelation=data.NiceAttributeRelation,
@@ -741,160 +738,112 @@ class MainParser:
                 r[k] = v
         return r
 
+    _excludes: dict[type, list[str]] = {
+        NiceBaseSkill: ["detail"],
+        NiceSkill: [
+            "name",
+            "originalName",
+            "ruby",
+            "detail",
+            "unmodifiedDetail",
+            "type",
+            "icon",
+            "coolDown",
+            "actIndividuality",
+            "script",
+            "extraPassive",
+            "skillAdd",
+            "aiIds",
+            "functions",
+        ],
+        NiceBaseTd: ["detail"],
+        NiceTd: [
+            "card",
+            "name",
+            "originalName",
+            "ruby",
+            "icon",
+            "rank",
+            "type",
+            "effectFlags",
+            "detail",
+            "unmodifiedDetail",
+            "npGain",
+            "npDistribution",
+            "individuality",
+            "script",
+            "functions",
+        ],
+        NiceBgm: ["name", "fileName", "notReleased", "audioAsset"],
+        NiceTrait: ["name"],
+        NiceGift: ["id", "priority"],
+        NiceLore: ["comments", "voices"],
+        NiceWar: ["emptyMessage"],
+        NiceMap: ["mapGimmicks"],
+        NiceQuestPhase: ["supportServants"],
+        NiceQuest: [],
+        QuestEnemy: ["drops", "ai", "limit"],
+        EnemyDrop: ["dropExpected", "dropVariance"],
+        NiceEventMissionCondition: ["missionTargetId"],
+        NiceEventMission: [
+            "flag",
+            "missionTargetId",
+            "detail",
+            "startedAt",
+            "endedAt",
+            "closedAt",
+            "rewardRarity",
+            "notfyPriority",
+            "presentMessageId",
+        ],
+        NiceEventTowerReward: ["boardMessage", "rewardGet", "banner"],
+        NiceEventLotteryBox: ["id", "priority", "detail", "icon", "banner"],
+        NiceEventReward: ["bgImagePoint", "bgImageGet"],
+        NiceEventPointBuff: ["detail"],
+        NiceShop: [
+            "baseShopId",
+            "eventId",
+            "detail",
+            "openedAt",
+            "closedAt",
+            "warningMessage",
+        ],
+        NiceServant: ["originalBattleName", "expFeed"],
+        BasicServant: ["originalOverwriteName"],
+        NiceEquip: ["expFeed", "expGrowth", "atkGrowth", "hpGrowth"],
+        AscensionAdd: [
+            "originalOverWriteServantName",
+            "originalOverWriteServantBattleName",
+            "originalOverWriteTDName",
+        ],
+        NiceMasterMission: ["quests"],
+    }
+
     def _encoder(self, obj):
         exclude = {"originalName"}
+        _type = type(obj)
+        exclude.update(self._excludes.get(_type, []))
 
-        # TODO: remove in 2.0.7
-        if isinstance(obj, NiceWarAdd):
-            if obj.type == NiceWarOverwriteType.effectChangeWhiteMark:
-                obj.type = NiceWarOverwriteType.clearMark
-        elif isinstance(obj, NiceVoiceCond):
-            if obj.condType.value.startswith("unknown"):
-                obj.condType = NiceVoiceCondType.spacificShopPurchase
-        elif isinstance(obj, NiceVoiceLine):
-            if obj.svtVoiceType == NiceSvtVoiceType.eventExpedition:
-                obj.svtVoiceType = NiceSvtVoiceType.eventReward
-        elif isinstance(obj, NiceVoiceGroup):
-            if obj.type == NiceSvtVoiceType.eventExpedition:
-                obj.type = NiceSvtVoiceType.eventReward
-
-        if isinstance(obj, NiceBaseSkill):
-            exclude.add("detail")
-        elif isinstance(obj, NiceSkill):
+        if _type == NiceSkill and isinstance(obj, NiceSkill):
             if obj.id not in self.jp_data.base_skills:
                 self.jp_data.base_skills[obj.id] = NiceBaseSkill.parse_obj(obj.dict())
-            exclude.update(
-                {
-                    "name",
-                    "originalName",
-                    "ruby",
-                    "detail",
-                    "unmodifiedDetail",
-                    "type",
-                    "icon",
-                    "coolDown",
-                    "actIndividuality",
-                    "script",
-                    "extraPassive",
-                    "skillAdd",
-                    "aiIds",
-                    "functions",
-                }
-            )
             if obj.ruby in ("", "-"):
                 exclude.add("ruby")
-        elif isinstance(obj, NiceBaseTd):
-            exclude.add("detail")
-        elif isinstance(obj, NiceTd):
+        elif _type == NiceTd and isinstance(obj, NiceTd):
             if obj.id not in self.jp_data.base_tds:
                 self.jp_data.base_tds[obj.id] = NiceBaseTd.parse_obj(obj.dict())
-            exclude.update(
-                {
-                    "card",
-                    "name",
-                    "originalName",
-                    "ruby",
-                    "icon",
-                    "rank",
-                    "type",
-                    "effectFlags",
-                    "detail",
-                    "unmodifiedDetail",
-                    "npGain",
-                    "npDistribution",
-                    "individuality",
-                    "script",
-                    "functions",
-                }
-            )
             if obj.ruby in ("", "-"):
                 exclude.add("ruby")
-        elif isinstance(obj, NiceFunction):
+        elif _type == NiceFunction and isinstance(obj, NiceFunction):
             if obj.funcId not in self.jp_data.base_functions:
                 self.jp_data.base_functions[obj.funcId] = NiceBaseFunction.parse_obj(
                     obj.dict()
                 )
             exclude.update(NiceBaseFunction.__fields__.keys())
             exclude.remove("funcId")
-        elif isinstance(obj, NiceBaseFunction):
-            ...
-
-        if isinstance(obj, NiceBgm):
-            exclude.update({"name", "fileName", "notReleased", "audioAsset"})
-        elif isinstance(obj, NiceTrait):
-            exclude.add("name")
         elif isinstance(obj, NiceItemAmount):
             return {"itemId": obj.item.id, "amount": obj.amount}
-        elif isinstance(obj, NiceGift):
-            exclude.update({"id", "priority"})
-        elif isinstance(obj, NiceLore):
-            # print("ignore lore comments&voices")
-            exclude.update({"comments", "voices"})
-        elif isinstance(obj, NiceWar):
-            exclude.update({"emptyMessage"})
-        elif isinstance(obj, NiceMap):
-            exclude.update({"mapGimmicks"})
-        elif isinstance(obj, NiceQuestPhase):
-            if obj.afterClear == NiceQuestAfterClearType.repeatLast:
-                exclude.update({"supportServants"})
-        elif isinstance(obj, NiceQuest):
-            # exclude.update({"warLongName"})
-            pass
-        elif isinstance(obj, QuestEnemy):
-            exclude.update({"drops", "ai", "limit"})
-        elif isinstance(obj, EnemyDrop):
-            exclude.update({"dropExpected", "dropVariance"})
-        elif isinstance(obj, NiceEventMissionCondition):
-            exclude.update({"missionTargetId"})
-        elif isinstance(obj, NiceEventMission):
-            exclude.update(
-                {
-                    "flag",
-                    "missionTargetId",
-                    "detail",
-                    "startedAt",
-                    "endedAt",
-                    "closedAt",
-                    "rewardRarity",
-                    "notfyPriority",
-                    "presentMessageId",
-                }
-            )
-        elif isinstance(obj, NiceEventTowerReward):
-            exclude.update({"boardMessage", "rewardGet", "banner"})
-        elif isinstance(obj, NiceEventLotteryBox):
-            exclude.update({"id", "priority", "detail", "icon", "banner"})
-        elif isinstance(obj, NiceEventReward):
-            exclude.update({"bgImagePoint", "bgImageGet"})
-        elif isinstance(obj, NiceEventPointBuff):
-            exclude.update({"detail"})
-        elif isinstance(obj, NiceShop):
-            exclude.update(
-                {
-                    # "id",
-                    # "name",
-                    "baseShopId",
-                    "eventId",
-                    "detail",
-                    "openedAt",
-                    "closedAt",
-                    "warningMessage",
-                }
-            )
-        elif isinstance(obj, NiceServant):
-            exclude.update({"originalBattleName", "expFeed"})
-        elif isinstance(obj, BasicServant):
-            exclude.update({"originalOverwriteName"})
-        elif isinstance(obj, NiceEquip):
-            exclude.update({"expFeed", "expGrowth", "atkGrowth", "hpGrowth"})
         elif isinstance(obj, (AscensionAdd, ExtraAssets)):
-            exclude.update(
-                {
-                    "originalOverWriteServantName",
-                    "originalOverWriteServantBattleName",
-                    "originalOverWriteTDName",
-                }
-            )
             obj = obj.dict(exclude_none=True, exclude_defaults=True, exclude=exclude)
             # print('start encoding ', type(obj))
             for k in list(obj.keys()):
@@ -906,13 +855,6 @@ class MainParser:
                     obj.pop(k)
             # print('ended encoding ', type(obj))
             return obj
-        # TODO: removed
-        elif isinstance(obj, NiceVoiceLine):
-            if obj.svtVoiceType == NiceSvtVoiceType.eventDigging:
-                obj.svtVoiceType = NiceSvtVoiceType.eventShop
-        elif isinstance(obj, NiceVoiceGroup):
-            if obj.type == NiceSvtVoiceType.eventDigging:
-                obj.type = NiceSvtVoiceType.eventShop
 
         if isinstance(obj, BaseModel):
             # noinspection PyProtectedMember
