@@ -68,7 +68,7 @@ def dump_json(
     sort_keys: Optional[bool] = None,
 ) -> Optional[str]:
     if option is None:
-        option = 0
+        option = orjson.OPT_APPEND_NEWLINE
     if non_str_keys:
         option = option | orjson.OPT_NON_STR_KEYS
     if sort_keys:
