@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from .common import MappingBase, MappingStr
+from .common import MappingBase, MappingInt, MappingStr
 
 
 class EnumMapping(BaseModel):
@@ -73,5 +73,6 @@ class MappingData(BaseModel):
     svt_release: MappingBase[list[int]] = MappingBase()
     ce_release: MappingBase[list[int]] = MappingBase()
     cc_release: MappingBase[list[int]] = MappingBase()
+    quest_release: dict[int, MappingInt] = {}
 
     enums: EnumMapping = EnumMapping()

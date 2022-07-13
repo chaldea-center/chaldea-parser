@@ -112,8 +112,8 @@ class MasterData(BaseModelORJson):
     mstConstant: dict[str, int] = {}
 
     # extra
-    cachedQuests: dict[int, NiceQuest] = {}
-    cachedQuestsNA: dict[int, NiceQuest] = {}
+    # all_quests: dict[int, NiceQuest] = {}
+    all_quests_na: dict[int, NiceQuest] = {}  # only saved in jp_data
     cachedQuestPhases: dict[int, Optional[NiceQuestPhase]] = {}
     fixedDrops: dict[int, FixedDrop] = {}
     mappingData: MappingData = MappingData()

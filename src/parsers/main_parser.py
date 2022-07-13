@@ -231,6 +231,8 @@ class MainParser:
                 NiceEventType.questCampaign,
             )
         ]
+        if region == Region.NA:
+            self.jp_data.all_quests_na = master_data.quest_dict
         for svt in master_data.nice_servant_lore:
             master_data.remainedQuestIds.update(svt.relateQuestIds)
             master_data.remainedQuestIds.update(svt.trialQuestIds)
@@ -357,7 +359,11 @@ class MainParser:
             last_phase = quest.phases[-1]
             last_phase_key = quest.id * 100 + last_phase
             # war 9033 極東乖離結界「帝都」 also use FREE ???
-            if quest.type == NiceQuestType.free and quest.warId < 1000:
+            if (
+                quest.type == NiceQuestType.free
+                and quest.warId < 1000
+                and quest.afterClear == NiceQuestAfterClearType.repeatLast
+            ):
                 phase_data = AtlasApi.quest_phase(
                     quest.id,
                     last_phase,
@@ -392,7 +398,7 @@ class MainParser:
                     continue
                 phase_key = quest.id * 100 + phase
                 previous_data = previous_fixed_drops.get(phase_key)
-                quest_na = self.jp_data.cachedQuestsNA.get(quest.id)
+                quest_na = self.jp_data.all_quests_na.get(quest.id)
                 if (
                     previous_data is not None
                     and quest.openedAt < expire_time
@@ -410,7 +416,7 @@ class MainParser:
                         filter_fn=_check_quest_phase_in_recent,
                     )
                 else:
-                    quest_na = self.jp_data.cachedQuestsNA.get(quest.id)
+                    quest_na = self.jp_data.all_quests_na.get(quest.id)
                     if quest_na and phase in quest_na.phasesWithEnemies:
                         phase_data = AtlasApi.quest_phase(
                             quest.id,
@@ -482,7 +488,7 @@ class MainParser:
                 ):
                     continue
                 if not _quest.phasesWithEnemies:
-                    _quest_na = self.jp_data.cachedQuestsNA.get(_quest.id)
+                    _quest_na = self.jp_data.all_quests_na.get(_quest.id)
                     if not _quest_na or not _quest_na.phasesWithEnemies:
                         continue
                 worker.add_default(_quest)
@@ -498,7 +504,7 @@ class MainParser:
                     and not _quest.phasesWithEnemies
                 ):
                     continue
-                _quest_na = self.jp_data.cachedQuestsNA.get(_quest.id)
+                _quest_na = self.jp_data.all_quests_na.get(_quest.id)
                 if not _quest_na or not _quest_na.phasesWithEnemies:
                     continue
                 worker.add_default(_quest)
@@ -1293,7 +1299,18 @@ class MainParser:
                     entity_jp.name,
                     entity.name if entity else None,
                 )
+        # svt related quest release
+        for svt in jp_data.nice_servant_lore:
+            for quest_id in svt.relateQuestIds:
+                quest_jp = jp_data.quest_dict[quest_id]
+                release = mappings.quest_release.setdefault(quest_id, MappingBase())
+                release.update(Region.JP, quest_jp.openedAt)
+                quest = data.quest_dict.get(quest_id)
+                if not quest:
+                    continue
+                release.update(region, quest.openedAt)
 
+        # view enemy name
         for quest_id, enemies in jp_data.view_enemy_names.items():
             quest = jp_data.quest_dict.get(quest_id)
             if not quest:
