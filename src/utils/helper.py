@@ -62,6 +62,7 @@ def dump_json(
     fp: str | Path | None = None,
     default: Optional[Callable[[Any], Any]] = pydantic_encoder,
     indent2: bool = True,
+    beauty: bool = False,
     non_str_keys: bool = True,
     option: Optional[int] = None,
     sort_keys: Optional[bool] = None,
@@ -72,9 +73,11 @@ def dump_json(
         option = option | orjson.OPT_NON_STR_KEYS
     if sort_keys:
         option = option | orjson.OPT_SORT_KEYS
+    if indent2 and not beauty:
+        option = option | orjson.OPT_INDENT_2
     _bytes = orjson.dumps(obj, default=default, option=option)
     text = _bytes.decode()
-    if indent2:
+    if beauty:
         text = beautify(
             text, BeautifierOptions({"indent_size": 2, "end_with_newline": True})
         )

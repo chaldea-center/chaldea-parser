@@ -557,7 +557,7 @@ class MainParser:
             if _fn is None:
                 _fn = f"{key}.json"
             if _bytes is None:
-                _text = dump_json(obj, default=encoder or self._encoder)
+                _text = dump_json(obj, default=encoder or self._encoder, beauty=True)
                 assert _text
                 _bytes = _text.encode()
             md5 = hashlib.md5()

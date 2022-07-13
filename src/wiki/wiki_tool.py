@@ -387,7 +387,7 @@ class WikiTool:
             f"[{self.host}] save cache({len(self.cache.pages)} pages,"
             f" {len(self.cache.images)} images) to {self._fp}"
         )
-        dump_json(self.cache, self._fp)
+        dump_json(self.cache, self._fp, indent2=False)
 
     @contextlib.contextmanager
     def disable_cache(self):
