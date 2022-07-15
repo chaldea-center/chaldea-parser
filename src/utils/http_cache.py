@@ -142,9 +142,7 @@ class HttpApiUtil(abc.ABC):
                     print("validation error, delete and retry:", url)
                     self.cache_storage.delete_url(url)
                     # todo: not called
-                    return _parse_model(
-                        self._limit_api_func(url, expire_after=0, **kwargs), False
-                    )
+                    return _parse_model(self._limit_api_func(url, **kwargs), False)
             elif _response.status_code == 404:
                 return None
             else:

@@ -15,7 +15,7 @@ from app.schemas.nice import NiceQuestPhase, NiceWar
 from src.config import settings
 from src.schemas.drop_data import DropRateData, DropRateSheet
 from src.utils import AtlasApi, logger
-from src.utils.helper import LocalProxy, dump_json, load_json
+from src.utils.helper import LocalProxy, dump_json_beautify, load_json
 
 
 sheet_url = (
@@ -40,7 +40,7 @@ def run_drop_rate_update():
         legacyData=_parse_sheet_data(*legacy_sheet_url),
         newData=_parse_sheet_data(*sheet_url),
     )
-    dump_json(data, settings.output_wiki / "dropRate.json")
+    dump_json_beautify(data, settings.output_wiki / "dropRate.json")
     print("Saved drop rate data")
 
 
@@ -53,7 +53,11 @@ def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
         url = _full_sheet_url(key, gid)
         logger.info(f"downloading sheet from {url}")
         csv_contents = requests.get(url).content.decode("utf8")
-    df = pd.read_csv(StringIO(csv_contents), header=None, encoding="utf8")  # noqa
+        fn = "domus_aurea_drop_sheet" + ("_legacy.csv" if legacy else ".csv")
+        settings.output_wiki.joinpath(fn).write_text(csv_contents)
+    df = pd.read_csv(
+        StringIO(csv_contents), header=None, encoding="utf8", thousands=","
+    )  # noqa
     df.drop(index=0, inplace=True)
 
     # drop quest_name, item_name, last rows. EXCEPT first pair
@@ -91,6 +95,7 @@ def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
     assert not df.iloc[2:, 1].isnull().any(), list(df.iloc[2:, 1])
     assert df.iloc[0, -35] == "輝石"  # (3+2)*7
     settings.tmp_vars[f"df_{legacy}"] = df
+    df = df.apply(lambda x: x.str.replace(",", ""), axis=1)
 
     sheet_data = DropRateSheet()
     sheet_items = [
@@ -124,7 +129,8 @@ def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
     assert len(sheet_data.questIds) == len(sheet_data.apCosts) == len(sheet_data.runs)
     quests: list[NiceQuestPhase] = []
     for questId in sheet_data.questIds:
-        q = AtlasApi.quest_phase(questId, 1)
+        # 94-daily, 93-free
+        q = AtlasApi.quest_phase(questId, 3 if str(questId).startswith("93") else 1)
         assert q
         quests.append(q)
     sheet_data.bonds = [q.bond for q in quests]

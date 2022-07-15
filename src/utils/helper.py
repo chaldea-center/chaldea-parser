@@ -1,6 +1,7 @@
 import os
 import platform
 import re
+import subprocess
 import threading
 import time
 from operator import itemgetter
@@ -18,7 +19,6 @@ from typing import (
 )
 
 import orjson
-from jsbeautifier import BeautifierOptions, beautify
 from pydantic import BaseModel
 from pydantic.json import pydantic_encoder
 
@@ -62,26 +62,23 @@ def dump_json(
     fp: str | Path | None = None,
     default: Optional[Callable[[Any], Any]] = pydantic_encoder,
     indent2: bool = True,
-    beauty: bool = False,
     non_str_keys: bool = True,
+    new_line: bool = True,
     option: Optional[int] = None,
     sort_keys: Optional[bool] = None,
 ) -> Optional[str]:
     if option is None:
-        option = orjson.OPT_APPEND_NEWLINE
+        option = 0
+    if new_line:
+        option = option | orjson.OPT_APPEND_NEWLINE
     if non_str_keys:
         option = option | orjson.OPT_NON_STR_KEYS
     if sort_keys:
         option = option | orjson.OPT_SORT_KEYS
-    if indent2 and not beauty:
+    if indent2:
         option = option | orjson.OPT_INDENT_2
     _bytes = orjson.dumps(obj, default=default, option=option)
     text = _bytes.decode()
-    if beauty:
-        text = beautify(
-            text, BeautifierOptions({"indent_size": 2, "end_with_newline": True})
-        )
-        _bytes = text.encode()
     if fp is not None:
         fp = Path(fp)
         if not fp.parent.exists():
@@ -89,6 +86,36 @@ def dump_json(
         fp.write_bytes(_bytes)
     else:
         return text
+
+
+def dump_json_beautify(
+    obj,
+    fp: str | Path,
+    default: Optional[Callable[[Any], Any]] = pydantic_encoder,
+    option: Optional[int] = None,
+    sort_keys: Optional[bool] = None,
+) -> Optional[str]:
+    dump_json(
+        obj,
+        fp,
+        default,
+        indent2=False,
+        non_str_keys=True,
+        new_line=False,
+        option=option,
+        sort_keys=sort_keys,
+    )
+    beautify_file(fp)
+
+
+def beautify_file(fp: str | Path):
+    result = subprocess.run(["js-beautify", "-r", "-s=2", "-n", str(fp)])
+    if result.returncode != 0:
+        logger.error(
+            f"beautify run failed, exit={result.returncode}\n"
+            f"{result.stderr}\n{result.stdout}"
+        )
+    result.check_returncode()
 
 
 def json_xpath(data: Union[dict, list], path: Union[str, Sequence], default=None):

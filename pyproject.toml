@@ -17,7 +17,6 @@ requests-cache = "^0.9.3"
 wikitextparser = "^0.48.0"
 pydantic = "^1.9.0"
 orjson = "^3.7.2"
-jsbeautifier = "^1.14.4"
 
 [tool.poetry.dev-dependencies]
 iPython = "^8.0.1"

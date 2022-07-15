@@ -220,6 +220,8 @@ class FileVersion(BaseModel):
     filename: str
     size: int
     hash: str
+    minSize: int = 0
+    minHash: str = ""
     timestamp: int
 
 

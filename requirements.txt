@@ -10,7 +10,6 @@ charset-normalizer==2.0.12; python_full_version >= "3.6.0" and python_version >=
 click==8.0.4; python_version >= "3.10" and python_version < "4.0"
 colorama==0.4.4; python_version >= "3.10" and python_full_version < "3.0.0" and sys_platform == "win32" and python_version < "4.0" and platform_system == "Windows" or sys_platform == "win32" and python_version >= "3.10" and python_version < "4.0" and python_full_version >= "3.5.0" and platform_system == "Windows"
 deprecated==1.2.13; python_version >= "3.10" and python_full_version < "3.0.0" and python_version < "4.0" or python_version >= "3.10" and python_version < "4.0" and python_full_version >= "3.4.0"
-editorconfig==0.12.3
 fastapi-cache2==0.1.8; python_version >= "3.10" and python_version < "4.0"
 fastapi==0.78.0; python_version >= "3.10" and python_version < "4.0" and python_full_version >= "3.6.1"
 fgo-game-data-api @ git+https://github.com/chaldea-center/fgo-game-data-api.git@master ; python_version >= "3.10" and python_version < "4.0"
@@ -25,7 +24,6 @@ httpcore==0.15.0; python_version >= "3.10" and python_version < "4.0"
 httptools==0.4.0; python_version >= "3.10" and python_version < "4.0" and python_full_version >= "3.5.0"
 httpx==0.23.0; python_version >= "3.10" and python_version < "4.0"
 idna==3.3
-jsbeautifier==1.14.4
 mwclient==0.10.1
 mwparserfromhell==0.6.4; python_version >= "3.6"
 numpy==1.22.3; python_version >= "3.10"

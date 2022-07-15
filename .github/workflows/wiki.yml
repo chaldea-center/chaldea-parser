@@ -26,6 +26,7 @@ jobs:
           /bin/date
           echo "::set-output name=date::$(/bin/date -u "+%Y%m%d%H%M")"
           curl -s https://ipinfo.io/ip
+          echo https://github.com/chaldea-center/chaldea-data/commits/main
         shell: bash
 
       - name: Checkout chaldea-parser
@@ -53,6 +54,8 @@ jobs:
 
       - name: Install dependencies
         run: |
+          npm --location=global install js-beautify
+          js-beautify -v
           pip uninstall --yes fgo-game-data-api
           pip install -r requirements.txt
 

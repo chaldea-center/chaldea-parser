@@ -69,6 +69,8 @@ from pydantic.json import pydantic_encoder
 from requests import Response
 from requests_cache.models.response import CachedResponse
 
+from src.utils.helper import beautify_file
+
 from ..config import settings
 from ..schemas.common import (
     AtlasExportFile,
@@ -557,27 +559,37 @@ class MainParser:
             if _fn is None:
                 _fn = f"{key}.json"
             if _bytes is None:
-                _text = dump_json(obj, default=encoder or self._encoder, beauty=True)
+                _text = dump_json(
+                    obj, default=encoder or self._encoder, indent2=False, new_line=False
+                )
                 assert _text
                 _bytes = _text.encode()
-            md5 = hashlib.md5()
-            md5.update(_bytes)
-            _hash = md5.hexdigest()[:6]
+            _hash = hashlib.md5(_bytes).hexdigest()[:6]
             fv = FileVersion(
                 key=key,
                 filename=_fn,
                 timestamp=int(_now.timestamp()),
-                hash=_hash,
                 size=len(_bytes),
+                hash=_hash,
+                minSize=len(_bytes),
+                minHash=_hash,
             )
             if _fn in _last_version.files:
                 last_fv = _last_version.files[_fn]
-                if fv.json(exclude={"timestamp"}) == last_fv.json(
-                    exclude={"timestamp"}
+                if (fv.key, fv.filename, fv.minSize, fv.minHash) == (
+                    last_fv.key,
+                    last_fv.filename,
+                    last_fv.minSize,
+                    last_fv.minHash,
                 ):
                     fv.timestamp = last_fv.timestamp
             cur_version.files[_fn] = fv
-            settings.output_dist.joinpath(_fn).write_bytes(_bytes)
+            _fp = settings.output_dist.joinpath(_fn)
+            _fp.write_bytes(_bytes)
+            beautify_file(_fp)
+            _bytes = _fp.read_bytes()
+            fv.hash = hashlib.md5(_bytes).hexdigest()[:6]
+            fv.size = len(_bytes)
             logger.info(f"[version] dump {key}: {_fn}")
 
         def _dump_by_count(
@@ -721,7 +733,7 @@ class MainParser:
             cur_version.utc = _last_version.utc
 
         dump_json(cur_version, dist_folder / "version.json")
-        logger.info(dump_json(cur_version))
+        # logger.info(dump_json(cur_version))
         self.copy_static()
         msg = f"{cur_version.minimalApp}, {cur_version.utc}"
         if len(self.payload.regions) not in (0, len(Region.__members__)):
