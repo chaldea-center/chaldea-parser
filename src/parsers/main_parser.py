@@ -338,7 +338,7 @@ class MainParser:
         used_previous_count = 0
         expire_time = time.time() - settings.quest_phase_expire * 24 * 3600
         try:
-            if self.payload.regions:
+            if not self.payload.skipPrevQuestDrops:
                 previous_fixed_drops = {
                     v["id"]: FixedDrop.parse_obj(v)
                     for v in load_json(settings.output_dist / "fixedDrops.json") or []

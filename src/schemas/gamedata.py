@@ -56,6 +56,7 @@ class ExchangeTicket(BaseModel):
     replaced: MappingBase[list[int]] | None = None
 
 
+# TODO: use <phase, <item, num>>
 class FixedDrop(BaseModel):
     id: int  # quest phase key
     items: dict[int, int]
