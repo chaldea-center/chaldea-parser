@@ -6,6 +6,7 @@ from .common import MappingBase, MappingInt, MappingStr
 class EnumMapping(BaseModel):
     svt_class: dict[str, MappingStr] = {}
     attribute: dict[str, MappingStr] = {}
+    svt_type: dict[str, MappingStr] = {}
     servant_policy: dict[str, MappingStr] = {}
     servant_personality: dict[str, MappingStr] = {}
     gender: dict[str, MappingStr] = {}
@@ -18,11 +19,13 @@ class EnumMapping(BaseModel):
     item_category: dict[str, MappingStr] = {}
     custom_mission_type: dict[str, MappingStr] = {}
     np_damage_type: dict[str, MappingStr] = {}
+    td_effect_flag: dict[str, MappingStr] = {}
+    summon_type: dict[str, MappingStr] = {}
+    # long dict
     effect_type: dict[str, MappingStr] = {}
     func_type: dict[str, MappingStr] = {}
     buff_type: dict[str, MappingStr] = {}
     svt_voice_type: dict[str, MappingStr] = {}
-    svt_type: dict[str, MappingStr] = {}
 
 
 class MappingData(BaseModel):

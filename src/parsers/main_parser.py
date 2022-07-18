@@ -28,6 +28,7 @@ from app.schemas.gameenums import (
     NiceSvtFlag,
     NiceSvtType,
     NiceSvtVoiceType,
+    NiceTdEffectFlag,
     NiceWarOverwriteType,
 )
 from app.schemas.nice import (
@@ -84,6 +85,7 @@ from ..schemas.common import (
     NpDamageType,
     OpenApiInfo,
     Payload,
+    SummonType,
     SvtObtain,
 )
 from ..schemas.const_data import ConstGameData
@@ -937,6 +939,8 @@ class MainParser:
             enums.svt_class.setdefault(v.value, MappingStr())
         for v in Attribute.__members__.values():
             enums.attribute.setdefault(v.value, MappingStr())
+        for v in NiceSvtType.__members__.values():
+            enums.svt_type.setdefault(v.value, MappingStr())
         for v in ServantPolicy.__members__.values():
             enums.servant_policy.setdefault(v.value, MappingStr())
         for v in ServantPersonality.__members__.values():
@@ -962,14 +966,17 @@ class MainParser:
             enums.custom_mission_type.setdefault(v.value, MappingStr())
         for v in NpDamageType.__members__.values():
             enums.np_damage_type.setdefault(v.value, MappingStr())
+        for v in NiceTdEffectFlag.__members__.values():
+            enums.td_effect_flag.setdefault(v.value, MappingStr())
+        for v in SummonType.__members__.values():
+            enums.summon_type.setdefault(v.value, MappingStr())
+        # long dict
         for v in NiceFuncType.__members__.values():
             enums.func_type.setdefault(v.value, MappingStr())
         for v in NiceBuffType.__members__.values():
             enums.buff_type.setdefault(v.value, MappingStr())
         for v in NiceSvtVoiceType.__members__.values():
             enums.svt_voice_type.setdefault(v.value, MappingStr())
-        for v in NiceSvtType.__members__.values():
-            enums.svt_type.setdefault(v.value, MappingStr())
 
     def _merge_official_mappings(self, region: Region):
         logger.info(f"merging official translations from {region}")
