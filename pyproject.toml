@@ -6,7 +6,6 @@ authors = ["narumi"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fgo-game-data-api = { git = "https://github.com/chaldea-center/fgo-game-data-api.git" }
 mwclient = "^0.10.1"
 mwparserfromhell = "^0.6.4"
 pandas = "^1.3.4"
@@ -17,12 +16,15 @@ requests-cache = "^0.9.3"
 wikitextparser = "^0.48.0"
 pydantic = "^1.9.0"
 orjson = "^3.7.2"
+python-dotenv = "0.20.0"
 
 [tool.poetry.dev-dependencies]
+fgo-game-data-api = { git = "https://github.com/chaldea-center/fgo-game-data-api.git" }
 iPython = "^8.0.1"
 black = "^22.1.0"
 isort = "^5.10.1"
 pyperclip = "^1.8.2"
+packaging = "^21.3"
 
 [tool.isort]
 line_length = 88
