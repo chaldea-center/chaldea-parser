@@ -70,9 +70,7 @@ from pydantic.json import pydantic_encoder
 from requests import Response
 from requests_cache.models.response import CachedResponse
 
-from src.utils.helper import beautify_file
-
-from ..config import settings
+from ..config import PayloadSetting, settings
 from ..schemas.common import (
     AtlasExportFile,
     CEObtain,
@@ -84,7 +82,6 @@ from ..schemas.common import (
     MappingStr,
     NpDamageType,
     OpenApiInfo,
-    Payload,
     SummonType,
     SvtObtain,
 )
@@ -117,6 +114,8 @@ from ..utils import (
     logger,
     sort_dict,
 )
+from ..utils.helper import beautify_file
+from ..utils.stopwatch import Stopwatch
 from ..wiki import FANDOM, MOONCELL
 from .core.ticket import parse_exchange_tickets
 from .wiki_parser import WikiParser
@@ -135,32 +134,38 @@ class MainParser:
         self.jp_data = MasterData(region=Region.JP)
         self.wiki_data = WikiData()
         self.huntingQuests: list[int] = []
-        self.payload: Payload = Payload.parse_obj(load_json("payload.json") or {})
+        self.payload: PayloadSetting = PayloadSetting()
         logger.info(f"Payload: {self.payload}")
+        self.stopwatch = Stopwatch("MainParser")
 
     @count_time
     def start(self):
-        if self.payload.clearCacheHttp:
+        self.stopwatch.start()
+        if self.payload.clear_cache_http:
             logger.warning("clear all http_cache")
             AtlasApi.cache_storage.clear()
             McApi.cache_storage.clear()
-        if self.payload.clearCacheWiki:
+        if self.payload.clear_cache_wiki:
             logger.warning("clear all wiki cache")
             MOONCELL.clear()
             FANDOM.clear()
 
         logger.info("update_exported_files")
         self.update_exported_files()
+        self.stopwatch.log("update_export")
         self.wiki_data = WikiData.parse_dir(full_version=True)
         self.huntingQuests = [
             q for event in self.wiki_data.events.values() for q in event.huntingQuestIds
         ]
+        self.stopwatch.log(f"load wiki data")
         self.jp_data = self.load_master_data(Region.JP)
         self.merge_all_mappings()
-        if settings.is_debug and settings.skip_quests:
+        self.stopwatch.log(f"mappings finish")
+        if settings.is_debug and self.payload.skip_quests:
             logger.warning("skip checking quests data")
         else:
             self.filter_quests()
+            self.stopwatch.log(f"quests")
         self._post_mappings()
         self.jp_data.exchangeTickets = parse_exchange_tickets(self.jp_data.nice_item)
         if not settings.output_wiki.joinpath("dropRate.json").exists():
@@ -169,6 +174,7 @@ class MainParser:
 
             run_drop_rate_update()
         self.save_data()
+        print(self.stopwatch.output())
 
     def update_exported_files(self):
         def _add_download_task(_url, _fp):
@@ -196,14 +202,15 @@ class MainParser:
                 AtlasApi.full_url(f"export/{region}/info.json")
             ).json()
             region_changed = (
-                region in self.payload.regions and self.payload.forceUpdateExport
+                region in self.payload.regions and self.payload.force_update_export
             ) or info_local != info_remote
 
             for f in AtlasExportFile.__members__.values():
                 fp_export = f.cache_path(region)
                 fp_export.parent.mkdir(parents=True, exist_ok=True)
                 if api_changed or region_changed or not fp_export.exists():
-                    self.payload.regions.add(region)
+                    if region not in self.payload.regions:
+                        self.payload.regions.append(region)
                     url = f.resolve_link(region)
                     worker.add(_add_download_task, url, fp_export)
                 else:
@@ -261,6 +268,7 @@ class MainParser:
 
         master_data.sort()
         if not add_trigger:
+            self.stopwatch.log(f"master data [{region}] no trigger")
             return master_data
 
         def _add_trigger_skill(
@@ -330,6 +338,7 @@ class MainParser:
         logger.info(
             f"{region}: loaded {len(master_data.base_skills)} trigger skills, {len(master_data.base_tds)} trigger TD"
         )
+        self.stopwatch.log(f"master data [{region}]")
         return master_data
 
     def filter_quests(self):
@@ -340,23 +349,16 @@ class MainParser:
         logger.info("processing quest data")
         previous_fixed_drops: dict[int, FixedDrop] = {}
         used_previous_count = 0
-        expire_time = time.time() - settings.quest_phase_expire * 24 * 3600
+        close_at_limit = time.time() - 3 * 24 * 3600
+        expire_time = time.time() - self.payload.recent_quest_expire * 24 * 3600
         try:
-            if not self.payload.skipPrevQuestDrops:
+            if not self.payload.skip_prev_quest_drops:
                 previous_fixed_drops = {
                     v["id"]: FixedDrop.parse_obj(v)
                     for v in load_json(settings.output_dist / "fixedDrops.json") or []
                 }
         except Exception as e:
             logger.error(f"fail to reading fixed drop data of previous build: {e}")
-
-        def _check_quest_phase_in_recent(response: Response | CachedResponse):
-            try:
-                phase_data = orjson.loads(response.content)
-                return phase_data["openedAt"] > expire_time
-            except Exception as _e:
-                print(_e)
-                return True
 
         def _check_one_quest(quest: NiceQuest):
             # main story's free
@@ -372,15 +374,8 @@ class MainParser:
                     quest.id,
                     last_phase,
                     # filter_fn=_check_quest_phase_in_recent,
-                    expire_after=self.payload.mainStoryQuestExpire * 24 * 3600,
+                    expire_after=self.payload.main_story_quest_expire * 24 * 3600,
                 )
-                if phase_data:
-                    for stage in phase_data.stages:
-                        for enemy in stage.enemies:
-                            name = re.sub(r"(\s*)([A-Z\uff21-\uff3a])$", "", enemy.name)
-                            self.jp_data.mappingData.entity_names.setdefault(
-                                name, MappingStr()
-                            )
                 self.jp_data.cachedQuestPhases[last_phase_key] = phase_data
                 return
             if quest.warId == 1002:  # 曜日クエスト
@@ -405,8 +400,14 @@ class MainParser:
                 quest_na = self.jp_data.all_quests_na.get(quest.id)
                 if (
                     previous_data is not None
-                    and quest.openedAt < expire_time
-                    and (not quest_na or quest_na.openedAt < expire_time)
+                    and (
+                        quest.closedAt < close_at_limit or quest.openedAt < expire_time
+                    )
+                    and (
+                        not quest_na
+                        or quest_na.closedAt < close_at_limit
+                        or quest_na.openedAt < expire_time
+                    )
                 ):
                     self.jp_data.fixedDrops[phase_key] = previous_data.copy(deep=True)
                     nonlocal used_previous_count
@@ -417,7 +418,7 @@ class MainParser:
                     phase_data = AtlasApi.quest_phase(
                         quest.id,
                         phase,
-                        filter_fn=_check_quest_phase_in_recent,
+                        expire_after=-1 if quest.openedAt < expire_time else 0,
                     )
                 else:
                     quest_na = self.jp_data.all_quests_na.get(quest.id)
@@ -426,7 +427,7 @@ class MainParser:
                             quest.id,
                             phase,
                             Region.NA,
-                            filter_fn=_check_quest_phase_in_recent,
+                            expire_after=-1 if quest_na.openedAt < expire_time else 0,
                         )
                 if phase_data is None:
                     continue
@@ -437,6 +438,8 @@ class MainParser:
                     for enemy in stage.enemies
                     for _drop in enemy.drops
                 ]:
+                    if drop.runs < 5:
+                        continue
                     drop_prob = drop.dropCount / drop.runs
                     if 0.95 < drop_prob < 1:
                         drop_prob = 1
@@ -532,6 +535,7 @@ class MainParser:
         _now = datetime.datetime.now(datetime.timezone.utc)
 
         logger.debug("Saving data")
+        self.stopwatch.log(f"Save start")
         cur_version = DataVersion(
             timestamp=int(_now.timestamp()),
             utc=_now.isoformat(timespec="seconds").split("+")[0],
@@ -719,6 +723,7 @@ class MainParser:
         base_functions = list(self.jp_data.base_functions.values())
         base_functions.sort(key=lambda x: x.funcId)
         _normal_dump(base_functions, "baseFunctions")
+        self.stopwatch.log(f"save end")
 
         changed = False
         for k, f in cur_version.files.items():

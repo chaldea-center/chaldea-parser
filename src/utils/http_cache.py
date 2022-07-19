@@ -106,7 +106,7 @@ class HttpApiUtil(abc.ABC):
                     print(f"error in filter_fn: {e}")
                     matched = True
                 if matched:
-                    print("delete matched url:", url)
+                    # print("delete matched url:", url)
                     self.cache_storage.delete_url(url)
                     resp = None
         if resp is None:

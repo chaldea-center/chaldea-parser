@@ -230,13 +230,3 @@ class DataVersion(BaseModel):
     utc: str
     minimalApp: str
     files: dict[str, FileVersion] = {}
-
-
-class Payload(BaseModel):
-    regions: set[Region] = set()  # from atlas
-    forceUpdateExport: bool = False
-    clearCacheHttp: bool = False
-    clearCacheWiki: bool = False
-    mainStoryQuestExpire: int = 90
-    runWikiParser: bool = False
-    skipPrevQuestDrops: bool = False

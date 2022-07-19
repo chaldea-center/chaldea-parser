@@ -1,5 +1,7 @@
+import json
 from pathlib import Path
 
+from app.schemas.common import Region
 from pydantic import BaseSettings, NoneStr
 
 
@@ -22,8 +24,6 @@ class Settings(BaseSettings):
     fandom_pwd: str = ""
 
     environment: str = ""
-    quest_phase_expire: int = 30
-    skip_quests: bool = False
 
     # proxy, for development
     x_http_proxy: NoneStr = None
@@ -65,3 +65,34 @@ settings = Settings()
 
 Path(settings.cache_dir).mkdir(parents=True, exist_ok=True)
 Path(settings.log_dir).mkdir(parents=True, exist_ok=True)
+
+
+class PayloadSetting(BaseSettings):
+    regions: list[Region] = []  # from atlas
+    force_update_export: bool = False
+    clear_cache_http: bool = False
+    clear_cache_wiki: bool = False
+    skip_quests: bool = False
+    recent_quest_expire: int = 30
+    main_story_quest_expire: int = 90
+    skip_prev_quest_drops: bool = False
+    run_wiki_parser: bool = False
+    slow_mode: bool = False
+
+    class Config:
+        @classmethod
+        def customise_sources(
+            cls,
+            init_settings,
+            env_settings,
+            file_secret_settings,
+        ):
+            def json_config_settings_source(settings: BaseSettings) -> dict:
+                return json.loads(Path("payload.json").read_text())
+
+            return (
+                init_settings,
+                json_config_settings_source,
+                env_settings,
+                file_secret_settings,
+            )
