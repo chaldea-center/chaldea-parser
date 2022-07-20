@@ -276,3 +276,14 @@ class WikiData(BaseModelORJson):
         return self.commandCodes.setdefault(
             collection_no, CommandCodeW(collectionNo=collection_no)
         )
+
+
+class AppNews(BaseModel):
+    type: int | None = None
+    priority: int | None = None
+    startTime: str | None = None
+    endTime: str | None = None
+    title: str | None = None
+    content: str | None = None
+    image: str | None = None
+    link: str | None = None

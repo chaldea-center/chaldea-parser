@@ -9,7 +9,7 @@ from typing import Any, AnyStr, Iterable, Match, TypeVar
 
 import orjson
 import requests
-from app.schemas.common import NiceTrait, Region, RepoInfo
+from app.schemas.common import NiceTrait, Region
 from app.schemas.enums import (
     OLD_TRAIT_MAPPING,
     Attribute,
@@ -67,8 +67,6 @@ from app.schemas.nice import (
 )
 from pydantic import BaseModel
 from pydantic.json import pydantic_encoder
-from requests import Response
-from requests_cache.models.response import CachedResponse
 
 from ..config import PayloadSetting, settings
 from ..schemas.common import (
@@ -95,6 +93,7 @@ from ..schemas.gamedata import (
     NiceBaseTd,
 )
 from ..schemas.wiki_data import (
+    AppNews,
     CommandCodeW,
     CraftEssenceW,
     EventW,
@@ -118,7 +117,6 @@ from ..utils.helper import beautify_file
 from ..utils.stopwatch import Stopwatch
 from ..wiki import FANDOM, MOONCELL
 from .core.ticket import parse_exchange_tickets
-from .wiki_parser import WikiParser
 
 
 _KT = TypeVar("_KT", str, int)
@@ -140,6 +138,11 @@ class MainParser:
 
     @count_time
     def start(self):
+        # check news.json
+        fp_news = settings.output_dist / "news.json"
+        for obj in load_json(fp_news) or []:
+            AppNews.parse_obj(obj)
+
         self.stopwatch.start()
         if self.payload.clear_cache_http:
             logger.warning("clear all http_cache")
@@ -349,8 +352,8 @@ class MainParser:
         logger.info("processing quest data")
         previous_fixed_drops: dict[int, FixedDrop] = {}
         used_previous_count = 0
-        close_at_limit = time.time() - 3 * 24 * 3600
-        expire_time = time.time() - self.payload.recent_quest_expire * 24 * 3600
+        close_at_limit = int(time.time() - 3 * 24 * 3600)
+        expire_time = int(time.time() - self.payload.recent_quest_expire * 24 * 3600)
         try:
             if not self.payload.skip_prev_quest_drops:
                 previous_fixed_drops = {
@@ -418,16 +421,18 @@ class MainParser:
                     phase_data = AtlasApi.quest_phase(
                         quest.id,
                         phase,
-                        expire_after=-1 if quest.openedAt < expire_time else 0,
+                        filter_fn=quest.closedAt > close_at_limit
+                        and quest.openedAt > expire_time,
                     )
                 else:
                     quest_na = self.jp_data.all_quests_na.get(quest.id)
                     if quest_na and phase in quest_na.phasesWithEnemies:
                         phase_data = AtlasApi.quest_phase(
-                            quest.id,
+                            quest_na.id,
                             phase,
                             Region.NA,
-                            expire_after=-1 if quest_na.openedAt < expire_time else 0,
+                            filter_fn=quest_na.closedAt > close_at_limit
+                            and quest_na.openedAt > expire_time,
                         )
                 if phase_data is None:
                     continue
@@ -550,7 +555,9 @@ class MainParser:
             _last_version = cur_version.copy(deep=True)
         if not settings.is_debug:
             for f in settings.output_dist.glob("**/*"):
-                if f.is_file():
+                if f.name in ("news.json"):
+                    continue
+                elif f.is_file():
                     f.unlink()
                 elif f.is_dir():
                     shutil.rmtree(f)

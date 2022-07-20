@@ -26,6 +26,9 @@ from .helper import Model
 from .log import logger
 
 
+FILTER_FN2 = FILTER_FN | bool | None
+
+
 @contextmanager
 def http_cache_enabled(**kwargs) -> Generator[CachedSession, None, None]:
     session = CachedSession(
@@ -85,7 +88,7 @@ class HttpApiUtil(abc.ABC):
         self._limit_api_func = _call_api
 
     def call_api(
-        self, url, filter_fn: FILTER_FN | None = None, **kwargs
+        self, url, filter_fn: FILTER_FN2 = None, **kwargs
     ) -> Optional[Union[Response, CachedResponse]]:
         """
         :param url: only path or full url
@@ -96,27 +99,27 @@ class HttpApiUtil(abc.ABC):
         url = self.full_url(url)
         key = self.cache_storage.create_key(url=url, method="GET")
         resp = self.cache_storage.get_response(key)
-        if resp and not resp.is_expired:
-            if filter_fn is not None:
-                try:
-                    matched = (
-                        filter_fn if isinstance(filter_fn, bool) else filter_fn(resp)
-                    )
-                except Exception as e:
-                    print(f"error in filter_fn: {e}")
-                    matched = True
-                if matched:
-                    # print("delete matched url:", url)
-                    self.cache_storage.delete_url(url)
-                    resp = None
+        should_delete = False
+        if resp and resp.is_expired:
+            should_delete = True
+        if resp and filter_fn is not None:
+            try:
+                should_delete = (
+                    filter_fn if isinstance(filter_fn, bool) else filter_fn(resp)
+                )
+            except Exception as e:
+                logger.error(f"error in filter_fn: {e}")
+                should_delete = True
+        if should_delete:
+            logger.debug(f"delete matched url:{url}")
+            self.cache_storage.delete_url(url)
+            resp = None
         if resp is None:
             resp = self._limit_api_func(url, **kwargs)
 
         return resp
 
-    def api_json(
-        self, url, filter_fn: FILTER_FN | None = None, **kwargs
-    ) -> dict | None:
+    def api_json(self, url, filter_fn: FILTER_FN2 = None, **kwargs) -> dict | None:
         url = self.full_url(url)
         response = self.call_api(url, filter_fn, **kwargs)
         if response is None:
@@ -124,7 +127,7 @@ class HttpApiUtil(abc.ABC):
         return response.json()
 
     def api_model(
-        self, url, model: Type[Model], filter_fn: FILTER_FN | None = None, **kwargs
+        self, url, model: Type[Model], filter_fn: FILTER_FN2 = None, **kwargs
     ) -> Optional[Model]:
         url = self.full_url(url)
         response = self.call_api(url, filter_fn, **kwargs)
@@ -160,7 +163,7 @@ class HttpApiUtil(abc.ABC):
         quest_id: int,
         phase: int,
         region=Region.JP,
-        filter_fn: FILTER_FN | None = None,
+        filter_fn: FILTER_FN2 = None,
         **kwargs,
     ):
         return self.api_model(

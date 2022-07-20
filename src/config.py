@@ -73,7 +73,7 @@ class PayloadSetting(BaseSettings):
     clear_cache_http: bool = False
     clear_cache_wiki: bool = False
     skip_quests: bool = False
-    recent_quest_expire: int = 30
+    recent_quest_expire: int = 20
     main_story_quest_expire: int = 90
     skip_prev_quest_drops: bool = False
     run_wiki_parser: bool = False
@@ -88,7 +88,10 @@ class PayloadSetting(BaseSettings):
             file_secret_settings,
         ):
             def json_config_settings_source(settings: BaseSettings) -> dict:
-                return json.loads(Path("payload.json").read_text())
+                fp = Path("payload.json")
+                if fp.exists():
+                    return json.loads(fp.read_text())
+                return {}
 
             return (
                 init_settings,
