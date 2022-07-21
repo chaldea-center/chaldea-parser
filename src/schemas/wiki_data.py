@@ -110,6 +110,7 @@ class EventWBase(BaseModel):
     fandomLink: NoneStr = None
     forceShown: bool = False
     titleBanner: MappingBase[str] = MappingBase()
+    officialBanner: MappingBase[str] = MappingBase()
     noticeLink: MappingStr = MappingStr()
     huntingId: int = 0
     huntingQuestIds: list[int] = []
@@ -122,6 +123,7 @@ class WarW(BaseModel):
     mcLink: NoneStr = None
     fandomLink: NoneStr = None
     titleBanner: MappingBase[str] = MappingBase()
+    officialBanner: MappingBase[str] = MappingBase()
     noticeLink: MappingStr = MappingStr()
 
 
@@ -150,7 +152,8 @@ class LimitedSummonBase(BaseModel):
     fandomLink: NoneStr = None
     name: MappingStr = MappingStr()
     banner: MappingBase[str] = MappingBase()
-    noticeLink: MappingStr = MappingStr()  # cn: number, tw?
+    officialBanner: MappingBase[str] = MappingBase()
+    noticeLink: MappingStr = MappingStr()  # cn&tw: number
     startTime: MappingInt = MappingInt()
     endTime: MappingInt = MappingInt()
 
