@@ -55,6 +55,9 @@ def main(
             war.officialBanner.TW = _check_parse(
                 war.officialBanner.TW, war.noticeLink.TW, parse_tw_top_banner
             )
+        war.officialBanner.NA = _check_parse(
+            war.officialBanner.NA, war.noticeLink.NA, parse_na_top_banner
+        )
 
     for event in events:
         if event.titleBanner.JP:
@@ -69,6 +72,9 @@ def main(
             event.officialBanner.TW = _check_parse(
                 event.officialBanner.TW, event.noticeLink.TW, parse_tw_top_banner
             )
+        event.officialBanner.NA = _check_parse(
+            event.officialBanner.NA, event.noticeLink.NA, parse_na_top_banner
+        )
 
     for summon in summons:
         if summon.banner.JP:
@@ -83,6 +89,9 @@ def main(
             summon.officialBanner.TW = _check_parse(
                 summon.officialBanner.TW, summon.noticeLink.TW, parse_tw_top_banner
             )
+        summon.officialBanner.NA = _check_parse(
+            summon.officialBanner.NA, summon.noticeLink.NA, parse_na_top_banner
+        )
 
 
 def _get_xpath(source, xpath) -> Any | None:
@@ -102,6 +111,13 @@ def parse_jp_top_banner(url: str):
     source = api.call_api(url).text
     source = re.sub(r"<!--\s*/?block\s*--->", "", source)
     img = _get_xpath(source, '//div[@class="article"]//img[@width="800"]/@src')
+    return _join(url, img)
+
+
+def parse_na_top_banner(url: str):
+    source = api.call_api(url).text
+    source = re.sub(r"<!--\s*/?block\s*--->", "", source)
+    img = _get_xpath(source, '//div[@class="article"]//img/@src')
     return _join(url, img)
 
 
@@ -139,7 +155,7 @@ if __name__ == "__main__":
     summon_path = wiki_folder / "summonsBase.json"
     summons = [LimitedSummonBase.parse_obj(obj) for obj in load_json(summon_path) or []]
 
-    main(wars, events, summons, force=True)
+    main(wars, events, summons, force=False)
 
     dump_json_beautify(wars, war_path)
     dump_json_beautify(events, event_path)
