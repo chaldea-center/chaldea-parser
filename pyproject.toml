@@ -17,6 +17,7 @@ wikitextparser = "^0.48.0"
 pydantic = "^1.9.0"
 orjson = "^3.7.2"
 python-dotenv = "0.20.0"
+lxml = "^4.9.1"
 
 [tool.poetry.dev-dependencies]
 fgo-game-data-api = { git = "https://github.com/chaldea-center/fgo-game-data-api.git" }
@@ -25,7 +26,6 @@ black = "^22.1.0"
 isort = "^5.10.1"
 pyperclip = "^1.8.2"
 packaging = "^21.3"
-lxml = "^4.9.1"
 
 [tool.isort]
 line_length = 88

@@ -89,7 +89,7 @@ class HttpApiUtil(abc.ABC):
 
     def call_api(
         self, url, filter_fn: FILTER_FN2 = None, **kwargs
-    ) -> Optional[Union[Response, CachedResponse]]:
+    ) -> Response | CachedResponse:
         """
         :param url: only path or full url
         :param filter_fn: if return True, it should ignore cache and fetch again
@@ -119,20 +119,16 @@ class HttpApiUtil(abc.ABC):
 
         return resp
 
-    def api_json(self, url, filter_fn: FILTER_FN2 = None, **kwargs) -> dict | None:
+    def api_json(self, url, filter_fn: FILTER_FN2 = None, **kwargs) -> dict:
         url = self.full_url(url)
         response = self.call_api(url, filter_fn, **kwargs)
-        if response is None:
-            return None
         return response.json()
 
     def api_model(
         self, url, model: Type[Model], filter_fn: FILTER_FN2 = None, **kwargs
-    ) -> Optional[Model]:
+    ) -> Model | None:
         url = self.full_url(url)
         response = self.call_api(url, filter_fn, **kwargs)
-        if response is None:
-            return None
 
         def _parse_model(_response: Response, retry=False):
             if _response.status_code == 200:

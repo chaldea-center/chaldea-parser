@@ -28,6 +28,7 @@ from ..utils.helper import sort_dict
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.template import mwparse, parse_template, parse_template_list, remove_tag
 from ..wiki.wiki_tool import KnownTimeZone
+from .wiki import replace_banner_url
 
 
 class _WikiTemp:
@@ -90,6 +91,14 @@ class WikiParser:
         logger.info("[Fandom] parsing command code data")
         self.fandom_cc()
         self.check_invalid_wikilinks()
+        logger.info("[wiki] official banner")
+        replace_banner_url.main(
+            list(self.wiki_data.wars.values()),
+            list(self.wiki_data.events.values()),
+            list(self.wiki_data.summons.values()),
+            False,
+        )
+
         logger.info("Saving data...")
         MOONCELL.save_cache()
         FANDOM.save_cache()

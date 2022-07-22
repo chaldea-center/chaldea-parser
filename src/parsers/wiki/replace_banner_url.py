@@ -1,49 +1,47 @@
 #%%
 import re
-from typing import Callable
+from pathlib import Path
+from typing import Any, Callable
 from urllib.parse import urljoin
 
-# import requests
 from lxml import etree
 
-from src.schemas.wiki_data import EventWBase, LimitedSummonBase, WarW
-from src.utils.helper import dump_json_beautify, load_json
-from src.utils.http_cache import HttpApiUtil
+from ...config import settings
+from ...schemas.wiki_data import EventWBase, LimitedSummonBase, WarW, WikiData
+from ...utils.helper import dump_json_beautify, load_json
+from ...utils.http_cache import HttpApiUtil
+
 
 api = HttpApiUtil(
-    api_server="https://api.atlasacademy.io",
+    api_server="",
     rate_calls=5,
     rate_period=1,
-    db_path="cache/http_cache/banners",
+    db_path=str(settings.cache_http_cache / "banners"),
     expire_after=100 * 24 * 3600,
 )
 
 #%%
-def main(force: bool = False):
-    added = 0
-
+def main(
+    wars: list[WarW],
+    events: list[EventWBase],
+    summons: list[LimitedSummonBase],
+    force: bool = False,
+):
     def _check_parse(
         official: str | None, url: str | None, parser: Callable[[str], str | None]
     ):
-        nonlocal added
         if official and not force:
             return official
         if url:
-            # if added > 10:
-            #     return official
-            print(f"reading: {url}")
             try:
                 official_new = parser(url)
-                print(url, official_new)
-                added += 1
                 if official_new:
                     return official_new
             except Exception as e:
                 print(e)
                 return official
         return official
-    war_path = "data/wiki/wars.json"
-    wars = [WarW.parse_obj(obj) for obj in load_json(war_path) or []]
+
     for war in wars:
         if war.titleBanner.JP:
             war.officialBanner.JP = _check_parse(
@@ -57,10 +55,7 @@ def main(force: bool = False):
             war.officialBanner.TW = _check_parse(
                 war.officialBanner.TW, war.noticeLink.TW, parse_tw_top_banner
             )
-    dump_json_beautify(wars, war_path)
 
-    event_path = "data/wiki/eventsBase.json"
-    events = [EventWBase.parse_obj(obj) for obj in load_json(event_path) or []]
     for event in events:
         if event.titleBanner.JP:
             event.officialBanner.JP = _check_parse(
@@ -74,10 +69,7 @@ def main(force: bool = False):
             event.officialBanner.TW = _check_parse(
                 event.officialBanner.TW, event.noticeLink.TW, parse_tw_top_banner
             )
-    dump_json_beautify(events, event_path)
 
-    summon_path = "data/wiki/summonsBase.json"
-    summons = [LimitedSummonBase.parse_obj(obj) for obj in load_json(summon_path) or []]
     for summon in summons:
         if summon.banner.JP:
             summon.officialBanner.JP = _check_parse(
@@ -91,10 +83,9 @@ def main(force: bool = False):
             summon.officialBanner.TW = _check_parse(
                 summon.officialBanner.TW, summon.noticeLink.TW, parse_tw_top_banner
             )
-    dump_json_beautify(summons, summon_path)
 
 
-def _get_xpath(source, xpath) -> str | None:
+def _get_xpath(source, xpath) -> Any | None:
     html = etree.HTML(source)  # type: ignore
     results = html.xpath(xpath)
     if results:
@@ -115,6 +106,8 @@ def parse_jp_top_banner(url: str):
 
 
 def parse_cn_top_banner(notice_id: str):
+    if not notice_id.isdigit():
+        notice_id = re.findall(r"[^\d]\d+$", notice_id)[-1][1:]
     response = api.call_api(f"https://api.biligame.com/news/{notice_id}.action").json()
     if response.get("code") == -400:
         print(f"https://api.biligame.com/news/{notice_id}.action", response)
@@ -125,6 +118,8 @@ def parse_cn_top_banner(notice_id: str):
 
 
 def parse_tw_top_banner(notice_id: str):
+    if not notice_id.isdigit:
+        notice_id = re.findall(r"[^\d]\d+$", notice_id)[-1][1:]
     response = api.call_api(
         f"https://www.fate-go.com.tw/newsmng/{notice_id}.json"
     ).json()
@@ -133,7 +128,22 @@ def parse_tw_top_banner(notice_id: str):
     return _join("https://www.fate-go.com.tw/news.html", img)
 
 
+#%%
 if __name__ == "__main__":
-    main()
+    wiki_folder = Path(settings.output_wiki)
+
+    war_path = wiki_folder / "wars.json"
+    wars = [WarW.parse_obj(obj) for obj in load_json(war_path) or []]
+    event_path = wiki_folder / "eventsBase.json"
+    events = [EventWBase.parse_obj(obj) for obj in load_json(event_path) or []]
+    summon_path = wiki_folder / "summonsBase.json"
+    summons = [LimitedSummonBase.parse_obj(obj) for obj in load_json(summon_path) or []]
+
+    main(wars, events, summons, force=True)
+
+    dump_json_beautify(wars, war_path)
+    dump_json_beautify(events, event_path)
+    dump_json_beautify(summons, summon_path)
+
 
 # %%
