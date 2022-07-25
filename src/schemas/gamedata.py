@@ -7,6 +7,7 @@ from app.schemas.common import Region
 from app.schemas.enums import Attribute, SvtClass, Trait
 from app.schemas.gameenums import NiceBuffAction, NiceCardType
 from app.schemas.nice import (
+    ExtraPassive,
     NiceBaseFunction,
     NiceBgm,
     NiceBuff,
@@ -78,6 +79,7 @@ class NiceBaseSkill(NiceSkill):
     condQuestPhase: int = Field(0, exclude=True)
     condLv: int = Field(0, exclude=True)
     condLimitCount: int = Field(0, exclude=True)
+    extraPassive: list[ExtraPassive] = Field([], exclude=True)
 
 
 class MasterData(BaseModelORJson):

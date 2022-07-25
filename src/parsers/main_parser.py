@@ -783,7 +783,6 @@ class MainParser:
             "coolDown",
             "actIndividuality",
             "script",
-            "extraPassive",
             "skillAdd",
             "aiIds",
             "functions",
