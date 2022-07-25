@@ -1000,6 +1000,7 @@ class MainParser:
             mappings.svt_release.update(region, sorted(data.svt_dict.keys()))
             mappings.ce_release.update(region, sorted(data.ce_dict.keys()))
             mappings.cc_release.update(region, sorted(data.cc_dict.keys()))
+            mappings.mc_release.update(region, sorted(data.mc_dict.keys()))
 
         def _update_mapping(
             m: dict[_KT, MappingBase[_KV]],

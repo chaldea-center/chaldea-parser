@@ -37,6 +37,7 @@ def _update_mapping_files():
             "svt_release",
             "ce_release",
             "cc_release",
+            "mc_release",
             "quest_release",
         ):
             # release->MappingBase[list[int]]
