@@ -245,6 +245,12 @@ class MainParser:
                 NiceEventType.questCampaign,
             )
         ]
+        if region == Region.JP:
+            cn_ce = AtlasApi.api_model(
+                "/nice/CN/equip/102022?lore=true", NiceEquip, expire_after=0
+            )
+            assert cn_ce
+            master_data.nice_equip_lore.append(cn_ce)
         if region == Region.NA:
             self.jp_data.all_quests_na = master_data.quest_dict
         for svt in master_data.nice_servant_lore:
