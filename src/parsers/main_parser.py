@@ -1000,6 +1000,7 @@ class MainParser:
         mappings = self.jp_data.mappingData
         jp_data = self.jp_data
         data = self.load_master_data(region)
+        jp_chars = re.compile(r"[\u3040-\u309f\u30a0-\u30ff]")
 
         if region != Region.JP:
             mappings.svt_release.update(region, sorted(data.svt_dict.keys()))
@@ -1019,6 +1020,9 @@ class MainParser:
             m.setdefault(_key, MappingBase())
             if value == _key:
                 return
+            if region in (Region.CN, Region.TW) and isinstance(value, str):
+                if jp_chars.search(value):
+                    return
             return self._update_key_mapping(
                 region,
                 key_mapping=m,
