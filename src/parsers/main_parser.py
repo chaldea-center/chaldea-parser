@@ -249,7 +249,8 @@ class MainParser:
             cn_ce = AtlasApi.api_model(
                 "/nice/CN/equip/102022?lore=true", NiceEquip, expire_after=0
             )
-            assert cn_ce
+            assert cn_ce and cn_ce.profile
+            cn_ce.profile.illustrator = "STAR影法師"
             master_data.nice_equip_lore.append(cn_ce)
         if region == Region.NA:
             self.jp_data.all_quests_na = master_data.quest_dict
@@ -407,16 +408,16 @@ class MainParser:
                 phase_key = quest.id * 100 + phase
                 previous_data = previous_fixed_drops.get(phase_key)
                 quest_na = self.jp_data.all_quests_na.get(quest.id)
-                if (
-                    previous_data is not None
-                    and (
-                        quest.closedAt < close_at_limit or quest.openedAt < expire_time
-                    )
-                    and (
-                        not quest_na
-                        or quest_na.closedAt < close_at_limit
-                        or quest_na.openedAt < expire_time
-                    )
+                jp_ended = (
+                    quest.closedAt < close_at_limit or quest.openedAt < expire_time
+                )
+                na_ended = (
+                    not quest_na
+                    or quest_na.closedAt < close_at_limit
+                    or quest_na.openedAt < expire_time
+                )
+                if previous_data is not None and (
+                    self.payload.regions or (jp_ended and na_ended)
                 ):
                     self.jp_data.fixedDrops[phase_key] = previous_data.copy(deep=True)
                     nonlocal used_previous_count
@@ -468,9 +469,12 @@ class MainParser:
 
         for war in self.jp_data.nice_war:
             if war.id == 9999:  # Chaldea Gate
+                _now = time.time()
                 for spot in war.spots:
                     spot.quests = [
-                        q for q in spot.quests if q.id in self.jp_data.remainedQuestIds
+                        q
+                        for q in spot.quests
+                        if q.id in self.jp_data.remainedQuestIds or q.closedAt > _now
                     ]
                 continue
             if war.id == 1002:  # 曜日クエスト
@@ -509,7 +513,7 @@ class MainParser:
                     _quest_na = self.jp_data.all_quests_na.get(_quest.id)
                     if not _quest_na or not _quest_na.phasesWithEnemies:
                         continue
-                worker.add_default(_quest)
+                    worker.add_default(_quest)
 
                 if (
                     _quest.type != NiceQuestType.free
