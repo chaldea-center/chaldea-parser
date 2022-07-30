@@ -233,6 +233,18 @@ class WikiParser:
 
     def mc_ce(self):
         index_data = _mc_index_data("礼装图鉴/数据")
+        index_data.insert(
+            0,
+            {
+                "id": "102022",
+                "name": "简中版6周年纪念",
+                "name_link": "简中版6周年纪念",
+                "des": "支援中获得的友情点＋10(可以重复)",
+                "des_max": "",
+                "tag": "",
+                "type": "纪念",
+            },
+        )
 
         def _parse_one(record: dict):
             ce_add = self.wiki_data.get_ce(int(record["id"]))
