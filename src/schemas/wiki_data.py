@@ -179,6 +179,14 @@ class WikiData(BaseModelORJson):
     def parse_dir(cls, full_version: bool = False) -> "WikiData":
         folder = settings.output_wiki
         data = {
+            "craftEssences": {
+                ce["collectionNo"]: ce
+                for ce in load_json(folder / "craftEssences.json") or []
+            },
+            "commandCodes": {
+                cc["collectionNo"]: cc
+                for cc in load_json(folder / "commandCodes.json") or []
+            },
             "wars": {war["id"]: war for war in load_json(folder / "wars.json") or []},
             "mcTransl": load_json(folder / "mcTransl.json", {}),
             "fandomTransl": load_json(folder / "fandomTransl.json", {}),
@@ -188,14 +196,6 @@ class WikiData(BaseModelORJson):
                 "servants": {
                     svt["collectionNo"]: svt
                     for svt in load_json(folder / "servants.json") or []
-                },
-                "craftEssences": {
-                    ce["collectionNo"]: ce
-                    for ce in load_json(folder / "craftEssences.json") or []
-                },
-                "commandCodes": {
-                    cc["collectionNo"]: cc
-                    for cc in load_json(folder / "commandCodes.json") or []
                 },
                 "events": {
                     event["id"]: event

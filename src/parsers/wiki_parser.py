@@ -269,6 +269,8 @@ class WikiParser:
             profile_cn = params.get2("解说")
             if profile_cn:
                 ce_add.profile.CN = profile_cn
+            ce_add.characters.clear()
+            ce_add.unknownCharacters.clear()
             for index in range(20):
                 key = "出场角色" if index == 0 else index
                 chara = params.get2(key)
@@ -305,6 +307,8 @@ class WikiParser:
             profile_cn = params.get2("解说")
             if profile_cn:
                 cc_add.profile.CN = profile_cn
+            cc_add.characters.clear()
+            cc_add.unknownCharacters.clear()
             for index in range(20):
                 key = "出场角色" if index == 0 else index
                 chara = params.get2(key)
