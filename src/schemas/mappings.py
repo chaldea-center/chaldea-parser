@@ -80,3 +80,4 @@ class MappingData(BaseModel):
     quest_release: dict[int, MappingInt] = {}
 
     enums: EnumMapping = EnumMapping()
+    misc: dict[str, MappingStr] = {}
