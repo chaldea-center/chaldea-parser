@@ -15,7 +15,7 @@ AtlasApi = HttpApiUtil(
     rate_calls=5,
     rate_period=1,
     db_path=str(Path(settings.cache_http_cache / "atlas")),
-    expire_after=-1,
+    expire_after=3600 * 24 * 60,
 )
 
 McApi = HttpApiUtil(
@@ -23,5 +23,5 @@ McApi = HttpApiUtil(
     rate_calls=3,
     rate_period=1,
     db_path=str(Path(settings.cache_http_cache / "mooncell")),
-    expire_after=-1,
+    expire_after=3600 * 24 * 60,
 )

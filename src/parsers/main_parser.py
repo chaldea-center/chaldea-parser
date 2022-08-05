@@ -314,6 +314,17 @@ class MainParser:
 
         worker = Worker(f"base_skill_{region}", _add_trigger_skill)
         for func in master_data.func_list_no_cache():
+            if func.svals and func.svals[0].DependFuncId:
+                func_id = func.svals[0].DependFuncId
+                if func_id not in master_data.base_functions:
+                    dep_func = AtlasApi.api_model(
+                        f"/nice/JP/function/{func_id}",
+                        NiceBaseFunction,
+                        expire_after=3600 * 24 * 7,
+                    )
+                    if dep_func:
+                        master_data.base_functions[func_id] = dep_func
+
             if not func.buffs or not func.svals:
                 continue
             buff = func.buffs[0]
