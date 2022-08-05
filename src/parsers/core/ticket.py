@@ -24,15 +24,14 @@ def parse_exchange_tickets(nice_item: list[NiceItem]) -> list[ExchangeTicket]:
         if not match:
             continue
         year, month = match.group(2), match.group(1)
-        m2 = re.search(r"^(.+)、(.+)、(.+)の中から一つと交換ができます。$", item.detail)
-        if not m2:
-            continue
+
         item_ids = []
-        for i in (1, 2, 3):
-            item_id = name_id_map.get(m2.group(i))
-            if item_id:
-                item_ids.append(item_id)
-        assert len(item_ids) == 3, f"exchange ticket items!=3: {item_ids}"
+        assert (
+            len(item.itemSelects) == 3
+        ), f"exchange ticket items!=3: {item.id}-{item.name}"
+        for select in item.itemSelects:
+            assert len(select.gifts) == 1
+            item_ids.append(select.gifts[0].objectId)
         key = int(year) * 100 + int(month)
         tickets.append(
             ExchangeTicket(
@@ -41,6 +40,7 @@ def parse_exchange_tickets(nice_item: list[NiceItem]) -> list[ExchangeTicket]:
                 month=int(month),
                 items=item_ids,
                 replaced=replaced.get(key),
+                multiplier=4 if key >= 202208 else 1,
             )
         )
     return tickets

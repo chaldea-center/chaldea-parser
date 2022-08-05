@@ -264,7 +264,7 @@ GitPython = "^3.1.27"
 gunicorn = "^20.1.0"
 hiredis = "^2.0.0"
 httpx = "^0.23.0"
-orjson = "^3.7.8"
+orjson = "^3.7.11"
 psycopg2 = "^2.9.3"
 python-dotenv = "^0.20.0"
 python-Levenshtein = "^0.12.2"
@@ -278,7 +278,7 @@ uvicorn = {version = "^0.18.2", extras = ["standard"]}
 type = "git"
 url = "https://github.com/chaldea-center/fgo-game-data-api.git"
 reference = "master"
-resolved_reference = "0a36253a8f636658bcbf68448199b975ea8b7d84"
+resolved_reference = "154168eb608591fe512a24e25f1e3fd7a1b1ff9b"
 
 [[package]]
 name = "fuzzywuzzy"
@@ -551,7 +551,7 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "orjson"
-version = "3.7.8"
+version = "3.7.11"
 description = "Fast, correct Python JSON library supporting dataclasses, datetimes, and numpy"
 category = "main"
 optional = false

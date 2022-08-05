@@ -55,6 +55,7 @@ class ExchangeTicket(BaseModel):
     month: int
     items: list[int]
     replaced: MappingBase[list[int]] | None = None
+    multiplier: int = 1
 
 
 # TODO: use <phase, <item, num>>
