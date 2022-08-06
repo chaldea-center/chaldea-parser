@@ -371,7 +371,7 @@ class MainParser:
         previous_fixed_drops: dict[int, FixedDrop] = {}
         used_previous_count = 0
         close_at_limit = int(time.time() - 3 * 24 * 3600)
-        expire_time = int(time.time() - self.payload.recent_quest_expire * 24 * 3600)
+        open_at_limit = int(time.time() - self.payload.recent_quest_expire * 24 * 3600)
         try:
             if not self.payload.skip_prev_quest_drops:
                 previous_fixed_drops = {
@@ -381,78 +381,72 @@ class MainParser:
         except Exception as e:
             logger.error(f"fail to reading fixed drop data of previous build: {e}")
 
-        def _check_one_quest(quest: NiceQuest):
-            # main story's free
-            last_phase = quest.phases[-1]
-            last_phase_key = quest.id * 100 + last_phase
-            # war 9033 極東乖離結界「帝都」 also use FREE ???
-            if (
-                quest.type == NiceQuestType.free
-                and quest.warId < 1000
+        def _save_free_phase(quest: NiceQuest, phase=3):
+            assert (
+                phase in quest.phases
                 and quest.afterClear == NiceQuestAfterClearType.repeatLast
-            ):
-                phase_data = AtlasApi.quest_phase(
-                    quest.id,
-                    last_phase,
-                    # filter_fn=_check_quest_phase_in_recent,
-                    expire_after=self.payload.main_story_quest_expire * 24 * 3600,
-                )
-                self.jp_data.cachedQuestPhases[last_phase_key] = phase_data
-                return
-            if quest.warId == 1002:  # 曜日クエスト
-                self.jp_data.cachedQuestPhases[last_phase_key] = AtlasApi.quest_phase(
-                    quest.id,
-                    last_phase,
-                )
-                return
+            ), quest.id
+            assert quest.id == 94061636 or (
+                quest.warId < 1000 and quest.type == NiceQuestType.free
+            ), quest.id
 
-            if quest.afterClear not in (
+            phase_data = AtlasApi.quest_phase(
+                quest.id,
+                phase,
+                # filter_fn=_check_quest_phase_in_recent,
+                expire_after=self.payload.main_story_quest_expire * 24 * 3600,
+            )
+            assert phase_data
+            self.jp_data.cachedQuestPhases[quest.id * 100 + phase] = phase_data
+
+        def _check_fixed_drop(quest: NiceQuest):
+            assert quest.afterClear in (
                 NiceQuestAfterClearType.close,
                 NiceQuestAfterClearType.resetInterval,
-            ):
-                return
+            ), quest.id
 
-            # fixed drops
+            quest_na = self.jp_data.all_quests_na.get(quest.id)
+
             for phase in quest.phases:
-                if phase in quest.phasesNoBattle:
-                    continue
                 phase_key = quest.id * 100 + phase
                 previous_data = previous_fixed_drops.get(phase_key)
-                quest_na = self.jp_data.all_quests_na.get(quest.id)
-                jp_ended = (
-                    quest.closedAt < close_at_limit or quest.openedAt < expire_time
-                )
-                na_ended = (
-                    not quest_na
-                    or quest_na.closedAt < close_at_limit
-                    or quest_na.openedAt < expire_time
-                )
-                if previous_data is not None and (
-                    self.payload.regions or (jp_ended and na_ended)
-                ):
-                    self.jp_data.fixedDrops[phase_key] = previous_data.copy(deep=True)
-                    nonlocal used_previous_count
-                    used_previous_count += 1
-                    continue
+                if previous_data:
+                    # 关闭未过3天且20天内开放
+                    retry_jp = (
+                        quest.closedAt > close_at_limit
+                        and quest.openedAt > open_at_limit
+                    )
+                    retry_na = (
+                        quest_na
+                        and quest_na.closedAt > close_at_limit
+                        and quest_na.openedAt > open_at_limit
+                    )
+                    retry = not self.payload.regions and (retry_jp or retry_na)
+                    if not retry:
+                        self.jp_data.fixedDrops[phase_key] = previous_data.copy(
+                            deep=True
+                        )
+                        nonlocal used_previous_count
+                        used_previous_count += 1
+                        continue
                 phase_data = None
                 if phase in quest.phasesWithEnemies:
                     phase_data = AtlasApi.quest_phase(
                         quest.id,
                         phase,
+                        Region.JP,
                         filter_fn=quest.closedAt > close_at_limit
-                        and quest.openedAt > expire_time,
+                        and quest.openedAt > open_at_limit,
                     )
-                else:
-                    quest_na = self.jp_data.all_quests_na.get(quest.id)
-                    if quest_na and phase in quest_na.phasesWithEnemies:
-                        phase_data = AtlasApi.quest_phase(
-                            quest_na.id,
-                            phase,
-                            Region.NA,
-                            filter_fn=quest_na.closedAt > close_at_limit
-                            and quest_na.openedAt > expire_time,
-                        )
-                if phase_data is None:
+                elif quest_na and phase in quest_na.phasesWithEnemies:
+                    phase_data = AtlasApi.quest_phase(
+                        quest_na.id,
+                        phase,
+                        Region.NA,
+                        filter_fn=quest_na.closedAt > close_at_limit
+                        and quest_na.openedAt > open_at_limit,
+                    )
+                if not phase_data:
                     continue
                 phase_drops: NumDict[int, int] = NumDict()
                 for drop in [
@@ -475,7 +469,7 @@ class MainParser:
                     id=phase_key, items=phase_drops
                 )
 
-        worker = Worker("quest", func=_check_one_quest)
+        worker = Worker("quest")
         # _now = int(time.time()) + 60 * 24 * 3600
 
         for war in self.jp_data.nice_war:
@@ -487,7 +481,7 @@ class MainParser:
                         for q in spot.quests
                         if q.id in self.jp_data.remainedQuestIds or q.closedAt > _now
                     ]
-                continue
+                # continue
             if war.id == 1002:  # 曜日クエスト
                 # remove closed quests
                 for spot in war.spots:
@@ -502,45 +496,30 @@ class MainParser:
             for _quest in [q for spot in war.spots for q in spot.quests]:
                 if not _quest.phases:
                     continue
-                if _quest.type == NiceQuestType.free:
-                    worker.add_default(_quest)
+                # main story free quests
+                if (
+                    _quest.type == NiceQuestType.free
+                    and _quest.warId < 1000
+                    and _quest.afterClear == NiceQuestAfterClearType.repeatLast
+                ):
+                    worker.add(_save_free_phase, _quest, 3)
                     continue
                 if _quest.warId == 1002:
                     if _quest.id == 94061636:  # 宝物庫の扉を開け 初級
-                        worker.add_default(_quest)
-                        continue
-                    # if (
-                    #     _quest.closedAt > NEVER_CLOSED_TIMESTAMP
-                    #     and _quest.afterClear == NiceQuestAfterClearType.repeatLast
-                    # ):
-                    #     worker.add_default(_quest)
-                    #     continue
+                        worker.add(_save_free_phase, _quest, 1)
+                    continue
+                # one-off quests: event/main story
                 if _quest.afterClear not in (
                     NiceQuestAfterClearType.close,
                     NiceQuestAfterClearType.resetInterval,
                 ):
                     continue
-                if not _quest.phasesWithEnemies:
+                if _quest.phasesWithEnemies:
+                    worker.add(_check_fixed_drop, _quest)
+                else:
                     _quest_na = self.jp_data.all_quests_na.get(_quest.id)
-                    if not _quest_na or not _quest_na.phasesWithEnemies:
-                        continue
-                    worker.add_default(_quest)
-
-                if (
-                    _quest.type != NiceQuestType.free
-                    and _quest.warId != 1002
-                    and _quest.afterClear
-                    not in (
-                        NiceQuestAfterClearType.close,
-                        NiceQuestAfterClearType.resetInterval,
-                    )
-                    and not _quest.phasesWithEnemies
-                ):
-                    continue
-                _quest_na = self.jp_data.all_quests_na.get(_quest.id)
-                if not _quest_na or not _quest_na.phasesWithEnemies:
-                    continue
-                worker.add_default(_quest)
+                    if _quest_na and _quest_na.phasesWithEnemies:
+                        worker.add(_check_fixed_drop, _quest)
         worker.wait()
         logger.debug(
             f"used {used_previous_count} quest phases' fixed drop from previous build"
