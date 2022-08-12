@@ -158,7 +158,7 @@ class WikiParser:
             nicknames.update([s.strip() for s in record["name_other"].split("&")])
             obtains = [
                 SvtObtain.from_cn(m)
-                for m in record["method"].split("<br>")
+                for m in re.split(r"<br>|&", record["method"])
                 if m not in ("活动通关奖励", "事前登录赠送")
             ]
             svt_add.obtains = sorted(set(obtains))

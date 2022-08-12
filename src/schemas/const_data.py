@@ -1,7 +1,7 @@
 from typing import Optional
 
 from app.schemas.common import NiceTrait
-from app.schemas.enums import Attribute, SvtClass
+from app.schemas.enums import Attribute, SvtClass, Trait
 from app.schemas.gameenums import (
     NiceBuffAction,
     NiceBuffLimit,
@@ -22,6 +22,22 @@ class BuffActionDetail(BaseModel):
     isRec: bool
     plusAction: int
     maxRate: list[int]
+
+
+class NiceClassInfo(BaseModel):
+    id: int
+    className: SvtClass | None
+    name: str
+    individuality: Trait
+    attackRate: int
+    imageId: int
+    iconImageId: int
+    frameId: int
+    priority: int
+    groupType: int
+    relationId: int
+    supportGroup: int
+    autoSelSupportType: int
 
 
 class CardInfo(BaseModel):
@@ -51,6 +67,7 @@ class MasterUserLvDetail(BaseModel):
 class ConstGameData(BaseModel):
     attributeRelation: dict[Attribute, dict[Attribute, int]]
     buffActions: dict[NiceBuffAction, BuffActionDetail]
+    classInfo: dict[int, NiceClassInfo]
     cardInfo: dict[NiceCardType, dict[int, CardInfo]]
     classAttackRate: dict[SvtClass, int]
     classRelation: dict[SvtClass, dict[SvtClass, int]]

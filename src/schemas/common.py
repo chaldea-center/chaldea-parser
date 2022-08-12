@@ -193,6 +193,7 @@ class AtlasExportFile(str, Enum):
     nice_enums = "nice_enums"  # hard code
     nice_trait = "nice_trait"  # hard code, +unknown
     nice_attribute_relation = "NiceAttributeRelation"  # hard code
+    nice_class = "NiceClass"
     nice_class_attack_rate = "NiceClassAttackRate"
     nice_class_relation = "NiceClassRelation"
     nice_card = "NiceCard"

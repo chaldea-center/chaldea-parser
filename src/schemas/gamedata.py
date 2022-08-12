@@ -32,7 +32,13 @@ from pydantic import BaseModel, Field
 
 from ..schemas.common import MappingBase
 from ..utils import NEVER_CLOSED_TIMESTAMP, sort_dict
-from .const_data import BuffActionDetail, CardInfo, GrailCostDetail, MasterUserLvDetail
+from .const_data import (
+    BuffActionDetail,
+    CardInfo,
+    GrailCostDetail,
+    MasterUserLvDetail,
+    NiceClassInfo,
+)
 from .mappings import MappingData
 
 
@@ -105,6 +111,8 @@ class MasterData(BaseModelORJson):
     NiceAttributeRelation: dict[Attribute, dict[Attribute, int]] = {}
     NiceBuffList_ActionList: dict[NiceBuffAction, BuffActionDetail] = {}
     NiceCard: dict[NiceCardType, dict[int, CardInfo]] = {}
+
+    NiceClass: list[NiceClassInfo] = []
     NiceClassAttackRate: dict[SvtClass, int] = {}
     NiceClassRelation: dict[SvtClass, dict[SvtClass, int]] = {}
     NiceConstant: dict[str, int] = {}

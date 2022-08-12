@@ -702,6 +702,7 @@ class MainParser:
             ConstGameData(
                 attributeRelation=data.NiceAttributeRelation,
                 buffActions=data.NiceBuffList_ActionList,
+                classInfo={x.id: x for x in data.NiceClass},
                 cardInfo=data.NiceCard,
                 classAttackRate=data.NiceClassAttackRate,
                 classRelation=data.NiceClassRelation,
