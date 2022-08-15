@@ -4,7 +4,7 @@ import functools
 import time
 from contextlib import contextmanager
 from datetime import timedelta
-from typing import Generator, Optional, Type, Union
+from typing import Generator, Type
 
 import requests
 import requests_cache
@@ -15,6 +15,7 @@ from ratelimit import limits, sleep_and_retry
 from requests import Response
 from requests_cache import CachedSession
 from requests_cache.backends.sqlite import SQLiteCache
+from requests_cache.cache_control import ExpirationTime
 from requests_cache.models.response import CachedResponse
 
 
@@ -62,7 +63,7 @@ class HttpApiUtil(abc.ABC):
         rate_calls: int = 90,
         rate_period: int = 1,
         db_path: str = "http_cache",
-        expire_after=-1,
+        expire_after=2592000,
     ):
         self.api_server = api_server
         self.cache_storage: SQLiteCache = SQLiteCache(db_path=db_path)
@@ -88,7 +89,11 @@ class HttpApiUtil(abc.ABC):
         self._limit_api_func = _call_api
 
     def call_api(
-        self, url, filter_fn: FILTER_FN2 = None, **kwargs
+        self,
+        url,
+        expire_after: ExpirationTime = None,
+        filter_fn: FILTER_FN2 = None,
+        **kwargs,
     ) -> Response | CachedResponse:
         """
         :param url: only path or full url
@@ -102,7 +107,17 @@ class HttpApiUtil(abc.ABC):
         should_delete = False
         if resp and resp.is_expired:
             should_delete = True
-        if resp and filter_fn is not None:
+
+        if (
+            not should_delete
+            and resp
+            and isinstance(expire_after, int)
+            and expire_after >= 0
+        ):
+            if time.time() > resp.created_at.timestamp() + expire_after:
+                should_delete = True
+        if not should_delete and resp and filter_fn is not None:
+            resp.created_at
             try:
                 should_delete = (
                     filter_fn if isinstance(filter_fn, bool) else filter_fn(resp)
@@ -115,20 +130,31 @@ class HttpApiUtil(abc.ABC):
             self.cache_storage.delete_url(url)
             resp = None
         if resp is None:
-            resp = self._limit_api_func(url, **kwargs)
+            resp = self._limit_api_func(url, expire_after=expire_after, **kwargs)
 
         return resp
 
-    def api_json(self, url, filter_fn: FILTER_FN2 = None, **kwargs) -> dict:
+    def api_json(
+        self,
+        url,
+        expire_after: ExpirationTime = None,
+        filter_fn: FILTER_FN2 = None,
+        **kwargs,
+    ) -> dict:
         url = self.full_url(url)
-        response = self.call_api(url, filter_fn, **kwargs)
+        response = self.call_api(url, expire_after, filter_fn, **kwargs)
         return response.json()
 
     def api_model(
-        self, url, model: Type[Model], filter_fn: FILTER_FN2 = None, **kwargs
+        self,
+        url,
+        model: Type[Model],
+        expire_after: ExpirationTime = None,
+        filter_fn: FILTER_FN2 = None,
+        **kwargs,
     ) -> Model | None:
         url = self.full_url(url)
-        response = self.call_api(url, filter_fn, **kwargs)
+        response = self.call_api(url, expire_after, filter_fn, **kwargs)
 
         def _parse_model(_response: Response, retry=False):
             if _response.status_code == 200:
@@ -159,13 +185,15 @@ class HttpApiUtil(abc.ABC):
         quest_id: int,
         phase: int,
         region=Region.JP,
+        expire_after: ExpirationTime = None,
         filter_fn: FILTER_FN2 = None,
         **kwargs,
     ):
         return self.api_model(
             f"/nice/{region}/quest/{quest_id}/{phase}",
             NiceQuestPhase,
-            filter_fn=filter_fn,
+            expire_after,
+            filter_fn,
             **kwargs,
         )
 
