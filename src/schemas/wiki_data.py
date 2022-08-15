@@ -34,6 +34,8 @@ class WikiTranslation(BaseModelORJson):
     ce_skill_des: dict[int, str] = {}
     ce_skill_des_max: dict[int, str] = {}
     cc_skill_des: dict[int, str] = {}
+    costume_names: dict[str, str] = {}
+    costume_details: dict[int, str] = {}
 
     def sort(self):
         self.svt_names = sort_dict(self.svt_names)
@@ -48,6 +50,8 @@ class WikiTranslation(BaseModelORJson):
         self.ce_skill_des = sort_dict(self.ce_skill_des)
         self.ce_skill_des_max = sort_dict(self.ce_skill_des_max)
         self.cc_skill_des = sort_dict(self.cc_skill_des)
+        self.costume_names = sort_dict(self.costume_names)
+        self.costume_details = sort_dict(self.costume_details)
 
 
 class ServantWBase(BaseModel):
@@ -62,6 +66,8 @@ class ServantW(ServantWBase):
     aprilFoolAssets: list[str] = []
     aprilFoolProfile: MappingStr = MappingStr()
     spriteModels: list[str] = []
+    # mcSpriteModels: list[str] = []
+    fandomSprites: list[str] = []
     mcProfiles: dict[int, list[str]] = {}
     fandomProfiles: dict[int, list[str]] = {}
 

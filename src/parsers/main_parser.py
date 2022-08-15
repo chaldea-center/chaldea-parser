@@ -1416,6 +1416,10 @@ class MainParser:
             _update_mapping(mappings.quest_names, name_jp, name_cn)
         for name_jp, name_cn in transl.spot_names.items():
             _update_mapping(mappings.spot_names, name_jp, name_cn)
+        for name_jp, name_cn in transl.costume_names.items():
+            _update_mapping(mappings.costume_names, name_jp, name_cn)
+        for collection, name_cn in transl.costume_details.items():
+            _update_mapping(mappings.costume_detail, collection, name_cn)
 
         # ce/cc skill des
         for ce in self.jp_data.nice_equip_lore:

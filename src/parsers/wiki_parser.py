@@ -26,7 +26,13 @@ from ..schemas.wiki_data import (
 from ..utils import Worker, count_time, dump_json, load_json, logger
 from ..utils.helper import sort_dict
 from ..wiki import FANDOM, MOONCELL
-from ..wiki.template import mwparse, parse_template, parse_template_list, remove_tag
+from ..wiki.template import (
+    find_tabber,
+    mwparse,
+    parse_template,
+    parse_template_list,
+    remove_tag,
+)
 from ..wiki.wiki_tool import KnownTimeZone
 from .wiki import replace_banner_url
 
@@ -72,18 +78,20 @@ class WikiParser:
         MOONCELL.remove_recent_changed()
         FANDOM.remove_recent_changed()
         self.init_wiki_data()
-        logger.info("[Mooncell] parsing servant data")
+        logger.info("[MC] parsing servant data")
         self.mc_svt()
-        logger.info("[Mooncell] parsing craft essence data")
+        logger.info("[MC] parsing craft essence data")
         self.mc_ce()
-        logger.info("[Mooncell] parsing command code data")
+        logger.info("[MC] parsing command code data")
         self.mc_cc()
-        logger.info("[Mooncell] parsing event/war/quest data")
+        logger.info("[MC] parsing event/war/quest data")
         self.mc_events()
         self.mc_wars()
         self.mc_quests()
-        logger.info("[Mooncell] parsing summon data")
+        logger.info("[MC] parsing summon data")
         self.mc_summon()
+        logger.info("[MC] parsing extra data")
+        self.mc_extra()
         logger.info("[Fandom] parsing servant data")
         self.fandom_svt()
         logger.info("[Fandom] parsing craft essence data")
@@ -338,7 +346,7 @@ class WikiParser:
         def _parse_one(collection_no: int, link: str):
             svt_add: ServantW = self.wiki_data.get_svt(collection_no)
             svt_add.fandomLink = link
-            text = FANDOM.get_page_text(link)
+            text = mwparse(FANDOM.get_page_text(link))
 
             need_profile = self._need_wiki_profile(Region.NA, svt_add.collectionNo)
             for params in parse_template_list(text, r"^{{Biography"):
@@ -360,6 +368,21 @@ class WikiParser:
                         svt_add.aprilFoolProfile.NA += f"\n\n{apex}"
                     else:
                         svt_add.aprilFoolProfile.NA = apex
+
+            images_section = text.get_sections(levels=[2], matches="Images")
+            sprites_text = find_tabber(images_section, "Sprites")
+            sprites = []
+            if sprites_text:
+                for line in sprites_text.split("\n"):
+                    cells = line.strip().split("|")
+                    if len(cells) != 2:
+                        continue
+                    fn, name = cells
+                    if "Command Card" in name or "NP Logo" in name:
+                        continue
+                    if fn:
+                        sprites.append(fn.replace(" ", "_"))
+            svt_add.fandomSprites = sprites
 
         worker = Worker("fandom_svt")
         list_text = FANDOM.get_page_text("Servant List by ID")
@@ -598,6 +621,17 @@ class WikiParser:
         for answer in MOONCELL.ask_query("[[分类:限时召唤]]"):
             worker.add(_parse_one, answer["fulltext"])
         worker.wait()
+
+    def mc_extra(self):
+        costume_page = MOONCELL.get_page_text("灵衣一览")
+        for params in parse_template_list(costume_page, r"^{{灵衣一览"):
+            name_cn, name_jp = params.get2("中文名"), params.get2("日文名")
+            if name_cn and name_jp:
+                self.mc_transl.costume_names[name_cn] = name_jp
+            collection = params.get_cast("序号", int)
+            detail_cn = params.get2("中文简介")
+            if collection and detail_cn:
+                self.mc_transl.costume_details[collection] = detail_cn
 
     def check_invalid_wikilinks(self):
         def _check_page(title: str | None):

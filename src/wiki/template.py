@@ -1,8 +1,8 @@
 import re
 from typing import Any, Callable, Iterable, TypeVar, Union
 
-from mwparserfromhell import parse as mwparse
-from mwparserfromhell.nodes import Template, Wikilink
+import mwparserfromhell
+from mwparserfromhell.nodes import Tag, Template, Wikilink
 from mwparserfromhell.nodes.extras import Parameter
 from mwparserfromhell.wikicode import Wikicode
 
@@ -30,6 +30,10 @@ kAllTags = (
 )
 
 _T = TypeVar("_T")
+
+
+def mwparse(value, context=0, skip_style_tags=False) -> Wikicode:
+    return mwparserfromhell.parse(value, context, skip_style_tags)
 
 
 class Params(dict[Any, str]):
@@ -211,3 +215,36 @@ def parse_template_list(code, matches: str | None = None) -> list[Params]:
     for tmpl in mwparse(code).filter_templates(matches=matches):
         results.append(parse_template(tmpl, matches))
     return results
+
+
+def split_tabber(code, default: str = "") -> list[tuple[str, str]]:
+    code = mwparse(code)
+    tags: list[Tag] = code.filter_tags(recursive=False, matches="tabber")
+    if len(tags) == 0:
+        return [(default, trim(str(code)))]
+    else:
+        tabs = tags[0].contents.__str__().split("|-|")
+        tab_list = []
+        for tab in tabs:
+            res = re.findall(r"^([^{}]+?)=([\w\W]*?)$", tab)
+            if res:
+                res = res[0]
+                tab_list.append((res[0].strip(), res[1].strip()))
+        return tab_list
+
+
+def find_tabber(code, tab_name: str) -> str | None:
+    if not code:
+        return None
+    code = mwparse(code)
+    tags: list[Tag] = code.filter_tags(recursive=False, matches="tabber")
+    if len(tags) == 0:
+        return None
+    else:
+        tabs = tags[0].contents.__str__().split("|-|")
+        for tab in tabs:
+            res = re.findall(r"^([^{}]+?)=([\w\W]*?)$", tab)
+            if res:
+                res = res[0]
+                if str(res[0]).strip() == tab_name:
+                    return str(res[1]).strip()
