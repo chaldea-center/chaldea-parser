@@ -69,7 +69,7 @@ jobs:
 
       - run: echo "LAST_AUTHOR=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
         working-directory: ${{ env.output_dir }}
-      - run: echo "NEED_WIKI=${{ !contains(env.LAST_AUTHOR, '[bot]') || (github.event.client_payload && github.event.client_payload.runWikiParser) }}" >> $GITHUB_ENV
+      - run: echo "NEED_WIKI=${{ !contains(env.LAST_AUTHOR, '[bot]') || (github.event.client_payload && github.event.client_payload.run_wiki_parser) }}" >> $GITHUB_ENV
         working-directory: ${{ env.output_dir }}
 
       - name: Checkout static repo
