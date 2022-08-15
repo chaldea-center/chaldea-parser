@@ -207,8 +207,12 @@ class WikiTool:
                 self._download_image(origin_url, filepath)
         return url
 
+    @staticmethod
+    def norm_filename(filename: str) -> str:
+        return unquote(filename).replace(" ", "_")
+
     def hash_file_url(self, filename: str) -> str:
-        filename = unquote(filename).replace(" ", "_")
+        filename = self.norm_filename(filename)
         _hash = md5(filename.encode()).hexdigest()
         return f"{self.img_url_prefix}/{_hash[:1]}/{_hash[:2]}/{filename}"
 

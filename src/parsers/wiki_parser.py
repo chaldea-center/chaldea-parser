@@ -169,7 +169,13 @@ class WikiParser:
                 for m in re.split(r"<br>|&", record["method"])
                 if m not in ("活动通关奖励", "事前登录赠送")
             ]
-            svt_add.obtains = sorted(set(obtains))
+            obtains = list(set(obtains))
+            if len(obtains) > 1 and SvtObtain.unknown in obtains:
+                obtains.remove(SvtObtain.unknown)
+            if not obtains:
+                obtains.append(SvtObtain.unknown)
+            svt_add.obtains = sorted(obtains)
+
             # profile
 
             wikitext = mwparse(MOONCELL.get_page_text(svt_add.mcLink))
@@ -235,6 +241,7 @@ class WikiParser:
                 for key, value in params.items():
                     if "模型" in key or "灵衣" in key and str(value).endswith(".png"):
                         svt_add.spriteModels.append(MOONCELL.hash_file_url(value))
+                        svt_add.mcSprites.append(MOONCELL.norm_filename(value))
 
         worker = Worker.from_map(_parse_one, index_data, name="mc_svt")
         worker.wait()
@@ -381,7 +388,7 @@ class WikiParser:
                     if "Command Card" in name or "NP Logo" in name:
                         continue
                     if fn:
-                        sprites.append(fn.replace(" ", "_"))
+                        sprites.append(FANDOM.norm_filename(fn))
             svt_add.fandomSprites = sprites
 
         worker = Worker("fandom_svt")

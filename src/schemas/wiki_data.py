@@ -66,7 +66,7 @@ class ServantW(ServantWBase):
     aprilFoolAssets: list[str] = []
     aprilFoolProfile: MappingStr = MappingStr()
     spriteModels: list[str] = []
-    # mcSpriteModels: list[str] = []
+    mcSprites: list[str] = []
     fandomSprites: list[str] = []
     mcProfiles: dict[int, list[str]] = {}
     fandomProfiles: dict[int, list[str]] = {}
