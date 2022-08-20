@@ -221,7 +221,7 @@ class MainParser:
                     pass
             worker.wait()
             dump_json(info_remote, fp_info)
-            logger.debug(f"Exported files updated:\n{dump_json(info_remote)}")
+            logger.debug(f"Exported files updated:\n{info_remote}")
         dump_json(openapi_remote, fp_openapi)
 
     def load_master_data(self, region: Region, add_trigger: bool = True) -> MasterData:

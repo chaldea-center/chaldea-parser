@@ -130,7 +130,7 @@ class HttpApiUtil(abc.ABC):
             self.cache_storage.delete_url(url)
             resp = None
         if resp is None:
-            resp = self._limit_api_func(url, expire_after=expire_after, **kwargs)
+            resp = self._limit_api_func(url, **kwargs)
 
         return resp
 

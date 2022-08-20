@@ -98,6 +98,9 @@ class WikiParser:
         self.fandom_ce()
         logger.info("[Fandom] parsing command code data")
         self.fandom_cc()
+        logger.info("[Fandom] parsing extra data")
+        self.fandom_extra()
+
         self.check_invalid_wikilinks()
         logger.info("[wiki] official banner")
         replace_banner_url.main(
@@ -634,11 +637,26 @@ class WikiParser:
         for params in parse_template_list(costume_page, r"^{{灵衣一览"):
             name_cn, name_jp = params.get2("中文名"), params.get2("日文名")
             if name_cn and name_jp:
-                self.mc_transl.costume_names[name_cn] = name_jp
+                self.mc_transl.costume_names[name_jp] = name_cn
             collection = params.get_cast("序号", int)
             detail_cn = params.get2("中文简介")
             if collection and detail_cn:
                 self.mc_transl.costume_details[collection] = detail_cn
+
+    def fandom_extra(self):
+        for page_name in [
+            "Sub:Costume_Dress/Full_Costume_List",
+            "Sub:Costume_Dress/Simple_Costume_List",
+        ]:
+            costume_page = FANDOM.get_page_text(page_name)
+            for row in wikitextparser.parse(costume_page).tables[0].data()[1:]:
+                names = re.split(r"<br\s*/>", row[2])
+                if len(names) != 2:
+                    continue
+                name_jp = remove_tag(names[0])
+                name_na = remove_tag(names[1].strip().strip("'"))
+                if name_jp and name_na:
+                    self.fandom_transl.costume_names[name_jp] = name_na
 
     def check_invalid_wikilinks(self):
         def _check_page(title: str | None):
