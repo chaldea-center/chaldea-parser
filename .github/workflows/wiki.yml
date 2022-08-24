@@ -5,7 +5,7 @@ on:
   #      - main
   workflow_dispatch:
   schedule:
-    - cron: "15 12 * * *"
+    - cron: "15 12 */3 * *"
 
 jobs:
   wiki:
@@ -85,7 +85,7 @@ jobs:
         working-directory: ${{ env.output_dir }}
         run: |
           git add .
-          git commit -m "update wiki parser" || echo "Nothing to update"
+          git commit -m "update wiki data" || echo "Nothing to update"
 
       - name: Publish static
         working-directory: ${{ env.static_dir }}
