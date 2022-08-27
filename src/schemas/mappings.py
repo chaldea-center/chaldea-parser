@@ -3,6 +3,26 @@ from pydantic import BaseModel
 from .common import MappingBase, MappingInt, MappingStr
 
 
+CN_REPLACE = {
+    "西行者": "玄奘三藏",
+    "匕见": "荆轲",
+    "虎狼": "吕布",
+    "歌果": "美杜莎",
+    "雾都弃子": "开膛手杰克",
+    "莲偶": "哪吒",
+    "周照": "武则天",
+    "瞑生院祈荒": "杀生院祈荒",
+    "重瞳": "项羽",
+    "忠贞": "秦良玉",
+    "祖政": "始皇帝",
+    "雏罂": "虞美人",
+    "丹驹": "赤兔马",
+    "琰女": "杨贵妃",
+    "爱迪·萨奇": "爱德华·蒂奇",
+    "萨奇": "蒂奇",
+}
+
+
 class EnumMapping(BaseModel):
     svt_class: dict[str, MappingStr] = {}
     attribute: dict[str, MappingStr] = {}
@@ -81,3 +101,4 @@ class MappingData(BaseModel):
 
     enums: EnumMapping = EnumMapping()
     misc: dict[str, MappingStr] = {}
+    cn_replace: dict[str, str] = {}

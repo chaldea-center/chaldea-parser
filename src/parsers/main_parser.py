@@ -92,6 +92,7 @@ from ..schemas.gamedata import (
     NiceBaseSkill,
     NiceBaseTd,
 )
+from ..schemas.mappings import CN_REPLACE
 from ..schemas.wiki_data import (
     AppNews,
     CommandCodeW,
@@ -937,6 +938,7 @@ class MainParser:
             mappings.skill_names.pop(key, None)
         for key in self.jp_data.mappingData.cc_names.keys():
             mappings.skill_names.pop(key, None)
+        mappings.cn_replace = dict(CN_REPLACE)
 
     def _add_enum_mappings(self):
         mappings = self.jp_data.mappingData
@@ -1502,6 +1504,19 @@ class MainParser:
                     # print(f"Convert CN: {cn_name} -> {cn_name2}")
                     regions["CN"] = cn_name2
         # self.test_mapping_dict = mappings_dict
+        def _iter(obj):
+            if not isinstance(obj, dict):
+                return
+            v = obj.get("CN")
+            if isinstance(v, str):
+                for a, b in CN_REPLACE.items():
+                    v = v.replace(a, b)
+                obj["CN"] = v
+            for k, v in obj.items():
+                if k != "cn_replace":
+                    _iter(v)
+
+        _iter(mappings_dict)
         self.jp_data.mappingData = MappingData.parse_obj(mappings_dict)
 
     def _add_na_mapping(self):
