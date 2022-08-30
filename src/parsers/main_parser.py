@@ -1353,13 +1353,9 @@ class MainParser:
             quest = jp_data.quest_dict.get(quest_id)
             if not quest:
                 continue
-            if quest.warId != 1002 and not (
-                quest.warId < 1000
-                and quest.type == NiceQuestType.free
-                and quest.afterClear == NiceQuestAfterClearType.repeatLast
-            ):
-                continue
             for svt_id, name_jp in enemies.items():
+                if name_jp not in mappings.entity_names:
+                    continue
                 name = data.view_enemy_names.get(quest_id, {}).get(svt_id)
                 _update_mapping(mappings.entity_names, name_jp, name)
 
