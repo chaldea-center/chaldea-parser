@@ -27,7 +27,7 @@ def parse_exchange_tickets(nice_item: list[NiceItem]) -> list[ExchangeTicket]:
 
         item_ids = []
         assert (
-            len(item.itemSelects) == 3
+            len(item.itemSelects) in (3, 5)
         ), f"exchange ticket items!=3: {item.id}-{item.name}"
         for select in item.itemSelects:
             assert len(select.gifts) == 1
