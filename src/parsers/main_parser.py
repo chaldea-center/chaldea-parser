@@ -1095,8 +1095,8 @@ class MainParser:
                 continue
             # if war.id < 11000 and war.lastQuestId == 0:  # not released wars
             #     continue
-            _update_mapping(mappings.war_names, war_jp.name, war.name)
             _update_mapping(mappings.war_names, war_jp.longName, war.longName)
+            _update_mapping(mappings.war_names, war_jp.name, war.name)
         for spot_jp in jp_data.spot_dict.values():
             spot = data.spot_dict.get(spot_jp.id)
             _update_mapping(
