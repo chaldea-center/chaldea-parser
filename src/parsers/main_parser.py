@@ -812,7 +812,7 @@ class MainParser:
         NiceGift: ["id", "priority"],
         NiceLore: ["comments", "voices"],
         NiceWar: ["emptyMessage"],
-        NiceMap: ["mapGimmicks"],
+        NiceMap: [],
         NiceQuestPhase: ["supportServants"],
         NiceQuest: [],
         QuestEnemy: ["drops", "ai", "limit"],
