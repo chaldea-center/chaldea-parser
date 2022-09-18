@@ -54,6 +54,7 @@ from app.schemas.nice import (
     NiceItemAmount,
     NiceLore,
     NiceMap,
+    NiceMapGimmick,
     NiceMasterMission,
     NiceQuest,
     NiceQuestPhase,
@@ -118,6 +119,7 @@ from ..utils.helper import beautify_file
 from ..utils.stopwatch import Stopwatch
 from ..wiki import FANDOM, MOONCELL
 from .core.ticket import parse_exchange_tickets
+from .update_mapping import run_mapping_update
 
 
 _KT = TypeVar("_KT", str, int)
@@ -661,6 +663,9 @@ class MainParser:
         _normal_dump(data.basic_svt, "entities")
         _normal_dump(data.exchangeTickets, "exchangeTickets")
         _normal_dump(data.nice_bgm, "bgms", encoder=pydantic_encoder)
+
+        logger.info("Updating mappings")
+        run_mapping_update(data.mappingData)  # before dump
         _dump_by_ranges(
             self._encode_mapping_data(data.mappingData),
             ranges=[
@@ -671,6 +676,7 @@ class MainParser:
             key="mappingData",
             use_dict=True,
         )
+
         _dump_by_ranges(
             data.event_dict,
             ranges=[
@@ -713,7 +719,7 @@ class MainParser:
             ),
             "constData",
         )
-        _normal_dump(list(wiki_data.servants.values()), "wiki.servants")
+        _dump_by_count(list(wiki_data.servants.values()), 100, "wiki.servants")
         _dump_by_count(
             list(wiki_data.craftEssences.values()), 500, "wiki.craftEssences"
         )
@@ -755,14 +761,20 @@ class MainParser:
         if len(self.payload.regions) not in (0, len(Region.__members__)):
             msg = "[" + ",".join([r.value for r in self.payload.regions]) + "] " + msg
         Path(settings.output_dir).joinpath("commit-msg.txt").write_text(msg)
-        logger.info("Updating mappings")
-        from .update_mapping import run_mapping_update
-
-        run_mapping_update()
 
     @staticmethod
     def _encode_mapping_data(data: MappingData) -> dict[str, Any]:
         r = {}
+
+        def _clean_map(map):
+            if not isinstance(map, dict):
+                return map
+            return {k: _clean_map(v) for k, v in map.items() if v}
+
+        _dict = data.dict(exclude_none=True)
+        _dict = _clean_map(_dict)
+        data = MappingData.parse_obj(_dict)
+
         for k, v in data._iter(exclude_none=True):
             if isinstance(v, MappingBase):
                 r[k] = v.dict(exclude_none=True)
@@ -813,6 +825,7 @@ class MainParser:
         NiceLore: ["comments", "voices"],
         NiceWar: ["emptyMessage"],
         NiceMap: [],
+        NiceMapGimmick: ["actionAnimTime", "actionEffectId", "startedAt", "endedAt"],
         NiceQuestPhase: ["supportServants"],
         NiceQuest: [],
         QuestEnemy: ["drops", "ai", "limit"],
@@ -890,16 +903,53 @@ class MainParser:
             return obj
 
         if isinstance(obj, BaseModel):
-            # noinspection PyProtectedMember
-            return dict(
-                obj._iter(
-                    to_dict=False,
-                    exclude_none=True,
-                    exclude_defaults=True,
-                    exclude=exclude,
+            if isinstance(obj, NiceFunction):
+                map = dict(
+                    obj._iter(
+                        to_dict=True,
+                        exclude_none=True,
+                        exclude_defaults=True,
+                        exclude=exclude,
+                    )
                 )
-            )
+                # enable in 2.1.0
+                # self._trim_func_vals(map)
+            else:
+                map = dict(
+                    obj._iter(
+                        to_dict=False,
+                        exclude_none=True,
+                        exclude_defaults=True,
+                        exclude=exclude,
+                    )
+                )
+            return map
         return pydantic_encoder(obj)
+
+    @staticmethod
+    def _trim_func_vals(map: dict[str, Any]):
+        first: dict[str, Any] | None = map["svals"][0] if map.get("svals") else None
+        if not first:
+            return
+        for key1 in ["svals", "svals2", "svals3", "svals4", "svals5"]:
+            svals: list[dict] | None = map.get(key1)
+            if not svals:
+                continue
+            for index in range(len(svals)):
+                if key1 == "svals" and index == 0:
+                    continue
+                val = svals[index]
+                new_val = dict()
+                for key2 in first.keys():
+                    v = val.get(key2)
+                    if first[key2] != v:
+                        new_val[key2] = v
+                for key2 in val.keys():
+                    if key2 not in first:
+                        new_val[key2] = val[key2]
+                svals[index] = new_val
+
+        return map
 
     def merge_all_mappings(self):
         logger.info("merge all mappings")
@@ -1377,6 +1427,8 @@ class MainParser:
             value: _KV | None,
         ):
             if value is None:
+                return
+            if _key == value:
                 return
             if (
                 re.findall(r"20[1-2][0-9]", str(value))

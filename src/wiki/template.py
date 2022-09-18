@@ -145,7 +145,7 @@ def remove_tag(string: str, tags: Iterable[str] = kAllTags, console=False):
             shown_text = wiki_link.text
             if shown_text:
                 shown_text = str(shown_text).split("|", maxsplit=1)[0]
-            string = string.replace(str(wiki_link), shown_text or link)
+            string = string.replace(str(wiki_link), str(shown_text or link))
     if "trja" in tags:
         for template in code.filter_templates(matches=r"^{{trja"):
             params = parse_template(template)
@@ -204,9 +204,9 @@ def parse_template(template: Wikitext, matches: str | None = None) -> Params:
     params = Params()
     for p in tmpl.params:
         p: Parameter
-        value = trim(p.value)
+        value = trim(str(p.value))
         if value not in ("-", "—", ""):
-            params[trim(p.name)] = value
+            params[trim(str(p.name))] = value
     return params
 
 
