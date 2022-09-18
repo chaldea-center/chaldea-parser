@@ -769,7 +769,11 @@ class MainParser:
         def _clean_map(map):
             if not isinstance(map, dict):
                 return map
-            return {k: _clean_map(v) for k, v in map.items() if v}
+            return {
+                k: v if k in ("enums", "misc") else _clean_map(v)
+                for k, v in map.items()
+                if v
+            }
 
         _dict = data.dict(exclude_none=True)
         _dict = _clean_map(_dict)
