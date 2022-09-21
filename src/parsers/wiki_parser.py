@@ -96,8 +96,9 @@ class WikiParser:
         self.fandom_svt()
         logger.info("[Fandom] parsing craft essence data")
         self.fandom_ce()
-        logger.info("[Fandom] parsing command code data")
-        self.fandom_cc()
+        logger.info("[Fandom] skip fandom cc parsing.")
+        # logger.info("[Fandom] parsing command code data")
+        # self.fandom_cc()
         logger.info("[Fandom] parsing extra data")
         self.fandom_extra()
 
@@ -433,6 +434,7 @@ class WikiParser:
         worker.wait()
 
     def fandom_cc(self):
+        # Category:Command Code Display Order
         list_text = FANDOM.get_page_text("Command Code List/By ID")
         for row in wikitextparser.parse(list_text).tables[0].data()[1:]:
             collection_no = int(row[3])
