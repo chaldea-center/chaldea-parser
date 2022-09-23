@@ -1145,6 +1145,9 @@ class MainParser:
             war = data.war_dict.get(war_jp.id)
             if war is None:
                 continue
+            if war.id == 8098 and region == Region.NA:
+                # for NA: 8098 is Da Vinci and the 7 Counterfeit Heroic Spirits
+                continue
             if data.mstConstant["LAST_WAR_ID"] < war.id < 1000:
                 continue
             # if war.id < 11000 and war.lastQuestId == 0:  # not released wars
