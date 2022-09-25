@@ -41,11 +41,18 @@ def run_mapping_update(mappings: MappingData | None = None):
             continue
         fp = folder / f"{key}.json"
         if key in ("chara_names", "trait_redirect"):
-            # they wont be changed by atlas parser
-            dump_json(sort_dict(load_json(fp) or {}), fp)
-        else:
-            logger.debug(f"writing to {fp}")
-            dump_json(trans, fp)
+            # they won't be changed by atlas parser
+            trans = load_json(fp) or {}
+        if key not in (
+            "cn_replace",
+            "enums",
+            "misc",
+            "override_mappings",
+            "trait_redirect",
+        ):
+            trans = sort_dict(trans)
+        logger.debug(f"writing to {fp}")
+        dump_json(trans, fp)
 
 
 if __name__ == "__main__":

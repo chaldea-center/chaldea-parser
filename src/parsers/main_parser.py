@@ -53,6 +53,7 @@ from app.schemas.nice import (
     NiceGift,
     NiceItemAmount,
     NiceLore,
+    NiceLoreComment,
     NiceMap,
     NiceMapGimmick,
     NiceMasterMission,
@@ -1282,6 +1283,14 @@ class MainParser:
             cos_w.JP = costume_jp.detail
             if costume and costume.detail and costume.detail != costume_jp.detail:
                 cos_w.update(region, costume.detail)
+
+        def _get_comment(comments: list[NiceLoreComment]) -> NiceLoreComment:
+            comment = comments[0]
+            for c in comments:
+                if c.priority > comment.priority:
+                    comment = c
+            return comment
+
         for ce_jp in jp_data.nice_equip_lore:
             ce = data.ce_id_dict.get(ce_jp.id)
             _update_mapping(mappings.ce_names, ce_jp.name, ce.name if ce else None)
@@ -1289,12 +1298,16 @@ class MainParser:
                 ce_jp.collectionNo, CraftEssenceW(collectionNo=ce_jp.collectionNo)
             )
             if ce_jp.profile and ce_jp.profile.comments:
-                ce_w.profile.update(Region.JP, ce_jp.profile.comments[0].comment)
+                if len(ce_jp.profile.comments) > 1:
+                    logger.debug(
+                        f"{ce_jp.collectionNo}-{ce_jp.name} has {len(ce_jp.profile.comments)} lores"
+                    )
+                ce_w.profile.JP = _get_comment(ce_jp.profile.comments).comment
             if not ce:
                 continue
             if region != Region.JP and ce.profile and ce.profile.comments:
-                comment = ce.profile.comments[0].comment
-                if comment != ce_w.profile.JP:
+                comment = _get_comment(ce.profile.comments).comment
+                if comment and comment != ce_w.profile.JP:
                     ce_w.profile.update(region, comment)
 
         for cc_jp in jp_data.nice_command_code:
