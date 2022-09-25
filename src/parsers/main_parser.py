@@ -127,7 +127,7 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
-MIN_APP = "2.0.7"
+MIN_APP = "2.1.1"
 
 
 class MainParser:
@@ -917,7 +917,7 @@ class MainParser:
                     )
                 )
                 # enable in 2.1.0
-                # self._trim_func_vals(map)
+                self._trim_func_vals(map)
             else:
                 map = dict(
                     obj._iter(

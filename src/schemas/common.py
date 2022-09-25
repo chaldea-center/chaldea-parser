@@ -82,6 +82,9 @@ class SvtObtain(str, Enum):
 
     @staticmethod
     def from_cn(s: str) -> "SvtObtain":
+        s = s.strip()
+        if not s:
+            return SvtObtain.unknown
         return {
             "友情点召唤": SvtObtain.friendPoint,
             "剧情限定": SvtObtain.story,
@@ -91,7 +94,7 @@ class SvtObtain(str, Enum):
             "无法获得": SvtObtain.unavailable,
             "活动赠送": SvtObtain.eventReward,
             "通关报酬": SvtObtain.clearReward,
-        }.get(s.strip()) or SvtObtain.unknown
+        }[s]
 
 
 class CEObtain(str, Enum):
@@ -110,6 +113,8 @@ class CEObtain(str, Enum):
     @staticmethod
     def from_cn(s: str) -> "CEObtain":
         s = s.strip()
+        if not s:
+            return CEObtain.unknown
         return {
             "EXP卡": CEObtain.exp,
             "兑换": CEObtain.shop,
@@ -119,9 +124,9 @@ class CEObtain(str, Enum):
             "期间限定": CEObtain.limited,
             "活动奖励": CEObtain.eventReward,
             "纪念": CEObtain.campaign,
-            "羁绊": CEObtain.bond,
+            "牵绊": CEObtain.bond,
             "掉落加成": CEObtain.drop,
-        }.get(s, CEObtain.unknown)
+        }[s]
 
 
 class CCObtain(str, Enum):

@@ -26,11 +26,11 @@ def parse_exchange_tickets(nice_item: list[NiceItem]) -> list[ExchangeTicket]:
         year, month = match.group(2), match.group(1)
 
         item_ids = []
-        if len(item.itemSelects) > 3:
-            item.itemSelects = item.itemSelects[:3]
-        assert (
-            len(item.itemSelects) == 3
-        ), f"exchange ticket items!=3: {item.id}-{item.name}"
+        # if len(item.itemSelects) > 3:
+        #     item.itemSelects = item.itemSelects[:3]
+        # assert (
+        #     len(item.itemSelects) == 3
+        # ), f"exchange ticket items!=3: {item.id}-{item.name}"
         for select in item.itemSelects:
             assert len(select.gifts) == 1
             item_ids.append(select.gifts[0].objectId)
