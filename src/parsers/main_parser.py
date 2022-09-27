@@ -581,6 +581,9 @@ class MainParser:
                 )
                 assert _text
                 _bytes = _text.encode()
+            # '魔{jin}剑', 鯖江
+            for a, b in {"\ue000": "{jin}", "\ue001": "鯖"}.items():
+                _bytes = _bytes.replace(a.encode(), b.encode())
             _hash = hashlib.md5(_bytes).hexdigest()[:6]
             fv = FileVersion(
                 key=key,

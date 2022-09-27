@@ -83,7 +83,7 @@ class SvtObtain(str, Enum):
     @staticmethod
     def from_cn(s: str) -> "SvtObtain":
         s = s.strip()
-        if not s:
+        if not s or s in ("活动通关奖励", "事前登录赠送"):
             return SvtObtain.unknown
         return {
             "友情点召唤": SvtObtain.friendPoint,
