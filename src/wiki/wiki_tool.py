@@ -30,8 +30,6 @@ class KnownTimeZone(str, Enum):
 
 class WikiTool:
     def __init__(self, host: str, img_url_prefix: str, path="/", user=None, pwd=None):
-        from ..config import settings
-
         self.host: str = host
         self._path: str = path
         self.img_url_prefix: str = img_url_prefix
@@ -198,7 +196,7 @@ class WikiTool:
         sha1value = image.imageinfo["sha1"]
         url = re.sub(r"^http://", "https://", origin_url)
         url += "?sha1=" + sha1value
-        filepath = Path(settings.static_dir) / self.host / sha1value
+        filepath: Path = Path(settings.static_dir) / self.host / sha1value
         if (
             not filepath.exists()
             or sha1(filepath.read_bytes()).hexdigest() != sha1value
@@ -254,6 +252,13 @@ class WikiTool:
                 self.cache.pages.pop(name)
         else:
             return page.text
+
+    def remove_cache(self, name: str):
+        name = self.norm_key(name)
+        page = self.cache.pages.pop(name, None)
+        if page and page.redirect:
+            self.remove_cache(page.redirect)
+        return page
 
     @staticmethod
     def get_timestamp(s: str | None, tz: KnownTimeZone) -> Optional[int]:
@@ -330,6 +335,7 @@ class WikiTool:
             ctn = resp.get("continue")
             if ctn:
                 full_params.update(ctn)
+                time.sleep(5)
             else:
                 return items
 
@@ -350,11 +356,14 @@ class WikiTool:
             answers = resp["query"].get("results", {})
             if isinstance(answers, dict):
                 result.extend(answers.values())
+                time.sleep(5)
             else:
                 result.extend(answers)
         return result
 
     @retry_decorator(retry_times=3, lapse=10)
+    @sleep_and_retry
+    @limits(2, 5)
     def _api_call(self, params) -> dict:
         logger.warning(f"[{self.host}] call api: {params}")
         return requests.get(f"https://{self.host}/api.php", params=params).json()
@@ -380,11 +389,29 @@ class WikiTool:
         )
         for record in changes:
             title = self.norm_key(record.get("title"))
-            page = self.cache.pages.pop(title, None)
+            page = self.remove_cache(title)
             if page:
                 dropped += 1
                 logger.debug(f'{self.host}: drop outdated: {dropped} - "{title}"')
         self.cache.updated = _now
+
+    def clear_moved_or_deleted(self):
+        for letype in ["move", "delete"]:
+            params = {
+                "action": "query",
+                "format": "json",
+                "list": "logevents",
+                "utf8": 1,
+                "letype": letype,
+                "lenamespace": "0",
+                "lelimit": "max",
+            }
+            log_events = self._api_call(params)["query"]["logevents"]
+            for event in log_events:
+                title: str = event["title"]
+                if self.get_cache(title):
+                    self.remove_cache(title)
+                    logger.debug(f'{self.host}: drop {letype}d page: "{title}"')
 
     def save_cache(self):
         logger.debug(

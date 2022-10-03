@@ -72,6 +72,7 @@ class PayloadSetting(BaseSettings):
     force_update_export: bool = False
     clear_cache_http: bool = False
     clear_cache_wiki: bool = False
+    clear_wiki_moved: bool = True
     skip_quests: bool = False
     recent_quest_expire: int = 20
     main_story_quest_expire: int = 90

@@ -11,7 +11,7 @@ import requests
 import wikitextparser
 from app.schemas.nice import NiceServant
 
-from ..config import settings
+from ..config import PayloadSetting, settings
 from ..schemas.common import CEObtain, MappingStr, Region, SummonType, SvtObtain
 from ..schemas.wiki_data import (
     EventW,
@@ -44,9 +44,11 @@ class _WikiTemp:
         self.released_svts: dict[int, NiceServant] = {}
 
     def _get_svts(self):
-        for svt in requests.get(
-            f"https://api.atlasacademy.io/export/{self.region}/nice_servant_lore.json"
-        ).json():
+        servants = load_json(
+            f"{settings.atlas_export_dir}/{self.region}/nice_servant_lore.json"
+        )
+        assert servants
+        for svt in servants:
             self.released_svts[svt["collectionNo"]] = NiceServant.parse_obj(svt)
         assert self.released_svts, len(self.released_svts)
 
@@ -59,6 +61,7 @@ class WikiParser:
         self._mc = _WikiTemp(Region.CN)
         self._fandom = _WikiTemp(Region.NA)
         self._jp = _WikiTemp(Region.JP)
+        self.payload = PayloadSetting()
 
     @property
     def mc_transl(self) -> WikiTranslation:
@@ -77,6 +80,9 @@ class WikiParser:
         FANDOM.load()
         MOONCELL.remove_recent_changed()
         FANDOM.remove_recent_changed()
+        if self.payload.clear_wiki_moved:
+            MOONCELL.clear_moved_or_deleted()
+            FANDOM.clear_moved_or_deleted()
         self.init_wiki_data()
         logger.info("[MC] parsing servant data")
         self.mc_svt()
