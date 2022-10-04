@@ -35,6 +35,7 @@ def run_mapping_update(mappings: MappingData | None = None):
             "ce_release",
             "cc_release",
             "mc_release",
+            "war_release",
             "quest_release",
         ):
             # release->MappingBase[list[int]]

@@ -97,6 +97,7 @@ class MappingData(BaseModel):
     ce_release: MappingBase[list[int]] = MappingBase()
     cc_release: MappingBase[list[int]] = MappingBase()
     mc_release: MappingBase[list[int]] = MappingBase()
+    war_release: MappingBase[list[int]] = MappingBase()
     quest_release: dict[int, MappingInt] = {}
 
     enums: EnumMapping = EnumMapping()

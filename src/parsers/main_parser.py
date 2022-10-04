@@ -1135,6 +1135,7 @@ class MainParser:
                 continue
             _update_mapping(mappings.event_names, event_jp.name, event.name)
             _update_mapping(mappings.event_names, event_jp.shortName, event.shortName)
+        war_release = mappings.war_release.of(region) or []
         for war_jp in jp_data.nice_war:
             if war_jp.id < 1000:
                 self.wiki_data.wars.setdefault(war_jp.id, WarW(id=war_jp.id))
@@ -1154,10 +1155,15 @@ class MainParser:
                 continue
             if data.mstConstant["LAST_WAR_ID"] < war.id < 1000:
                 continue
+            event = data.event_dict.get(war.eventId)
+            if event and event.startedAt > time.time():
+                continue
+            war_release.append(war.id)
             # if war.id < 11000 and war.lastQuestId == 0:  # not released wars
             #     continue
             _update_mapping(mappings.war_names, war_jp.longName, war.longName)
             _update_mapping(mappings.war_names, war_jp.name, war.name)
+        mappings.war_release.update(region, sorted(war_release))
         for spot_jp in jp_data.spot_dict.values():
             spot = data.spot_dict.get(spot_jp.id)
             _update_mapping(

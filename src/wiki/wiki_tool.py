@@ -335,7 +335,7 @@ class WikiTool:
             ctn = resp.get("continue")
             if ctn:
                 full_params.update(ctn)
-                time.sleep(5)
+                time.sleep(2)
             else:
                 return items
 
@@ -356,7 +356,7 @@ class WikiTool:
             answers = resp["query"].get("results", {})
             if isinstance(answers, dict):
                 result.extend(answers.values())
-                time.sleep(5)
+                time.sleep(2)
             else:
                 result.extend(answers)
         return result
@@ -395,13 +395,19 @@ class WikiTool:
                 logger.debug(f'{self.host}: drop outdated: {dropped} - "{title}"')
         self.cache.updated = _now
 
-    def clear_moved_or_deleted(self):
+    def clear_moved_or_deleted(self, days: float | None = None):
+        if days is not None:
+            last_timestamp = datetime.utcnow().timestamp() - days * 24 * 3600
+        else:
+            last_timestamp = self.cache.updated - 2 * 3600
+
         for letype in ["move", "delete"]:
             params = {
                 "action": "query",
                 "format": "json",
                 "list": "logevents",
                 "utf8": 1,
+                "lestart": datetime.fromtimestamp(last_timestamp).isoformat(),
                 "letype": letype,
                 "lenamespace": "0",
                 "lelimit": "max",
