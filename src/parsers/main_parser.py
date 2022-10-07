@@ -10,25 +10,11 @@ from typing import Any, AnyStr, Iterable, Match, TypeVar
 import orjson
 import requests
 from app.schemas.common import NiceTrait, Region
-from app.schemas.enums import (
-    OLD_TRAIT_MAPPING,
-    Attribute,
-    ServantPersonality,
-    ServantPolicy,
-    SvtClass,
-)
+from app.schemas.enums import OLD_TRAIT_MAPPING
 from app.schemas.gameenums import (
-    NiceEventType,
-    NiceFuncTargetType,
-    NiceGender,
     NiceGiftType,
-    NiceMissionProgressType,
-    NiceMissionType,
     NiceQuestAfterClearType,
     NiceSvtFlag,
-    NiceSvtType,
-    NiceSvtVoiceType,
-    NiceTdEffectFlag,
     NiceWarOverwriteType,
 )
 from app.schemas.nice import (
@@ -49,7 +35,6 @@ from app.schemas.nice import (
     NiceEventReward,
     NiceEventTowerReward,
     NiceFunction,
-    NiceFuncType,
     NiceGift,
     NiceItemAmount,
     NiceLore,
@@ -73,17 +58,11 @@ from pydantic.json import pydantic_encoder
 from ..config import PayloadSetting, settings
 from ..schemas.common import (
     AtlasExportFile,
-    CEObtain,
-    CustomMissionType,
     DataVersion,
     FileVersion,
-    ItemCategory,
     MappingBase,
     MappingStr,
-    NpDamageType,
     OpenApiInfo,
-    SummonType,
-    SvtObtain,
 )
 from ..schemas.const_data import ConstGameData
 from ..schemas.gamedata import (
@@ -1000,48 +979,7 @@ class MainParser:
             m_trait.update(Region.NA, v.value, skip_exists=True)
 
         enums = self.jp_data.mappingData.enums
-        for v in SvtClass.__members__.values():
-            enums.svt_class.setdefault(v.value, MappingStr())
-        for v in Attribute.__members__.values():
-            enums.attribute.setdefault(v.value, MappingStr())
-        for v in NiceSvtType.__members__.values():
-            enums.svt_type.setdefault(v.value, MappingStr())
-        for v in ServantPolicy.__members__.values():
-            enums.servant_policy.setdefault(v.value, MappingStr())
-        for v in ServantPersonality.__members__.values():
-            enums.servant_personality.setdefault(v.value, MappingStr())
-        for v in NiceGender.__members__.values():
-            enums.gender.setdefault(v.value, MappingStr())
-        for v in NiceFuncTargetType.__members__.values():
-            enums.func_target_type.setdefault(v.value, MappingStr())
-        for v in SvtObtain.__members__.values():
-            enums.svt_obtain.setdefault(v.value, MappingStr())
-        for v in CEObtain.__members__.values():
-            enums.ce_obtain.setdefault(v.value, MappingStr())
-            enums.svt_obtain.setdefault(v.value, MappingStr())
-        for v in NiceMissionProgressType.__members__.values():
-            enums.mission_progress_type.setdefault(v.value, MappingStr())
-            enums.svt_obtain.setdefault(v.value, MappingStr())
-        for v in NiceMissionType.__members__.values():
-            enums.mission_type.setdefault(v.value, MappingStr())
-        # custom enums
-        for v in ItemCategory.__members__.values():
-            enums.item_category.setdefault(v.value, MappingStr())
-        for v in CustomMissionType.__members__.values():
-            enums.custom_mission_type.setdefault(v.value, MappingStr())
-        for v in NpDamageType.__members__.values():
-            enums.np_damage_type.setdefault(v.value, MappingStr())
-        for v in NiceTdEffectFlag.__members__.values():
-            enums.td_effect_flag.setdefault(v.value, MappingStr())
-        for v in SummonType.__members__.values():
-            enums.summon_type.setdefault(v.value, MappingStr())
-        # long dict
-        for v in NiceFuncType.__members__.values():
-            enums.func_type.setdefault(v.value, MappingStr())
-        for v in NiceBuffType.__members__.values():
-            enums.buff_type.setdefault(v.value, MappingStr())
-        for v in NiceSvtVoiceType.__members__.values():
-            enums.svt_voice_type.setdefault(v.value, MappingStr())
+        enums.update_enums()
 
     def _merge_official_mappings(self, region: Region):
         logger.info(f"merging official translations from {region}")

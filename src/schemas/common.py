@@ -148,7 +148,9 @@ class ItemCategory(str, Enum):
     ascension = "ascension"
     skill = "skill"
     special = "special"
+    eventAscension = "eventAscension"
     event = "event"
+    coin = "coin"
     other = "other"
 
 
@@ -160,12 +162,6 @@ class CustomMissionType(str, Enum):
     servantClass = "servantClass"
     enemyClass = "enemyClass"
     enemyNotServantClass = "enemyNotServantClass"
-
-
-class NpDamageType(str, Enum):
-    support = "support"
-    singleTarget = "singleTarget"
-    aoe = "aoe"
 
 
 class OpenApiInfo(BaseModel):

@@ -1,6 +1,32 @@
+from enum import Enum
+from typing import Any, Type, TypeVar
+
+from app.schemas.enums import Attribute, ServantPersonality, ServantPolicy, SvtClass
+from app.schemas.gameenums import (
+    NiceBuffType,
+    NiceCombineAdjustTarget,
+    NiceEventType,
+    NiceFuncTargetType,
+    NiceFuncType,
+    NiceGender,
+    NiceMissionProgressType,
+    NiceMissionType,
+    NiceSvtType,
+    NiceSvtVoiceType,
+    NiceTdEffectFlag,
+)
 from pydantic import BaseModel
 
-from .common import MappingBase, MappingInt, MappingStr
+from .common import (
+    CEObtain,
+    CustomMissionType,
+    ItemCategory,
+    MappingBase,
+    MappingInt,
+    MappingStr,
+    SummonType,
+    SvtObtain,
+)
 
 
 CN_REPLACE = {
@@ -24,28 +50,57 @@ CN_REPLACE = {
 
 
 class EnumMapping(BaseModel):
-    svt_class: dict[str, MappingStr] = {}
-    attribute: dict[str, MappingStr] = {}
-    svt_type: dict[str, MappingStr] = {}
-    servant_policy: dict[str, MappingStr] = {}
-    servant_personality: dict[str, MappingStr] = {}
-    gender: dict[str, MappingStr] = {}
-    func_target_type: dict[str, MappingStr] = {}
+    svt_class: dict[SvtClass, MappingStr] = {}
+    attribute: dict[Attribute, MappingStr] = {}
+    svt_type: dict[NiceSvtType, MappingStr] = {}
+    servant_policy: dict[ServantPolicy, MappingStr] = {}
+    servant_personality: dict[ServantPersonality, MappingStr] = {}
+    gender: dict[NiceGender, MappingStr] = {}
+    func_target_type: dict[NiceFuncTargetType, MappingStr] = {}
+    mission_progress_type: dict[NiceMissionProgressType, MappingStr] = {}
+    mission_type: dict[NiceMissionType, MappingStr] = {}
+    td_effect_flag: dict[NiceTdEffectFlag, MappingStr] = {}
+    event_type: dict[NiceEventType, MappingStr] = {}
+    combine_adjust_target: dict[NiceCombineAdjustTarget, MappingStr] = {}
     # wiki
-    svt_obtain: dict[str, MappingStr] = {}
-    ce_obtain: dict[str, MappingStr] = {}
-    mission_progress_type: dict[str, MappingStr] = {}
-    mission_type: dict[str, MappingStr] = {}
-    item_category: dict[str, MappingStr] = {}
-    custom_mission_type: dict[str, MappingStr] = {}
-    np_damage_type: dict[str, MappingStr] = {}
-    td_effect_flag: dict[str, MappingStr] = {}
-    summon_type: dict[str, MappingStr] = {}
+    svt_obtain: dict[SvtObtain, MappingStr] = {}
+    ce_obtain: dict[CEObtain, MappingStr] = {}
+    item_category: dict[ItemCategory, MappingStr] = {}
+    custom_mission_type: dict[CustomMissionType, MappingStr] = {}
+    summon_type: dict[SummonType, MappingStr] = {}
+    effect_type: dict[str, MappingStr] = {}  # custom
     # long dict
-    effect_type: dict[str, MappingStr] = {}
-    func_type: dict[str, MappingStr] = {}
-    buff_type: dict[str, MappingStr] = {}
-    svt_voice_type: dict[str, MappingStr] = {}
+    func_type: dict[NiceFuncType, MappingStr] = {}
+    buff_type: dict[NiceBuffType, MappingStr] = {}
+    svt_voice_type: dict[NiceSvtVoiceType, MappingStr] = {}
+
+    def update_enums(self):
+        enum_fields: dict[Type[Enum], dict[Any, MappingStr]] = {
+            SvtClass: self.svt_class,
+            Attribute: self.attribute,
+            NiceSvtType: self.svt_type,
+            ServantPolicy: self.servant_policy,
+            ServantPersonality: self.servant_personality,
+            NiceGender: self.gender,
+            NiceFuncTargetType: self.func_target_type,
+            NiceMissionProgressType: self.mission_progress_type,
+            NiceMissionType: self.mission_type,
+            NiceTdEffectFlag: self.td_effect_flag,
+            NiceEventType: self.event_type,
+            NiceCombineAdjustTarget: self.combine_adjust_target,
+            SvtObtain: self.svt_obtain,
+            CEObtain: self.ce_obtain,
+            ItemCategory: self.item_category,
+            CustomMissionType: self.custom_mission_type,
+            SummonType: self.summon_type,
+            # effect_type
+            NiceFuncType: self.func_type,
+            NiceBuffType: self.buff_type,
+            NiceSvtVoiceType: self.svt_voice_type,
+        }
+        for k, v in enum_fields.items():
+            for kk in k.__members__.values():
+                v.setdefault(kk, MappingBase())
 
 
 class MappingData(BaseModel):
