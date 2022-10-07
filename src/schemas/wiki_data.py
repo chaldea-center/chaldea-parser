@@ -234,7 +234,7 @@ class WikiData(BaseModelORJson):
         self.craftEssences = sort_dict(self.craftEssences)
         self.commandCodes = sort_dict(self.commandCodes)
         events = list(self.events.values())
-        events.sort(key=lambda event: event.startTime.JP or NEVER_CLOSED_TIMESTAMP)
+        events.sort(key=lambda event: event.id)
         self.events = {event.id: event for event in events}
         self.wars = sort_dict(self.wars)
         summons = list(self.summons.values())
