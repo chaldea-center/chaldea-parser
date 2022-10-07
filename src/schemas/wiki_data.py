@@ -263,6 +263,8 @@ class WikiData(BaseModelORJson):
         events_base = [
             event.dict(include=set(EventWBase.__fields__.keys()))
             for event in self.events.values()
+            if (event.id // 10000)
+            not in [2, 3, 7]  # combineCampaign, svtequipCombineCampaign, questCampaign
         ]
         dump_json_beautify(events_base, folder / "eventsBase.json")
         summons_base = [

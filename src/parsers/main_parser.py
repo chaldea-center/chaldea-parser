@@ -239,11 +239,7 @@ class MainParser:
             # print(f'loading {k}: {fp}: {None if v is None else len(data[k])} items')
         data["region"] = f"{region}"
         master_data = MasterData.parse_obj(data)
-        master_data.nice_event = [
-            event
-            for event in master_data.nice_event
-            if event.type
-        ]
+        master_data.nice_event = [event for event in master_data.nice_event]
         if region == Region.JP:
             cn_ce = AtlasApi.api_model(
                 "/nice/CN/equip/102022?lore=true", NiceEquip, expire_after=0
@@ -682,6 +678,8 @@ class MainParser:
                 range(80000, 80100),
                 range(80100, 80300),
                 range(80300, 80400),
+                range(80400, 90000),
+                # others, irregular 71256: White Day Spectacles
             ],
             save_remained=True,
             key="events",
