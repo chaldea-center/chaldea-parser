@@ -243,11 +243,6 @@ class MainParser:
             event
             for event in master_data.nice_event
             if event.type
-            not in (
-                NiceEventType.combineCampaign,
-                NiceEventType.svtequipCombineCampaign,
-                NiceEventType.questCampaign,
-            )
         ]
         if region == Region.JP:
             cn_ce = AtlasApi.api_model(
