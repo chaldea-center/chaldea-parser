@@ -409,6 +409,7 @@ class WikiTool:
                 "utf8": 1,
                 "lestart": datetime.fromtimestamp(last_timestamp).isoformat(),
                 "letype": letype,
+                "ledir": "newer",
                 "lenamespace": "0",
                 "lelimit": "max",
             }
