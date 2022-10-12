@@ -126,6 +126,7 @@ class CEObtain(str, Enum):
             "纪念": CEObtain.campaign,
             "牵绊": CEObtain.bond,
             "掉落加成": CEObtain.drop,
+            "未知": CEObtain.unknown,
         }[s]
 
 
