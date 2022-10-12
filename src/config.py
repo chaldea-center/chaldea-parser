@@ -74,6 +74,7 @@ class PayloadSetting(BaseSettings):
     clear_cache_wiki: bool = False
     clear_wiki_moved: bool = True
     skip_quests: bool = False
+    skip_mapping: bool = False
     recent_quest_expire: int = 20
     main_story_quest_expire: int = 90
     skip_prev_quest_drops: bool = False

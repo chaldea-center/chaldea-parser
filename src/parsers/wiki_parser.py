@@ -24,7 +24,7 @@ from ..schemas.wiki_data import (
     WikiTranslation,
 )
 from ..utils import Worker, count_time, dump_json, load_json, logger
-from ..utils.helper import sort_dict
+from ..utils.helper import parse_html_xpath, sort_dict
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.template import (
     find_tabber,
@@ -102,9 +102,8 @@ class WikiParser:
         self.fandom_svt()
         logger.info("[Fandom] parsing craft essence data")
         self.fandom_ce()
-        logger.info("[Fandom] skip fandom cc parsing.")
-        # logger.info("[Fandom] parsing command code data")
-        # self.fandom_cc()
+        logger.info("[Fandom] parsing command code data")
+        self.fandom_cc()
         logger.info("[Fandom] parsing extra data")
         self.fandom_extra()
 
@@ -441,15 +440,27 @@ class WikiParser:
 
     def fandom_cc(self):
         # Category:Command Code Display Order
-        list_text = FANDOM.get_page_text("Command Code List/By ID")
-        for row in wikitextparser.parse(list_text).tables[0].data()[1:]:
-            collection_no = int(row[3])
-            fa_link = FANDOM.resolve_wikilink(row[1])
+        list_page_html = requests.get(
+            "https://fategrandorder.fandom.com/wiki/Command_Code_List/By_ID"
+        ).text
+        pages = parse_html_xpath(
+            list_page_html,
+            '//div[@class="mw-parser-output"]/table/tbody/tr/td[3]/a/@href',
+        )
+        logger.debug(f"Fandom: {len(pages)} command codes")
+        for page_link in pages:
+            page_link = str(page_link)
+            assert page_link.startswith("/wiki/"), page_link
+            fa_link = page_link[6:]
+            wikitext = mwparse(FANDOM.get_page_text(fa_link))
+            assert fa_link and wikitext, fa_link
+            if not fa_link or not wikitext:
+                continue
+            infoboxcc = parse_template(wikitext, r"^{{Infoboxcc")
+            collection_no = infoboxcc.get_cast("id", cast=int)
+            assert collection_no, infoboxcc
             cc_add = self.wiki_data.get_cc(collection_no)
             cc_add.fandomLink = fa_link
-            if not fa_link:
-                continue
-            wikitext = mwparse(FANDOM.get_page_text(fa_link))
             params = parse_template(wikitext, r"^{{Craftlore")
             cc_add.profile.NA = params.get2("na") or params.get2("en")
 

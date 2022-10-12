@@ -19,6 +19,7 @@ from typing import (
 )
 
 import orjson
+from lxml import etree
 from pydantic import BaseModel
 from pydantic.json import pydantic_encoder
 
@@ -256,3 +257,8 @@ class LocalProxy:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._restore()
+
+
+def parse_html_xpath(text: str, path: str):
+    html = etree.HTML(text)  # type: ignore
+    return html.xpath(path)

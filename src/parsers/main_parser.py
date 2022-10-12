@@ -933,27 +933,27 @@ class MainParser:
 
     def merge_all_mappings(self):
         logger.info("merge all mappings")
+        if not self.payload.skip_mapping:
+            self._merge_official_mappings(Region.CN)
+            self._merge_wiki_translation(
+                Region.CN,
+                WikiTranslation.parse_obj(
+                    load_json(settings.output_wiki / "mcTransl.json", {})
+                ),
+            )
+
+            self._merge_official_mappings(Region.NA)
+            self._add_na_mapping()
+            self._merge_wiki_translation(
+                Region.NA,
+                WikiTranslation.parse_obj(
+                    load_json(settings.output_wiki / "fandomTransl.json", {})
+                ),
+            )
+
+            self._merge_official_mappings(Region.TW)
+            self._merge_official_mappings(Region.KR)
         self._add_enum_mappings()
-
-        self._merge_official_mappings(Region.CN)
-        self._merge_wiki_translation(
-            Region.CN,
-            WikiTranslation.parse_obj(
-                load_json(settings.output_wiki / "mcTransl.json", {})
-            ),
-        )
-
-        self._merge_official_mappings(Region.NA)
-        self._add_na_mapping()
-        self._merge_wiki_translation(
-            Region.NA,
-            WikiTranslation.parse_obj(
-                load_json(settings.output_wiki / "fandomTransl.json", {})
-            ),
-        )
-
-        self._merge_official_mappings(Region.TW)
-        self._merge_official_mappings(Region.KR)
         self._merge_repo_mapping()
         self._fix_cn_translation()
 

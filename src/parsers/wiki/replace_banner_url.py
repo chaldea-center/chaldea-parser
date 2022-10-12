@@ -10,6 +10,7 @@ from ...config import settings
 from ...schemas.wiki_data import EventWBase, LimitedSummonBase, WarW, WikiData
 from ...utils.helper import dump_json_beautify, load_json
 from ...utils.http_cache import HttpApiUtil
+from ...utils.log import logger
 
 
 api = HttpApiUtil(
@@ -126,7 +127,7 @@ def parse_cn_top_banner(notice_id: str):
         notice_id = re.findall(r"[^\d]\d+$", notice_id)[-1][1:]
     response = api.call_api(f"https://api.biligame.com/news/{notice_id}.action").json()
     if response.get("code") == -400:
-        print(f"https://api.biligame.com/news/{notice_id}.action", response)
+        logger.warning(f"https://api.biligame.com/news/{notice_id}.action", response)
         return
     source = response["data"]["content"]
     img = _get_xpath(source, "//img/@src")
