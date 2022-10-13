@@ -5,6 +5,7 @@ from app.schemas.enums import Attribute, ServantPersonality, ServantPolicy, SvtC
 from app.schemas.gameenums import (
     NiceBuffType,
     NiceCombineAdjustTarget,
+    NiceEventWorkType,
     NiceEventType,
     NiceFuncTargetType,
     NiceFuncType,
@@ -62,6 +63,7 @@ class EnumMapping(BaseModel):
     td_effect_flag: dict[NiceTdEffectFlag, MappingStr] = {}
     event_type: dict[NiceEventType, MappingStr] = {}
     combine_adjust_target: dict[NiceCombineAdjustTarget, MappingStr] = {}
+    event_work_type: dict[NiceEventWorkType, MappingStr] = {}
     # wiki
     svt_obtain: dict[SvtObtain, MappingStr] = {}
     ce_obtain: dict[CEObtain, MappingStr] = {}
@@ -87,6 +89,7 @@ class EnumMapping(BaseModel):
             NiceMissionType: self.mission_type,
             NiceTdEffectFlag: self.td_effect_flag,
             NiceEventType: self.event_type,
+            NiceEventWorkType: self.event_work_type,
             NiceCombineAdjustTarget: self.combine_adjust_target,
             SvtObtain: self.svt_obtain,
             CEObtain: self.ce_obtain,
