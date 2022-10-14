@@ -636,7 +636,7 @@ class MainParser:
         _normal_dump(data.nice_item, "items")
         _normal_dump(data.basic_svt, "entities")
         _normal_dump(data.exchangeTickets, "exchangeTickets")
-        _normal_dump(data.nice_bgm, "bgms", encoder=pydantic_encoder)
+        _normal_dump(data.nice_bgm, "bgms")
 
         logger.info("Updating mappings")
         run_mapping_update(data.mappingData)  # before dump
