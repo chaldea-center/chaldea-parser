@@ -5,8 +5,8 @@ from app.schemas.enums import Attribute, ServantPersonality, ServantPolicy, SvtC
 from app.schemas.gameenums import (
     NiceBuffType,
     NiceCombineAdjustTarget,
-    NiceEventWorkType,
     NiceEventType,
+    NiceEventWorkType,
     NiceFuncTargetType,
     NiceFuncType,
     NiceGender,

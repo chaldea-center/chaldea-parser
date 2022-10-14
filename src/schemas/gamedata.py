@@ -9,7 +9,7 @@ from app.schemas.gameenums import NiceBuffAction, NiceCardType
 from app.schemas.nice import (
     ExtraPassive,
     NiceBaseFunction,
-    NiceBgm,
+    NiceBgmEntity,
     NiceBuff,
     NiceCommandCode,
     NiceCostume,
@@ -95,7 +95,7 @@ class MasterData(BaseModelORJson):
     basic_svt: list[BasicServant] = []
     nice_command_code: list[NiceCommandCode] = []
     nice_cv: list[MstCv] = []
-    nice_bgm: list[NiceBgm] = []
+    nice_bgm: list[NiceBgmEntity] = []
     nice_enums: dict[str, dict[int, str]] = {}
     # nice_equip: list[NiceEquip]=[]
     nice_equip_lore: list[NiceEquip] = []
@@ -204,7 +204,7 @@ class MasterData(BaseModelORJson):
         return {x.id: x for x in self.nice_illustrator}
 
     @cached_property
-    def bgm_dict(self) -> dict[int, NiceBgm]:
+    def bgm_dict(self) -> dict[int, NiceBgmEntity]:
         return {x.id: x for x in self.nice_bgm}
 
     @cached_property
