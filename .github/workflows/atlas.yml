@@ -15,7 +15,7 @@ jobs:
         id: get-date
         run: |
           /bin/date
-          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d%H%M")"
+          echo "date=$(/bin/date -u "+%Y%m%d%H%M")" >> $GITHUB_OUTPUT
           echo https://github.com/chaldea-center/chaldea-data/commits/main
         shell: bash
 
@@ -34,7 +34,7 @@ jobs:
           cat payload.json
 
       - name: Cache Atlas and wiki api response
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.cache_dir }}
           key: api-cache-${{ runner.os }}-${{ steps.get-date.outputs.date }}
@@ -43,7 +43,7 @@ jobs:
             api-cache-
 
       - name: Setup Python 3.10
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
           cache: "pip"

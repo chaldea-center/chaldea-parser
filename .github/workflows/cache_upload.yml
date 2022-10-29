@@ -12,11 +12,11 @@ jobs:
         id: get-date
         run: |
           /bin/date
-          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d%H%M")"
+          echo "date=$(/bin/date -u "+%Y%m%d%H%M")" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Cache Atlas and wiki data
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ env.cache_dir }}
           key: api-cache-${{ runner.os }}-${{ steps.get-date.outputs.date }}
