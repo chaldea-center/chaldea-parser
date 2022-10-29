@@ -30,7 +30,7 @@ jobs:
         shell: bash
 
       - name: Checkout chaldea-parser
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Configure git author
         run: |
@@ -52,7 +52,7 @@ jobs:
           python-version: "3.10"
           cache: "pip"
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: chaldea-center/fgo-game-data-api
           path: fgo-game-data-api
@@ -65,14 +65,14 @@ jobs:
           npm --location=global install js-beautify
 
       - name: Checkout data repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: chaldea-center/chaldea-data
           token: ${{ secrets.GH_PAGES_TOKEN }}
           path: ${{ env.output_dir }}
 
       - name: Checkout static repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: chaldea-center/static-resource
           token: ${{ secrets.GH_PAGES_TOKEN }}
