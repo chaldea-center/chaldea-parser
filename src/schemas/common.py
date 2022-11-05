@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Generic, Optional, TypeVar, Union
 
 from app.schemas.common import Region
@@ -69,7 +69,7 @@ class MappingExtend(MappingBase[str]):
     ES: Optional[str] = None  # Spanish
 
 
-class SvtObtain(str, Enum):
+class SvtObtain(StrEnum):
     friendPoint = "friendPoint"
     story = "story"
     permanent = "permanent"
@@ -97,7 +97,7 @@ class SvtObtain(str, Enum):
         }[s]
 
 
-class CEObtain(str, Enum):
+class CEObtain(StrEnum):
     exp = "exp"
     shop = "shop"
     story = "story"
@@ -130,13 +130,13 @@ class CEObtain(str, Enum):
         }[s]
 
 
-class CCObtain(str, Enum):
+class CCObtain(StrEnum):
     @staticmethod
     def from_name(s: str):
         return
 
 
-class SummonType(str, Enum):
+class SummonType(StrEnum):
     story = "story"
     limited = "limited"
     gssr = "gssr"
@@ -144,7 +144,7 @@ class SummonType(str, Enum):
     unknown = "unknown"
 
 
-class ItemCategory(str, Enum):
+class ItemCategory(StrEnum):
     normal = "normal"
     ascension = "ascension"
     skill = "skill"
@@ -155,7 +155,7 @@ class ItemCategory(str, Enum):
     other = "other"
 
 
-class CustomMissionType(str, Enum):
+class CustomMissionType(StrEnum):
     trait = "trait"
     questTrait = "questTrait"
     quest = "quest"
@@ -176,7 +176,7 @@ class OpenApiInfo(BaseModel):
         allow_population_by_field_name = True
 
 
-class AtlasExportFile(str, Enum):
+class AtlasExportFile(StrEnum):
     basic_svt = "basic_svt"
     # nice_servant = "nice_servant"
     nice_servant_lore = "nice_servant_lore"

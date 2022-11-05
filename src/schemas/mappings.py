@@ -1,5 +1,5 @@
-from enum import Enum
-from typing import Any, Type, TypeVar
+from enum import StrEnum
+from typing import Any, Type
 
 from app.schemas.enums import Attribute, ServantPersonality, ServantPolicy, SvtClass
 from app.schemas.gameenums import (
@@ -77,7 +77,7 @@ class EnumMapping(BaseModel):
     svt_voice_type: dict[NiceSvtVoiceType, MappingStr] = {}
 
     def update_enums(self):
-        enum_fields: dict[Type[Enum], dict[Any, MappingStr]] = {
+        enum_fields: dict[Type[StrEnum], dict[Any, MappingStr]] = {
             SvtClass: self.svt_class,
             Attribute: self.attribute,
             NiceSvtType: self.svt_type,

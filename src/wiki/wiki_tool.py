@@ -2,7 +2,7 @@ import contextlib
 import re
 import time
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from functools import cached_property
 from hashlib import md5, sha1
 from pathlib import Path
@@ -23,7 +23,7 @@ from ..utils import dump_json, logger
 from ..utils.helper import load_json, retry_decorator
 
 
-class KnownTimeZone(str, Enum):
+class KnownTimeZone(StrEnum):
     cst = "Etc/GMT-8"
     jst = "Etc/GMT-9"
 

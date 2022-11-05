@@ -42,10 +42,10 @@ jobs:
             api-cache-${{ runner.os }}-
             api-cache-
 
-      - name: Setup Python 3.10
+      - name: Setup Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: "pip"
 
       - uses: actions/checkout@v3

@@ -808,7 +808,7 @@ class MainParser:
         NiceMapGimmick: ["actionAnimTime", "actionEffectId", "startedAt", "endedAt"],
         NiceQuestPhase: ["supportServants"],
         NiceQuest: [],
-        QuestEnemy: ["drops", "ai", "limit"],
+        QuestEnemy: ["drops", "limit"],
         EnemyDrop: ["dropExpected", "dropVariance"],
         NiceEventMissionCondition: ["missionTargetId"],
         NiceEventMission: [
