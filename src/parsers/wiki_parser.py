@@ -595,12 +595,17 @@ class WikiParser:
                 )
             return instance
 
+        added_summons: set[str] = set()
+
         def _parse_one(title: str):
             wikitext = mwparse(MOONCELL.get_page_text(title))
             params = parse_template(wikitext, r"^{{卡池信息")
             key = _gen_summon_key(params.get("卡池官网链接jp"))
             if not key:
                 return
+            if key in added_summons:
+                raise KeyError(f'duplicated summon key "{key}": {title}')
+            added_summons.add(key)
             summon = self.wiki_data.summons.setdefault(key, LimitedSummon(id=key))
             summon.mcLink = title
             summon.name.JP = params.get2("卡池名jp")
