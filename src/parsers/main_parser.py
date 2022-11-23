@@ -28,6 +28,7 @@ from app.schemas.nice import (
     NiceBuff,
     NiceBuffType,
     NiceEquip,
+    NiceEvent,
     NiceEventLotteryBox,
     NiceEventMission,
     NiceEventMissionCondition,
@@ -810,7 +811,8 @@ class MainParser:
         NiceQuest: [],
         QuestEnemy: ["drops", "limit"],
         EnemyDrop: ["dropExpected", "dropVariance"],
-        NiceEventMissionCondition: ["missionTargetId"],
+        NiceEvent: ["voicePlays"],
+        NiceEventMissionCondition: ["missionTargetId", "details"],
         NiceEventMission: [
             "flag",
             "missionTargetId",
