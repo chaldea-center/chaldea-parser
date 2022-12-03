@@ -14,7 +14,7 @@ def _mstFile(region: Region, name: str):
     return httpx.get(url).json()
 
 
-def add_enemy_skill_np_trans():
+def add_enemy_skill_td_trans():
     _add_enemy_skill_trans()
     _add_enemy_td_trans()
     print("done")
@@ -106,4 +106,6 @@ def _add_enemy_td_trans():
 
 #%%
 if __name__ == "__main__":
-    add_enemy_skill_np_trans()
+    add_enemy_skill_td_trans()
+
+# %%

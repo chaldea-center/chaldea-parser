@@ -114,7 +114,7 @@ class EventWBase(BaseModel):
     name: str
     mcLink: NoneStr = None
     fandomLink: NoneStr = None
-    forceShown: bool = False
+    shown: bool | None = None
     titleBanner: MappingBase[str] = MappingBase()
     officialBanner: MappingBase[str] = MappingBase()
     noticeLink: MappingStr = MappingStr()
@@ -265,6 +265,10 @@ class WikiData(BaseModelORJson):
             for event in self.events.values()
             if (event.id // 10000)
             not in [2, 3, 7]  # combineCampaign, svtequipCombineCampaign, questCampaign
+            and event.name
+            not in [
+                "[FFFF00]開放条件緩和中！[-]",
+            ]
         ]
         dump_json_beautify(events_base, folder / "eventsBase.json")
         summons_base = [
