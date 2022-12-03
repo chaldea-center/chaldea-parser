@@ -275,8 +275,10 @@ class WikiData(BaseModelORJson):
         dump_json_beautify(
             list(self.wars.values()), folder / "wars.json", default=_encoder
         )
+
+        include_event_keys = set(EventWBase.__fields__.keys())
         events_base = [
-            event.dict(include=set(EventWBase.__fields__.keys()))
+            dict(event._iter(include=include_event_keys, to_dict=False))
             for event in self.events.values()
             if (event.id // 10000)
             not in [2, 3, 7]  # combineCampaign, svtequipCombineCampaign, questCampaign
@@ -286,8 +288,10 @@ class WikiData(BaseModelORJson):
             ]
         ]
         dump_json_beautify(events_base, folder / "eventsBase.json", default=_encoder)
+
+        include_summon_keys = set(LimitedSummonBase.__fields__.keys())
         summons_base = [
-            summon.dict(include=set(LimitedSummonBase.__fields__.keys()))
+            dict(summon._iter(include=include_summon_keys, to_dict=False))
             for summon in self.summons.values()
         ]
         dump_json_beautify(summons_base, folder / "summonsBase.json", default=_encoder)
@@ -311,6 +315,8 @@ class WikiData(BaseModelORJson):
 def _encoder(obj):
     if isinstance(obj, MappingBase):
         return obj.dict(exclude_none=True)
+    elif isinstance(obj, BaseModel):
+        return dict(obj._iter(to_dict=False))
     return pydantic_encoder(obj)
 
 
