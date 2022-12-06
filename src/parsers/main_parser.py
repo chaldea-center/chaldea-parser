@@ -108,7 +108,7 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
-MIN_APP = "2.1.1"
+MIN_APP = "2.2.0"
 
 
 class MainParser:
@@ -812,7 +812,7 @@ class MainParser:
         QuestEnemy: ["drops", "limit"],
         EnemyDrop: ["dropExpected", "dropVariance"],
         NiceEvent: ["voicePlays"],
-        NiceEventMissionCondition: ["missionTargetId", "details"],
+        NiceEventMissionCondition: ["missionTargetId", "detail"],
         NiceEventMission: [
             "flag",
             "missionTargetId",
