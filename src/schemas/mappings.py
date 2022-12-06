@@ -13,6 +13,7 @@ from app.schemas.gameenums import (
     NiceMissionProgressType,
     NiceMissionType,
     NicePurchaseType,
+    NiceRestrictionType,
     NiceShopType,
     NiceSvtType,
     NiceSvtVoiceType,
@@ -68,6 +69,7 @@ class EnumMapping(BaseModel):
     event_work_type: dict[NiceEventWorkType, MappingStr] = {}
     shop_type: dict[NiceShopType, MappingStr] = {}
     purchase_type: dict[NicePurchaseType, MappingStr] = {}
+    restriction_type: dict[NiceRestrictionType, MappingStr] = {}
     # wiki
     svt_obtain: dict[SvtObtain, MappingStr] = {}
     ce_obtain: dict[CEObtain, MappingStr] = {}
@@ -96,6 +98,7 @@ class EnumMapping(BaseModel):
             NiceEventWorkType: self.event_work_type,
             NiceShopType: self.shop_type,
             NicePurchaseType: self.purchase_type,
+            NiceRestrictionType: self.restriction_type,
             NiceCombineAdjustTarget: self.combine_adjust_target,
             SvtObtain: self.svt_obtain,
             CEObtain: self.ce_obtain,
