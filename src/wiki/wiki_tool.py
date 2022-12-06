@@ -399,7 +399,7 @@ class WikiTool:
         if days is not None:
             last_timestamp = datetime.utcnow().timestamp() - days * 24 * 3600
         else:
-            last_timestamp = self.cache.updated - 2 * 3600
+            last_timestamp = self.cache.updated - 48 * 3600
 
         for letype in ["move", "delete"]:
             params = {
@@ -414,6 +414,7 @@ class WikiTool:
                 "lelimit": "max",
             }
             log_events = self._api_call(params)["query"]["logevents"]
+            logger.debug(log_events)
             for event in log_events:
                 title: str = event["title"]
                 if self.get_cache(title):
