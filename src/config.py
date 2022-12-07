@@ -25,6 +25,8 @@ class Settings(BaseSettings):
 
     environment: str = ""
 
+    discord_webhook: str = ""
+
     # proxy, for development
     x_http_proxy: NoneStr = None
     x_https_proxy: NoneStr = None

@@ -18,6 +18,7 @@ pydantic = "^1.9.0"
 orjson = "^3.7.2"
 python-dotenv = "^0.21.0"
 lxml = "^4.9.1"
+discord-webhook = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
 fgo-game-data-api = { git = "https://github.com/chaldea-center/fgo-game-data-api.git" }

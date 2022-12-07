@@ -23,7 +23,7 @@ from ..schemas.wiki_data import (
     WikiData,
     WikiTranslation,
 )
-from ..utils import Worker, count_time, dump_json, load_json, logger
+from ..utils import Worker, count_time, discord, dump_json, load_json, logger
 from ..utils.helper import parse_html_xpath, sort_dict
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.template import (
@@ -705,7 +705,7 @@ class WikiParser:
                 msg += f"\n  Mooncell pages: {self._mc.invalid_links}"
             if self._fandom.invalid_links:
                 msg += f"\n  Fandom pages: {self._fandom.invalid_links}"
-            raise ValueError(msg)
+            discord.wiki_links(self._mc.invalid_links, self._fandom.invalid_links)
 
     def sort(self):
         self.wiki_data.sort()
