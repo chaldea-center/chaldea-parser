@@ -707,6 +707,7 @@ class WikiParser:
                 msg += f"\n  Mooncell pages: {self._mc.invalid_links}"
             if self._fandom.invalid_links:
                 msg += f"\n  Fandom pages: {self._fandom.invalid_links}"
+            logger.warning(msg)
             discord.wiki_links(self._mc.invalid_links, self._fandom.invalid_links)
 
     def sort(self):

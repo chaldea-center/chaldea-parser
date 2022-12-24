@@ -6,7 +6,7 @@ from enum import StrEnum
 from functools import cached_property
 from hashlib import md5, sha1
 from pathlib import Path
-from typing import Optional
+from typing import Any, Callable, Optional
 from urllib.parse import unquote
 
 import mwclient
@@ -284,19 +284,6 @@ class WikiTool:
         type=None,  # noqa
         toponly=None,
     ):
-        # return list(
-        #     self.site.recentchanges(
-        #         start=start,
-        #         end=end,
-        #         dir=dir,
-        #         namespace=namespace,
-        #         prop=prop,
-        #         show=show,
-        #         limit=limit,
-        #         type=type,
-        #         toponly=toponly,
-        #     )
-        # )
         return self.query_listing(
             "recentchanges",
             "rc",
@@ -327,17 +314,7 @@ class WikiTool:
                 continue
             full_params[f"{prefix}{k}"] = v
 
-        items = []
-        while True:
-            resp = self._api_call(full_params)
-            items.extend(resp["query"][list_name])
-            logger.debug(f"Listing {list_name}: {len(items)} items")
-            ctn = resp.get("continue")
-            if ctn:
-                full_params.update(ctn)
-                time.sleep(2)
-            else:
-                return items
+        return self._api_call_continue(full_params, lambda x: x["query"][list_name])
 
     def ask_query(self, query):
         offset = 0
@@ -364,9 +341,19 @@ class WikiTool:
     @retry_decorator(retry_times=3, lapse=10)
     @sleep_and_retry
     @limits(2, 5)
-    def _api_call(self, params) -> dict:
+    def _api_call(self, params: dict) -> dict:
         logger.warning(f"[{self.host}] call api: {params}")
         return requests.get(f"https://{self.host}/api.php", params=params).json()
+
+    def _api_call_continue(self, params: dict, getter: Callable[[dict], Any]) -> list:
+        result = []
+        while True:
+            resp = self._api_call(params)
+            result.extend(getter(resp))
+            if "continue" not in resp:
+                break
+            params = params | resp["continue"]
+        return result
 
     def remove_recent_changed(self, days: float | None = None):
         _now = int(time.time())
@@ -413,7 +400,9 @@ class WikiTool:
                 "lenamespace": "0",
                 "lelimit": "max",
             }
-            log_events = self._api_call(params)["query"]["logevents"]
+            log_events = self._api_call_continue(
+                params, lambda x: x["query"]["logevents"]
+            )
             logger.debug(log_events)
             for event in log_events:
                 title: str = event["title"]
