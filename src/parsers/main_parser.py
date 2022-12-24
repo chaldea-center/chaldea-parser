@@ -868,6 +868,10 @@ class MainParser:
         elif _type == NiceTd and isinstance(obj, NiceTd):
             if obj.id not in self.jp_data.base_tds:
                 self.jp_data.base_tds[obj.id] = NiceBaseTd.parse_obj(obj.dict())
+            base_td = self.jp_data.base_tds[obj.id]
+            for key in ["card", "icon", "npDistribution"]:
+                if getattr(obj, key, None) == getattr(base_td, key, None):
+                    exclude.add(key)
             if obj.ruby in ("", "-"):
                 exclude.add("ruby")
         elif _type == NiceFunction and isinstance(obj, NiceFunction):
