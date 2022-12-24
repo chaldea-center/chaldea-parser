@@ -10,6 +10,12 @@ jobs:
       output_dir: "data/"
       cache_dir: "cache/"
       static_dir: "static/"
+      mc_user: ${{ secrets.MC_USER }}
+      mc_pwd: ${{ secrets.MC_PWD }}
+      fandom_user: ${{ secrets.FANDOM_USER }}
+      fandom_pwd: ${{ secrets.FANDOM_PWD }}
+      discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+
     steps:
       - name: Get Date
         id: get-date
