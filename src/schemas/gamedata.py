@@ -76,6 +76,9 @@ class NiceBaseTd(NiceTd):
     priority: int = Field(0, exclude=True)
     condQuestId: int = Field(0, exclude=True)
     condQuestPhase: int = Field(0, exclude=True)
+    # card: NiceCardType
+    # icon: Optional[HttpUrl]
+    # npDistribution: list[int]
 
 
 class NiceBaseSkill(NiceSkill):
