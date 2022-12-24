@@ -74,7 +74,8 @@ class PayloadSetting(BaseSettings):
     force_update_export: bool = False
     clear_cache_http: bool = False
     clear_cache_wiki: bool = False
-    clear_wiki_moved: bool = True
+    clear_wiki_changed: int = 7
+    clear_wiki_moved: int = 10
     skip_quests: bool = False
     skip_mapping: bool = False
     recent_quest_expire: int = 20
