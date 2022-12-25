@@ -9,8 +9,8 @@ from typing import Any, AnyStr, Iterable, Match, TypeVar
 
 import orjson
 import requests
-from app.schemas.common import NiceTrait, Region
-from app.schemas.enums import OLD_TRAIT_MAPPING
+from app.schemas.common import NiceBuffRelationOverwrite, NiceTrait, Region
+from app.schemas.enums import OLD_TRAIT_MAPPING, SvtClass
 from app.schemas.gameenums import (
     NiceGiftType,
     NiceQuestAfterClearType,
@@ -110,7 +110,12 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
+# TODO:
+# - remove hitsDistribution
+# - remove class31 32
 MIN_APP = "2.2.0"
+
+invalid_svt_class = [SvtClass.class31, SvtClass.class32]
 
 
 class MainParser:
@@ -221,6 +226,18 @@ class MainParser:
             # print(f'loading {k}: {fp}: {None if v is None else len(data[k])} items')
         data["region"] = f"{region}"
         master_data = MasterData.parse_obj(data)
+        # TODO: remove class31 and 32
+        for svt in itertools.chain(
+            master_data.basic_svt, master_data.nice_servant_lore
+        ):
+            if svt.className in invalid_svt_class:
+                svt.className = SvtClass.unknown
+        for clsName in invalid_svt_class:
+            master_data.NiceClassAttackRate.pop(clsName, None)
+            master_data.NiceClassRelation.pop(clsName, None)
+            for v in master_data.NiceClassRelation.values():
+                v.pop(clsName, None)
+
         master_data.nice_event = [event for event in master_data.nice_event]
         if region == Region.JP:
             cn_ce = AtlasApi.api_model(
@@ -859,6 +876,16 @@ class MainParser:
         exclude = {"originalName"}
         _type = type(obj)
         exclude.update(self._excludes.get(_type, []))
+
+        # TODO: to remove
+        if isinstance(obj, NiceBuffRelationOverwrite):
+            for clsName in invalid_svt_class:
+                obj.atkSide.pop(clsName, None)
+                obj.defSide.pop(clsName, None)
+                for v in obj.atkSide.values():
+                    v.pop(clsName, None)
+                for v in obj.defSide.values():
+                    v.pop(clsName, None)
 
         if _type == NiceSkill and isinstance(obj, NiceSkill):
             if obj.id not in self.jp_data.base_skills:
