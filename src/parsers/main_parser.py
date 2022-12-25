@@ -115,7 +115,7 @@ _KV = TypeVar("_KV", str, int)
 # - remove class31 32
 MIN_APP = "2.2.0"
 
-invalid_svt_class = [SvtClass.class31, SvtClass.class32]
+invalid_svt_class = [SvtClass.uOlgaMarieAlienGod, SvtClass.uOlgaMarie]
 
 
 class MainParser:
