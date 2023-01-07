@@ -55,9 +55,9 @@ def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
         csv_contents = requests.get(url).content.decode("utf8")
         fn = "domus_aurea_drop_sheet" + ("_legacy.csv" if legacy else ".csv")
         settings.output_wiki.joinpath(fn).write_text(csv_contents)
-    df = pd.read_csv(
+    df: pd.DataFrame = pd.read_csv(
         StringIO(csv_contents), header=None, encoding="utf8", thousands=","
-    )  # noqa
+    )
     df.drop(index=0, inplace=True)
 
     # drop quest_name, item_name, last rows. EXCEPT first pair

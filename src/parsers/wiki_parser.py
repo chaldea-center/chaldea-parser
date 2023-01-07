@@ -6,6 +6,7 @@ Summon: wiki_data/summons.json + MC data
 """
 import re
 from typing import Optional
+from urllib.parse import urlparse
 
 import requests
 import wikitextparser
@@ -737,6 +738,8 @@ def _mc_index_data(page: str) -> list[dict[str, Optional[str]]]:
 def _gen_summon_key(jp_url: str | None) -> Optional[str]:
     if not jp_url:
         return None
-    key_match = re.search(r"^https://news\.fate-go\.jp/(.+)$", jp_url)
-    if key_match:
-        return key_match.group(1).strip("/").replace("/", "_")
+    assert "fate-go.jp" in jp_url.lower(), jp_url
+    try:
+        return urlparse(jp_url).path.strip("/").replace("/", "_")
+    except:
+        return None

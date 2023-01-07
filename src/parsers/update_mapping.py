@@ -11,7 +11,7 @@ So make sure all changes here have been token affect in distribution before `upd
 from src.config import settings
 from src.schemas.common import DataVersion
 from src.schemas.gamedata import MappingData
-from src.utils.helper import dump_json, load_json, logger, sort_dict
+from src.utils.helper import dump_json_beautify, load_json, logger, sort_dict
 
 
 def run_mapping_update(mappings: MappingData | None = None):
@@ -53,7 +53,7 @@ def run_mapping_update(mappings: MappingData | None = None):
         ):
             trans = sort_dict(trans)
         logger.debug(f"writing to {fp}")
-        dump_json(trans, fp)
+        dump_json_beautify(trans, fp)
 
 
 if __name__ == "__main__":

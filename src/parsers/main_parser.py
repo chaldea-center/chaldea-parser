@@ -380,7 +380,7 @@ class MainParser:
                 phase in quest.phases
                 and quest.afterClear == NiceQuestAfterClearType.repeatLast
             ), quest.id
-            assert quest.id == 94061636 or (
+            assert quest.id in (94061636, 94061640) or (
                 quest.warId < 1000 and quest.type == NiceQuestType.free
             ), quest.id
 
@@ -499,7 +499,7 @@ class MainParser:
                     worker.add(_save_free_phase, _quest, 3)
                     continue
                 if _quest.warId == 1002:
-                    if _quest.id == 94061636:  # 宝物庫の扉を開け 初級
+                    if _quest.id in (94061636, 94061640):  # 宝物庫の扉を開け 初級&極級
                         worker.add(_save_free_phase, _quest, 1)
                     continue
                 # one-off quests: event/main story
@@ -910,8 +910,11 @@ class MainParser:
             exclude.remove("funcId")
         elif isinstance(obj, NiceItemAmount):
             return {"itemId": obj.item.id, "amount": obj.amount}
-        elif isinstance(obj, (AscensionAdd, ExtraAssets)):
-            obj = obj.dict(exclude_none=True, exclude_defaults=True, exclude=exclude)
+        elif isinstance(obj, (ExtraAssets, AscensionAdd)):
+            # NiceTrait.name
+            obj = obj.dict(
+                exclude_none=True, exclude_defaults=True, exclude=exclude | {"name"}
+            )
             # print('start encoding ', type(obj))
             for k in list(obj.keys()):
                 if isinstance(obj[k], dict):
