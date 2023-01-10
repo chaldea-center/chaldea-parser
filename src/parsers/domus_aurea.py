@@ -64,7 +64,7 @@ def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
     rows = [r for r in df.index if df.loc[r, 1] == "クエスト名"]  # type: ignore
     rows_drop = []
     for r in rows[1:]:
-        rows_drop.extend([r, r + 1])
+        rows_drop.extend([r, r + 1])  # type: ignore
     rows_drop.extend([r for r in df.index if r > rows_drop[-1]])
     for i, r in enumerate(df.index):
         if i > 3 and pd.isna(df.loc[r, 1]):  # type: ignore
@@ -95,7 +95,7 @@ def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
     assert not df.iloc[2:, 1].isnull().any(), list(df.iloc[2:, 1])
     assert df.iloc[0, -35] == "輝石"  # (3+2)*7
     settings.tmp_vars[f"df_{legacy}"] = df
-    df = df.apply(lambda x: x.str.replace(",", ""), axis=1)
+    df = df.apply(lambda x: x.str.replace(",", ""), axis=1)  # type: ignore
 
     sheet_data = DropRateSheet()
     sheet_items = [
@@ -127,6 +127,17 @@ def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
     assert not unknown_quests, f"these quests not found: {unknown_quests}"
     sheet_data.questIds = quest_ids
     assert len(sheet_data.questIds) == len(sheet_data.apCosts) == len(sheet_data.runs)
+    for index in range(len(sheet_data.questIds)):
+        quest_id = sheet_data.questIds[index]
+        sheet_ap = sheet_data.apCosts[index]
+        fix_ap = _FIX_AP.get(quest_id)
+        if fix_ap and fix_ap != sheet_ap:
+            if sheet_ap * 2 == fix_ap:
+                print(f"{quest_id} {sheet_ap}->{fix_ap}")
+                sheet_data.apCosts[index] = fix_ap
+            else:
+                print(f"ERROR: unexpected AP: {quest_id} {sheet_ap}<->{fix_ap}")
+
     quests: list[NiceQuestPhase] = []
     for questId in sheet_data.questIds:
         # 94-daily, 93-free
@@ -167,62 +178,77 @@ def _get_quest_spot_map():
             if len(free_quests) == 1:
                 spot_map[spot.name] = free_quests[0].id
 
-    custom_mapping: dict[str, int] = {
-        "殺極級": 94066106,
-        "殺超級": 94006828,
-        "殺上級": 94006827,
-        "殺中級": 94006826,
-        "殺初級": 94006825,
-        "術極級": 94066105,
-        "術超級": 94006824,
-        "術上級": 94006823,
-        "術中級": 94006822,
-        "術初級": 94006821,
-        "騎極級": 94066104,
-        "騎超級": 94006820,
-        "騎上級": 94006819,
-        "騎中級": 94006818,
-        "騎初級": 94006817,
-        "狂極級": 94066103,
-        "狂超級": 94006816,
-        "狂上級": 94006815,
-        "狂中級": 94006814,
-        "狂初級": 94006813,
-        "槍極級": 94066102,
-        "槍超級": 94006812,
-        "槍上級": 94006811,
-        "槍中級": 94006810,
-        "槍初級": 94006809,
-        "弓極級": 94066101,
-        "弓超級": 94006808,
-        "弓上級": 94006807,
-        "弓中級": 94006806,
-        "弓初級": 94006805,
-        "剣極級": 94066107,
-        "剣超級": 94006804,
-        "剣上級": 94006803,
-        "剣中級": 94006802,
-        "剣初級": 94006801,
-        # huyuki
-        "X-A（屋敷跡）": 93000001,
-        "X-B（爆心地）": 93000002,
-        "X-C（大橋）": 93000003,
-        "X-D（港）": 93000004,
-        "X-E（教会）": 93000005,
-        "X-F（校舎）": 93000006,
-        "X-G（燃え盛る森）": 93000007,
-        "変動座標点0号（大空洞）": 93000008,
-        # dup
-        "群島（静かな入り江）": 93000308,
-        "群島（隠された島）": 93000312,
-        "裏山（名もなき霊峰）": 93020307,
-        "裏山（戦戦恐恐）": 93020309,
-        # "代々木ニ丁目" ニ 二
-        "代々木二丁目": 93020101,
-    }
+    return spot_map | _FIX_NAME_ID_MAPPING
 
-    return spot_map | custom_mapping
 
+_FIX_NAME_ID_MAPPING: dict[str, int] = {
+    "殺極級": 94066106,
+    "殺超級": 94006828,
+    "殺上級": 94006827,
+    "殺中級": 94006826,
+    "殺初級": 94006825,
+    "術極級": 94066105,
+    "術超級": 94006824,
+    "術上級": 94006823,
+    "術中級": 94006822,
+    "術初級": 94006821,
+    "騎極級": 94066104,
+    "騎超級": 94006820,
+    "騎上級": 94006819,
+    "騎中級": 94006818,
+    "騎初級": 94006817,
+    "狂極級": 94066103,
+    "狂超級": 94006816,
+    "狂上級": 94006815,
+    "狂中級": 94006814,
+    "狂初級": 94006813,
+    "槍極級": 94066102,
+    "槍超級": 94006812,
+    "槍上級": 94006811,
+    "槍中級": 94006810,
+    "槍初級": 94006809,
+    "弓極級": 94066101,
+    "弓超級": 94006808,
+    "弓上級": 94006807,
+    "弓中級": 94006806,
+    "弓初級": 94006805,
+    "剣極級": 94066107,
+    "剣超級": 94006804,
+    "剣上級": 94006803,
+    "剣中級": 94006802,
+    "剣初級": 94006801,
+    # huyuki
+    "X-A（屋敷跡）": 93000001,
+    "X-B（爆心地）": 93000002,
+    "X-C（大橋）": 93000003,
+    "X-D（港）": 93000004,
+    "X-E（教会）": 93000005,
+    "X-F（校舎）": 93000006,
+    "X-G（燃え盛る森）": 93000007,
+    "変動座標点0号（大空洞）": 93000008,
+    # dup
+    "群島（静かな入り江）": 93000308,
+    "群島（隠された島）": 93000312,
+    "裏山（名もなき霊峰）": 93020307,
+    "裏山（戦戦恐恐）": 93020309,
+    # "代々木ニ丁目" ニ 二
+    "代々木二丁目": 93020101,
+}
+
+
+_RANK_AP = {
+    "極級": 40,
+    "超級": 40,
+    "上級": 30,
+    "中級": 20,
+    "初級": 10,
+}
+
+_FIX_AP = {
+    _FIX_NAME_ID_MAPPING[cls_name + rank]: _RANK_AP[rank]
+    for cls_name in ["殺", "術", "騎", "狂", "槍", "弓", "剣"]
+    for rank in _RANK_AP
+}
 
 _LEGACY_ITEM_MAPPING = (
     ("証", 6503, "英雄の証"),
