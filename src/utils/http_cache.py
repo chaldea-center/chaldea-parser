@@ -140,7 +140,7 @@ class HttpApiUtil(abc.ABC):
         expire_after: ExpirationTime = None,
         filter_fn: FILTER_FN2 = None,
         **kwargs,
-    ) -> dict:
+    ):
         url = self.full_url(url)
         response = self.call_api(url, expire_after, filter_fn, **kwargs)
         return response.json()

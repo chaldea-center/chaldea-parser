@@ -9,7 +9,6 @@
 /payload.json
 
 .idea/
-.vscode/
 /test*.py
 
 # pywikibot

@@ -70,14 +70,15 @@ Path(settings.log_dir).mkdir(parents=True, exist_ok=True)
 
 
 class PayloadSetting(BaseSettings):
-    regions: list[Region] = []  # from atlas
+    regions: list[Region] = []  # from aa/api
+    event: str | None = None
     force_update_export: bool = False
     clear_cache_http: bool = False
     clear_cache_wiki: bool = False
     clear_wiki_changed: int = 7
     clear_wiki_moved: int = 10
-    skip_quests: bool = False
     skip_mapping: bool = False
+    skip_quests: bool = False
     recent_quest_expire: int = 20
     main_story_quest_expire: int = 90
     skip_prev_quest_drops: bool = False

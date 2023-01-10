@@ -1,21 +1,23 @@
-import datetime
 import hashlib
 import itertools
 import re
 import shutil
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any, AnyStr, Iterable, Match, TypeVar
 
 import orjson
+import pytz
 import requests
 from app.schemas.common import NiceBuffRelationOverwrite, NiceTrait, Region
-from app.schemas.enums import OLD_TRAIT_MAPPING, SvtClass
+from app.schemas.enums import OLD_TRAIT_MAPPING, NiceSvtType, SvtClass
 from app.schemas.gameenums import (
     NiceGiftType,
     NiceQuestAfterClearType,
     NiceSvtFlag,
     NiceWarOverwriteType,
+    SvtType,
 )
 from app.schemas.nice import (
     AscensionAdd,
@@ -27,6 +29,7 @@ from app.schemas.nice import (
     NiceBgm,
     NiceBuff,
     NiceBuffType,
+    NiceCommandCode,
     NiceEquip,
     NiceEvent,
     NiceEventDiggingBlock,
@@ -39,6 +42,7 @@ from app.schemas.nice import (
     NiceEventTreasureBox,
     NiceFunction,
     NiceGift,
+    NiceItem,
     NiceItemAmount,
     NiceLore,
     NiceLoreComment,
@@ -55,7 +59,7 @@ from app.schemas.nice import (
     NiceWar,
     QuestEnemy,
 )
-from pydantic import BaseModel
+from pydantic import BaseModel, parse_file_as, parse_obj_as
 from pydantic.json import pydantic_encoder
 
 from ..config import PayloadSetting, settings
@@ -73,6 +77,7 @@ from ..schemas.gamedata import (
     MappingData,
     MasterData,
     MstViewEnemy,
+    NewAddedData,
     NiceBaseSkill,
     NiceBaseTd,
 )
@@ -101,7 +106,9 @@ from ..utils import (
 from ..utils.helper import beautify_file
 from ..utils.stopwatch import Stopwatch
 from ..wiki import FANDOM, MOONCELL
+from ..wiki.wiki_tool import KnownTimeZone
 from .core.ticket import parse_exchange_tickets
+from .domus_aurea import run_drop_rate_update
 from .update_mapping import run_mapping_update
 
 
@@ -126,15 +133,26 @@ class MainParser:
         self.payload: PayloadSetting = PayloadSetting()
         logger.info(f"Payload: {self.payload}")
         self.stopwatch = Stopwatch("MainParser")
+        self.now = datetime.now()
 
     @count_time
     def start(self):
-        # check news.json
-        fp_news = settings.output_dist / "news.json"
-        for obj in load_json(fp_news) or []:
-            AppNews.parse_obj(obj)
-
         self.stopwatch.start()
+
+        if self.payload.event == "load":
+            if self.payload.regions == [Region.JP]:
+                self.add_changes_only()
+                self.stopwatch.log("dump changes only")
+            else:
+                logger.info(
+                    f"ignore {self.payload.regions} changes for new-only addition"
+                )
+            print(self.stopwatch.output())
+            return
+
+        # check news.json
+        parse_file_as(list[AppNews], settings.output_dist / "news.json")
+
         if self.payload.clear_cache_http:
             logger.warning("clear all http_cache")
             AtlasApi.cache_storage.clear()
@@ -155,20 +173,114 @@ class MainParser:
         self.jp_data = self.load_master_data(Region.JP)
         self.merge_all_mappings()
         self.stopwatch.log(f"mappings finish")
-        if settings.is_debug and self.payload.skip_quests:
-            logger.warning("skip checking quests data")
-        else:
-            self.filter_quests()
-            self.stopwatch.log(f"quests")
+
+        self.filter_quests()
+        self.stopwatch.log(f"quests")
+
         self._post_mappings()
+
         self.jp_data.exchangeTickets = parse_exchange_tickets(self.jp_data.nice_item)
         if not settings.output_wiki.joinpath("dropRate.json").exists():
             logger.info("dropRate.json not exist, run domus_aurea parser")
-            from .domus_aurea import run_drop_rate_update
-
             run_drop_rate_update()
         self.save_data()
         print(self.stopwatch.output())
+
+    def add_changes_only(self):
+        added = NewAddedData(
+            time=datetime.now(pytz.timezone(KnownTimeZone.jst)).isoformat()
+        )
+        version = DataVersion.parse_file(settings.output_dist / "version.json")
+
+        def load_data_dict(key: str, field_key: str) -> dict[int, dict]:
+            out: dict[int, dict] = {}
+            for file in version.files.values():
+                if file.key == key:
+                    for entry in load_json(settings.output_dist / file.filename) or []:
+                        out[entry[field_key]] = entry
+            return out
+
+        remote_svts: list[dict] = requests.get(
+            "https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/JP/master/mstSvt.json"
+        ).json()
+        local_svts = load_data_dict("servants", "collectionNo")
+        for svt in remote_svts:
+            collection = svt["collectionNo"]
+            if (
+                collection == 0
+                or svt["type"] not in [SvtType.NORMAL, SvtType.ENEMY_COLLECTION_DETAIL]
+                or (
+                    collection in local_svts
+                    and sorted(svt["relateQuestIds"])
+                    == sorted(local_svts[collection].get("relateQuestIds", []))
+                )
+            ):
+                continue
+            svt = AtlasApi.api_model(
+                f"/nice/JP/servant/{collection}?lore=true", NiceServant, 0
+            )
+            if (
+                not svt
+                or svt.collectionNo == 0
+                or svt.type
+                not in [NiceSvtType.normal, NiceSvtType.enemyCollectionDetail]
+            ):
+                continue
+            added.svt.append(svt)
+
+        remote_ces = requests.get(
+            "https://api.atlasacademy.io/export/JP/basic_equip.json"
+        ).json()
+        local_ces = load_data_dict("craftEssences", "collectionNo")
+        for ce in remote_ces:
+            collection = ce["collectionNo"]
+            if collection == 0 or collection in local_ces:
+                continue
+            ce = AtlasApi.api_model(
+                f"/nice/JP/equip/{collection}?lore=true", NiceEquip, 0
+            )
+            if not ce or ce.collectionNo == 0:
+                continue
+            added.ce.append(ce)
+
+        remote_ccs = requests.get(
+            "https://api.atlasacademy.io/export/JP/basic_command_code.json"
+        ).json()
+        local_ccs = load_data_dict("commandCodes", "collectionNo")
+        for cc in remote_ccs:
+            collection = cc["collectionNo"]
+            if collection == 0 or collection in local_ccs:
+                continue
+            cc = AtlasApi.api_model(f"/nice/JP/CC/{collection}", NiceCommandCode, 0)
+            if not cc or cc.collectionNo == 0:
+                continue
+            added.cc.append(cc)
+
+        remote_items = requests.get(
+            "https://api.atlasacademy.io/export/JP/nice_item.json"
+        ).json()
+        local_items = load_data_dict("items", "id")
+        for item in remote_items:
+            if item["id"] not in local_items:
+                added.item.append(NiceItem.parse_obj(item))
+
+        if added.is_empty():
+            logger.info(f"No new user playable card added")
+            return
+
+        add_fv = self._normal_dump(added, "addData")
+        version.files[add_fv.filename] = add_fv
+        version.timestamp = int(self.now.timestamp())
+        version.utc = self.now.isoformat(timespec="seconds").split("+")[0]
+        dump_json(version, settings.output_dist / "version.json")
+
+        msg = f"[JP] {version.utc} " + ";".join(
+            [
+                k + " " + ",".join([str(x.get("collectionNo") or x["id"]) for x in v])
+                for k, v in added.dict(exclude_defaults=True, exclude={"time"}).items()
+            ]
+        )
+        Path(settings.output_dir).joinpath("commit-msg.txt").write_text(msg)
 
     def update_exported_files(self):
         def _add_download_task(_url, _fp):
@@ -257,12 +369,11 @@ class MainParser:
         ]
         # raw
         raw_fmt = "https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}/master/{name}.json"
-        master_data.viewEnemy = [
-            MstViewEnemy.parse_obj(o)
-            for o in requests.get(
-                raw_fmt.format(region=region, name="viewEnemy")
-            ).json()
-        ]
+        master_data.viewEnemy = parse_obj_as(
+            list[MstViewEnemy],
+            requests.get(raw_fmt.format(region=region, name="viewEnemy")).json(),
+        )
+
         master_data.mstConstant = {
             e["name"]: e["value"]
             for e in requests.get(
@@ -361,6 +472,10 @@ class MainParser:
         1. add main story's free quests + QP quest(10AP)' phase data to game_data.questPhases
         2. count each war's one-off questPhase's fixed drop
         """
+        if self.payload.skip_quests and settings.is_debug:
+            logger.warning("[debug] skip checking quests data")
+            return
+
         logger.info("processing quest data")
         previous_fixed_drops: dict[int, FixedDrop] = {}
         used_previous_count = 0
@@ -520,6 +635,54 @@ class MainParser:
         )
         logger.info("finished checking quests")
 
+    def _normal_dump(
+        self,
+        obj,
+        key: str,
+        _fn: str | None = None,
+        encoder=None,
+        _bytes: bytes | None = None,
+        last_version: DataVersion | None = None,
+    ) -> FileVersion:
+        if _fn is None:
+            _fn = f"{key}.json"
+        if _bytes is None:
+            _text = dump_json(
+                obj, default=encoder or self._encoder, indent2=False, new_line=False
+            )
+            assert _text
+            _bytes = _text.encode()
+        # '魔{jin}剑', 鯖江
+        for a, b in {"\ue000": "{jin}", "\ue001": "鯖"}.items():
+            _bytes = _bytes.replace(a.encode(), b.encode())
+        _hash = hashlib.md5(_bytes).hexdigest()[:6]
+        fv = FileVersion(
+            key=key,
+            filename=_fn,
+            timestamp=int(self.now.timestamp()),
+            size=len(_bytes),
+            hash=_hash,
+            minSize=len(_bytes),
+            minHash=_hash,
+        )
+        if last_version and _fn in last_version.files:
+            last_fv = last_version.files[_fn]
+            if (fv.key, fv.filename, fv.minSize, fv.minHash) == (
+                last_fv.key,
+                last_fv.filename,
+                last_fv.minSize,
+                last_fv.minHash,
+            ):
+                fv.timestamp = last_fv.timestamp
+        _fp = settings.output_dist.joinpath(_fn)
+        _fp.write_bytes(_bytes)
+        beautify_file(_fp)
+        _bytes = _fp.read_bytes()
+        fv.hash = hashlib.md5(_bytes).hexdigest()[:6]
+        fv.size = len(_bytes)
+        logger.info(f"[version] dump {key}: {_fn}")
+        return fv
+
     def save_data(self):
         settings.output_wiki.mkdir(parents=True, exist_ok=True)
 
@@ -531,13 +694,11 @@ class MainParser:
         wiki_data.sort()
         wiki_data.save(full_version=False)
 
-        _now = datetime.datetime.now(datetime.timezone.utc)
-
         logger.debug("Saving data")
         self.stopwatch.log(f"Save start")
         cur_version = DataVersion(
-            timestamp=int(_now.timestamp()),
-            utc=_now.isoformat(timespec="seconds").split("+")[0],
+            timestamp=int(self.now.timestamp()),
+            utc=self.now.isoformat(timespec="seconds").split("+")[0],
             minimalApp=MIN_APP,
             files={},
         )
@@ -563,44 +724,8 @@ class MainParser:
             encoder=None,
             _bytes: bytes | None = None,
         ):
-            if _fn is None:
-                _fn = f"{key}.json"
-            if _bytes is None:
-                _text = dump_json(
-                    obj, default=encoder or self._encoder, indent2=False, new_line=False
-                )
-                assert _text
-                _bytes = _text.encode()
-            # '魔{jin}剑', 鯖江
-            for a, b in {"\ue000": "{jin}", "\ue001": "鯖"}.items():
-                _bytes = _bytes.replace(a.encode(), b.encode())
-            _hash = hashlib.md5(_bytes).hexdigest()[:6]
-            fv = FileVersion(
-                key=key,
-                filename=_fn,
-                timestamp=int(_now.timestamp()),
-                size=len(_bytes),
-                hash=_hash,
-                minSize=len(_bytes),
-                minHash=_hash,
-            )
-            if _fn in _last_version.files:
-                last_fv = _last_version.files[_fn]
-                if (fv.key, fv.filename, fv.minSize, fv.minHash) == (
-                    last_fv.key,
-                    last_fv.filename,
-                    last_fv.minSize,
-                    last_fv.minHash,
-                ):
-                    fv.timestamp = last_fv.timestamp
-            cur_version.files[_fn] = fv
-            _fp = settings.output_dist.joinpath(_fn)
-            _fp.write_bytes(_bytes)
-            beautify_file(_fp)
-            _bytes = _fp.read_bytes()
-            fv.hash = hashlib.md5(_bytes).hexdigest()[:6]
-            fv.size = len(_bytes)
-            logger.info(f"[version] dump {key}: {_fn}")
+            fv = self._normal_dump(obj, key, _fn, encoder, _bytes, _last_version)
+            cur_version.files[fv.filename] = fv
 
         def _dump_by_count(
             obj: list, count: int, key: str, base_fn: str | None = None, encoder=None

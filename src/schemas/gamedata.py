@@ -92,6 +92,18 @@ class NiceBaseSkill(NiceSkill):
     extraPassive: list[ExtraPassive] = Field([], exclude=True)
 
 
+class NewAddedData(BaseModelORJson):
+    time: str
+    svt: list[NiceServant] = []
+    ce: list[NiceEquip] = []
+    cc: list[NiceCommandCode] = []
+    item: list[NiceItem] = []
+
+    def is_empty(self):
+        # skip item only changes
+        return not self.svt and not self.ce and not self.cc and not self.cc
+
+
 class MasterData(BaseModelORJson):
     region: Region
     # directly from atlas
