@@ -103,7 +103,7 @@ from ..utils import (
     logger,
     sort_dict,
 )
-from ..utils.helper import beautify_file
+from ..utils.helper import beautify_file, LocalProxy
 from ..utils.stopwatch import Stopwatch
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.wiki_tool import KnownTimeZone
@@ -784,7 +784,7 @@ class MainParser:
         _normal_dump(data.nice_bgm, "bgms")
 
         logger.info("Updating mappings")
-        run_mapping_update(data.mappingData)  # before dump
+        run_mapping_update(data.mappingData)  # before dump 
         _dump_by_ranges(
             self._encode_mapping_data(data.mappingData),
             ranges=[
@@ -882,6 +882,7 @@ class MainParser:
         if len(self.payload.regions) not in (0, len(Region.__members__)):
             msg = "[" + ",".join([r.value for r in self.payload.regions]) + "] " + msg
         Path(settings.output_dir).joinpath("commit-msg.txt").write_text(msg)
+        self.gametop()
 
     @staticmethod
     def _encode_mapping_data(data: MappingData) -> dict[str, Any]:
@@ -1828,3 +1829,29 @@ class MainParser:
             settings.output_dist,
             dirs_exist_ok=True,
         )
+
+    @staticmethod
+    def gametop():
+        fp = settings.output_dist / "gametop.json"
+        data = {
+            "JP": {"region": "JP", "gameServer": "game.fate-go.jp"},
+            "NA": {"region": "NA", "gameServer": "game.fate-go.us"},
+        }
+        for region in ["JP", "NA"]:
+            data_repo = f"https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}"
+            top = requests.get(f"{data_repo}/gamedatatop.json").json()
+            top = top["response"][0]["success"]
+            assetbundle = requests.get(f"{data_repo}/metadata/assetbundle.json").json()
+            with LocalProxy():
+                ver_codes = requests.get(
+                    f"https://raw.githubusercontent.com/O-Isaac/FGO-VerCode-extractor/{region}/VerCode.json"
+                ).json()
+            data[region] |= {
+                "appVer": ver_codes["appVer"],
+                "verCode": ver_codes["verCode"],
+                "dataVer": top["dataVer"],
+                "dateVer": top["dateVer"],
+                "assetbundle": top["assetbundle"],
+                "assetbundleFolder": assetbundle["folderName"],
+            }
+        dump_json(data, fp)
