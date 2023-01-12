@@ -103,7 +103,7 @@ from ..utils import (
     logger,
     sort_dict,
 )
-from ..utils.helper import beautify_file, LocalProxy
+from ..utils.helper import LocalProxy, beautify_file
 from ..utils.stopwatch import Stopwatch
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.wiki_tool import KnownTimeZone
@@ -139,7 +139,10 @@ class MainParser:
     def start(self):
         self.stopwatch.start()
 
-        if self.payload.event == "load":
+        if self.payload.event == "gametop":
+            self.gametop()
+            return
+        elif self.payload.event == "load":
             if self.payload.regions == [Region.JP]:
                 self.add_changes_only()
                 self.stopwatch.log("dump changes only")
@@ -784,7 +787,7 @@ class MainParser:
         _normal_dump(data.nice_bgm, "bgms")
 
         logger.info("Updating mappings")
-        run_mapping_update(data.mappingData)  # before dump 
+        run_mapping_update(data.mappingData)  # before dump
         _dump_by_ranges(
             self._encode_mapping_data(data.mappingData),
             ranges=[
