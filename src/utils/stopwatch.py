@@ -35,15 +35,18 @@ class Stopwatch:
 
     def output(self):
         output = [f"=== Stopwatch({self.name}) records ==="]
-        width = max([len(r.action) for r in self.records])
-        for record in self.records:
-            output.append(
-                "  ".join(
-                    [
-                        record.action.ljust(width),
-                        record.time.strftime("%H:%M:%S"),
-                        f"{record.lapse:5.2f}s",
-                    ]
+        if self.records:
+            width = max([len(r.action) for r in self.records])
+            for record in self.records:
+                output.append(
+                    "  ".join(
+                        [
+                            record.action.ljust(width),
+                            record.time.strftime("%H:%M:%S"),
+                            f"{record.lapse:5.2f}s",
+                        ]
+                    )
                 )
-            )
+        else:
+            output.append("no record")
         return "\n".join(output)
