@@ -1746,7 +1746,7 @@ class MainParser:
                 continue
             for key, trans in dest.items():
                 value = source.get(key)
-                if value and value == key:
+                if value and value.strip() == key.strip():
                     continue
                 if value and "\n" in value and "\n" not in key:
                     continue
