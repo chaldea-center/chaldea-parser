@@ -92,6 +92,10 @@ class NiceBaseSkill(NiceSkill):
     extraPassive: list[ExtraPassive] = Field([], exclude=True)
 
 
+class NiceEquipSort(NiceEquip):
+    sortId: float | None = None
+
+
 class NewAddedData(BaseModelORJson):
     time: str
     svt: list[NiceServant] = []

@@ -10,8 +10,8 @@ from typing import Any, AnyStr, Iterable, Match, TypeVar
 import orjson
 import pytz
 import requests
-from app.schemas.common import NiceBuffRelationOverwrite, NiceTrait, Region
-from app.schemas.enums import OLD_TRAIT_MAPPING, NiceSvtType, SvtClass
+from app.schemas.common import NiceTrait, Region
+from app.schemas.enums import OLD_TRAIT_MAPPING, NiceSvtType
 from app.schemas.gameenums import (
     NiceGiftType,
     NiceQuestAfterClearType,
@@ -80,6 +80,7 @@ from ..schemas.gamedata import (
     NewAddedData,
     NiceBaseSkill,
     NiceBaseTd,
+    NiceEquipSort,
 )
 from ..schemas.mappings import CN_REPLACE
 from ..schemas.wiki_data import (
@@ -117,12 +118,14 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
-# TODO:
-# - remove hitsDistribution
-# - remove class31 32
-MIN_APP = "2.2.0"
+MIN_APP = "2.2.3"
 
-invalid_svt_class = [SvtClass.uOlgaMarieAlienGod, SvtClass.uOlgaMarie]
+# cn_ces: dict[int, tuple[str, float]] = {102022: ("STAR影法師", 1461.5)}
+ADD_CES = {
+    Region.CN: {
+        102022: ("STAR影法師", 1461.5),
+    }
+}
 
 
 class MainParser:
@@ -341,26 +344,20 @@ class MainParser:
             # print(f'loading {k}: {fp}: {None if v is None else len(data[k])} items')
         data["region"] = f"{region}"
         master_data = MasterData.parse_obj(data)
-        # TODO: remove class31 and 32
-        for svt in itertools.chain(
-            master_data.basic_svt, master_data.nice_servant_lore
-        ):
-            if svt.className in invalid_svt_class:
-                svt.className = SvtClass.unknown
-        for clsName in invalid_svt_class:
-            master_data.NiceClassAttackRate.pop(clsName, None)
-            master_data.NiceClassRelation.pop(clsName, None)
-            for v in master_data.NiceClassRelation.values():
-                v.pop(clsName, None)
 
         master_data.nice_event = [event for event in master_data.nice_event]
         if region == Region.JP:
-            cn_ce = AtlasApi.api_model(
-                "/nice/CN/equip/102022?lore=true", NiceEquip, expire_after=0
-            )
-            assert cn_ce and cn_ce.profile
-            cn_ce.profile.illustrator = "STAR影法師"
-            master_data.nice_equip_lore.append(cn_ce)
+            for add_region, ces in ADD_CES.items():
+                for collection, (illustrator, sort_id) in ces.items():
+                    ce = AtlasApi.api_model(
+                        f"/nice/{add_region}/equip/{collection}?lore=true",
+                        NiceEquipSort,
+                        expire_after=0,
+                    )
+                    assert ce and ce.profile
+                    ce.profile.illustrator = illustrator
+                    ce.sortId = sort_id
+                    master_data.nice_equip_lore.append(ce)
         if region == Region.NA:
             self.jp_data.all_quests_na = master_data.quest_dict
         for svt in master_data.nice_servant_lore:
@@ -989,10 +986,11 @@ class MainParser:
         NiceServant: [
             "originalBattleName",
             "expFeed",
-            # "hitsDistribution",
+            "hitsDistribution",
         ],
         BasicServant: ["originalOverwriteName"],
         NiceEquip: ["expFeed", "expGrowth", "atkGrowth", "hpGrowth"],
+        NiceEquipSort: ["expFeed", "expGrowth", "atkGrowth", "hpGrowth"],
         AscensionAdd: [
             "originalOverWriteServantName",
             "originalOverWriteServantBattleName",
@@ -1005,16 +1003,6 @@ class MainParser:
         exclude = {"originalName"}
         _type = type(obj)
         exclude.update(self._excludes.get(_type, []))
-
-        # TODO: to remove
-        if isinstance(obj, NiceBuffRelationOverwrite):
-            for clsName in invalid_svt_class:
-                obj.atkSide.pop(clsName, None)
-                obj.defSide.pop(clsName, None)
-                for v in obj.atkSide.values():
-                    v.pop(clsName, None)
-                for v in obj.defSide.values():
-                    v.pop(clsName, None)
 
         if _type == NiceSkill and isinstance(obj, NiceSkill):
             if obj.id not in self.jp_data.base_skills:
@@ -1162,8 +1150,11 @@ class MainParser:
         jp_chars = re.compile(r"[\u3040-\u309f\u30a0-\u30ff]")
 
         if region != Region.JP:
+            mappings.ce_release.update(
+                region,
+                sorted(set(data.ce_dict.keys()) | set(ADD_CES.get(region, {}).keys())),
+            )
             mappings.svt_release.update(region, sorted(data.svt_dict.keys()))
-            mappings.ce_release.update(region, sorted(data.ce_dict.keys()))
             mappings.cc_release.update(region, sorted(data.cc_dict.keys()))
             mappings.mc_release.update(region, sorted(data.mc_dict.keys()))
 
