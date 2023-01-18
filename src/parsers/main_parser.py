@@ -88,6 +88,7 @@ from ..schemas.wiki_data import (
     CommandCodeW,
     CraftEssenceW,
     EventW,
+    ServantW,
     WarW,
     WikiData,
     WikiTranslation,
@@ -1287,6 +1288,7 @@ class MainParser:
 
         for svt_jp in jp_data.nice_servant_lore:
             svt = data.svt_id_dict.get(svt_jp.id)
+            self.wiki_data.get_svt(svt_jp.collectionNo)
             _update_mapping(
                 mappings.svt_names,
                 svt_jp.name,
@@ -1398,9 +1400,7 @@ class MainParser:
         for ce_jp in jp_data.nice_equip_lore:
             ce = data.ce_id_dict.get(ce_jp.id)
             _update_mapping(mappings.ce_names, ce_jp.name, ce.name if ce else None)
-            ce_w = self.wiki_data.craftEssences.setdefault(
-                ce_jp.collectionNo, CraftEssenceW(collectionNo=ce_jp.collectionNo)
-            )
+            ce_w = self.wiki_data.get_ce(ce_jp.collectionNo)
             if ce_jp.profile and ce_jp.profile.comments:
                 if len(ce_jp.profile.comments) > 1:
                     logger.debug(

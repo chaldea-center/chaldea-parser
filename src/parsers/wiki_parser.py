@@ -214,6 +214,8 @@ class WikiParser:
                         svt_add.aprilFoolAssets.append(
                             MOONCELL.get_file_url(f"{illustration}.png")
                         )
+            if svt_add.collectionNo == 83:
+                svt_add.aprilFoolAssets.append("083所罗门愚人节.png")
 
             april_profile_jp, april_profile_cn = [], []
             for params in parse_template_list(wikitext, r"^{{愚人节资料"):
