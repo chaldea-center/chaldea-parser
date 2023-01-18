@@ -105,7 +105,7 @@ from ..utils import (
     logger,
     sort_dict,
 )
-from ..utils.helper import LocalProxy, beautify_file
+from ..utils.helper import LocalProxy, beautify_file, describe_regions
 from ..utils.stopwatch import Stopwatch
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.wiki_tool import KnownTimeZone
@@ -145,6 +145,9 @@ class MainParser:
 
         if self.payload.event == "gametop":
             self.gametop()
+            settings.commit_msg.write_text(
+                f"{describe_regions(self.payload.regions)}Update Gametop"
+            )
             return
         elif self.payload.event == "load":
             if self.payload.regions == [Region.JP]:
@@ -287,7 +290,7 @@ class MainParser:
                 for k, v in added.dict(exclude_defaults=True, exclude={"time"}).items()
             ]
         )
-        Path(settings.output_dir).joinpath("commit-msg.txt").write_text(msg)
+        settings.commit_msg.write_text(msg)
 
     def update_exported_files(self):
         def _add_download_task(_url, _fp):
@@ -881,8 +884,8 @@ class MainParser:
         self.copy_static()
         msg = f"{cur_version.minimalApp}, {cur_version.utc}"
         if len(self.payload.regions) not in (0, len(Region.__members__)):
-            msg = "[" + ",".join([r.value for r in self.payload.regions]) + "] " + msg
-        Path(settings.output_dir).joinpath("commit-msg.txt").write_text(msg)
+            msg = describe_regions(self.payload.regions) + msg
+        settings.commit_msg.write_text(msg)
         self.gametop()
 
     @staticmethod

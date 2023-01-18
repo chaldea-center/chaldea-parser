@@ -62,6 +62,10 @@ class Settings(BaseSettings):
     def cache_wiki(self) -> Path:
         return Path(self.cache_dir) / "wiki"
 
+    @property
+    def commit_msg(self) -> Path:
+        return Path(self.output_dir) / "commit-msg.txt"
+
 
 settings = Settings()
 
