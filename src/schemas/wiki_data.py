@@ -57,12 +57,12 @@ class WikiTranslation(BaseModelORJson):
 
 class ServantWBase(BaseModel):
     collectionNo: int
+    mcLink: NoneStr = None
+    fandomLink: NoneStr = None
     nicknames: MappingBase[list[str]] = MappingBase()
 
 
 class ServantW(ServantWBase):
-    mcLink: NoneStr = None
-    fandomLink: NoneStr = None
     obtains: list[SvtObtain] = []
     aprilFoolAssets: list[str] = []
     aprilFoolProfile: MappingStr = MappingStr()
