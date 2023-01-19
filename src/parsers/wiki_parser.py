@@ -262,17 +262,34 @@ class WikiParser:
 
     def mc_ce(self):
         index_data = _mc_index_data("礼装图鉴/数据")
-        index_data.insert(
-            0,
-            {
-                "id": "102022",
-                "name": "简中版6周年纪念",
-                "name_link": "简中版6周年纪念",
-                "des": "支援中获得的友情点＋10(可以重复)",
-                "des_max": "",
-                "tag": "",
-                "type": "纪念",
-            },
+        index_data.extend(
+            [
+                {
+                    "id": "102022",
+                    "name": "简中版6周年纪念",
+                    "name_link": "简中版6周年纪念",
+                    "des": "支援中获得的友情点＋10(可以重复)",
+                    "type": "纪念",
+                },
+                {
+                    "id": "102023",
+                    "name": "简中版3周年纪念",
+                    "name_link": "简中版3周年纪念",
+                    "type": "纪念",
+                },
+                {
+                    "id": "102024",
+                    "name": "简中版4周年纪念",
+                    "name_link": "简中版4周年纪念",
+                    "type": "纪念",
+                },
+                {
+                    "id": "102025",
+                    "name": "简中版5周年纪念",
+                    "name_link": "简中版5周年纪念",
+                    "type": "纪念",
+                },
+            ]
         )
 
         def _parse_one(record: dict):
