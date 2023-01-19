@@ -714,7 +714,7 @@ class MainParser:
             _last_version = cur_version.copy(deep=True)
         if not settings.is_debug:
             for f in settings.output_dist.glob("**/*"):
-                if f.name in ("news.json"):
+                if f.name in ("news.json", "config.json"):
                     continue
                 elif f.is_file():
                     f.unlink()
