@@ -147,6 +147,7 @@ class MainParser:
         self.stopwatch.start()
 
         if self.payload.event == "gametop":
+            time.sleep(300)
             self.gametop()
             settings.commit_msg.write_text(
                 f"{describe_regions(self.payload.regions)}Update Gametop"
@@ -1839,7 +1840,9 @@ class MainParser:
         }
         for region in ["JP", "NA"]:
             data_repo = f"https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}"
-            top = requests.get(f"{data_repo}/gamedatatop.json").json()
+            top = requests.get(
+                f"{data_repo}/gamedatatop.json?t=${int(time.time())}"
+            ).json()
             top = top["response"][0]["success"]
             assetbundle = requests.get(f"{data_repo}/metadata/assetbundle.json").json()
             with LocalProxy():
