@@ -41,7 +41,7 @@ def run_mapping_update(mappings: MappingData | None = None):
             # release->MappingBase[list[int]]
             continue
         fp = folder / f"{key}.json"
-        if key in ("chara_names", "trait_redirect"):
+        if key in ("chara_names", "event_trait"):
             # they won't be changed by atlas parser
             trans = load_json(fp) or {}
         if key not in (
@@ -49,7 +49,7 @@ def run_mapping_update(mappings: MappingData | None = None):
             "enums",
             "misc",
             "override_mappings",
-            "trait_redirect",
+            "event_trait",
         ):
             trans = sort_dict(trans)
         logger.debug(f"writing to {fp}")

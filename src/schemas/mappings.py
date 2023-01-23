@@ -115,6 +115,16 @@ class EnumMapping(BaseModel):
                 v.setdefault(kk, MappingBase())
 
 
+class EventTrait(MappingStr):
+    eventId: int | None = None
+    relatedTrait: int | None = None
+    JP: str | None = None
+    CN: str | None = None
+    TW: str | None = None
+    NA: str | None = None
+    KR: str | None = None
+
+
 class MappingData(BaseModel):
     item_names: dict[str, MappingStr] = {}  # jp_name
     # item_detail: dict[int, MappingStr] = {}  # item.id
@@ -146,7 +156,8 @@ class MappingData(BaseModel):
     voice_line_names: dict[str, MappingStr] = {}
 
     trait: dict[int, MappingStr] = {}  # trait.id
-    trait_redirect: dict[int, int] = {}  # event_trait -> normal trait
+    # trait_redirect: dict[int, int] = {}  # event_trait -> normal trait
+    event_trait: dict[int, EventTrait] = {}
 
     # additional strings
     # ce_comment: dict[int, MappingStr] = {}  # in w

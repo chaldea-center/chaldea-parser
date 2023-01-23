@@ -174,6 +174,7 @@ class MasterData(BaseModelORJson):
         self.fixedDrops = sort_dict(self.fixedDrops)
         self.mappingData.costume_detail = sort_dict(self.mappingData.costume_detail)
         self.mappingData.trait = sort_dict(self.mappingData.trait)
+        # self.mappingData.event_trait = sort_dict(self.mappingData.event_trait)
         self.base_tds = sort_dict(self.base_tds)
         self.base_skills = sort_dict(self.base_skills)
         self.base_functions = sort_dict(self.base_functions)
