@@ -83,16 +83,7 @@ from ..schemas.gamedata import (
     NiceEquipSort,
 )
 from ..schemas.mappings import CN_REPLACE
-from ..schemas.wiki_data import (
-    AppNews,
-    CommandCodeW,
-    CraftEssenceW,
-    EventW,
-    ServantW,
-    WarW,
-    WikiData,
-    WikiTranslation,
-)
+from ..schemas.wiki_data import AppNews, CommandCodeW, WikiData, WikiTranslation
 from ..utils import (
     NEVER_CLOSED_TIMESTAMP,
     AtlasApi,
@@ -1221,9 +1212,7 @@ class MainParser:
             _update_mapping(mappings.bgm_names, bgm_jp.name, bgm.name if bgm else None)
 
         for event_jp in jp_data.nice_event:
-            event_extra = self.wiki_data.events.setdefault(
-                event_jp.id, EventW(id=event_jp.id, name=event_jp.name)  # type: ignore
-            )
+            event_extra = self.wiki_data.get_event(event_jp.id, event_jp.name)
             event_extra.startTime.JP = event_jp.startedAt
             event_extra.endTime.JP = event_jp.endedAt
             mappings.event_names.setdefault(event_jp.name, MappingBase())
@@ -1241,7 +1230,7 @@ class MainParser:
         war_release = mappings.war_release.of(region) or []
         for war_jp in jp_data.nice_war:
             if war_jp.id < 1000:
-                self.wiki_data.wars.setdefault(war_jp.id, WarW(id=war_jp.id))
+                self.wiki_data.get_war(war_jp.id)
             mappings.war_names.setdefault(war_jp.name, MappingBase())
             mappings.war_names.setdefault(war_jp.longName, MappingBase())
             for war_add in war_jp.warAdds:

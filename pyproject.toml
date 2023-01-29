@@ -2,7 +2,7 @@
 name = "chaldea-parser"
 version = "1.0.0"
 description = "Chaldea parser"
-authors = ["narumi"]
+authors = ["narumi <narumi@chaldea.center>"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -27,6 +27,12 @@ black = "^22.1.0"
 isort = "^5.10.1"
 pyperclip = "^1.8.2"
 packaging = "^21.3"
+
+[[tool.poetry.source]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = false
+secondary = false
 
 [tool.isort]
 line_length = 88

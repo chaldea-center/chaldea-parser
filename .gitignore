@@ -1,6 +1,7 @@
 ### User
 /app
 /tmp
+/temp
 /cache
 /logs
 /data

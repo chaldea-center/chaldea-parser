@@ -118,6 +118,7 @@ class EventWBase(BaseModel):
     shown: bool | None = None
     titleBanner: MappingBase[str] = MappingBase()
     officialBanner: MappingBase[str] = MappingBase()
+    extraBanners: MappingBase[list[str]] = MappingBase()
     noticeLink: MappingStr = MappingStr()
     huntingId: int = 0
     huntingQuestIds: list[int] = []
@@ -131,6 +132,7 @@ class WarW(BaseModel):
     fandomLink: NoneStr = None
     titleBanner: MappingBase[str] = MappingBase()
     officialBanner: MappingBase[str] = MappingBase()
+    extraBanners: MappingBase[list[str]] = MappingBase()
     noticeLink: MappingStr = MappingStr()
 
 
@@ -310,6 +312,12 @@ class WikiData(BaseModelORJson):
         return self.commandCodes.setdefault(
             collection_no, CommandCodeW(collectionNo=collection_no)
         )
+
+    def get_event(self, event_id: int, name: str):
+        return self.events.setdefault(event_id, EventW(id=event_id, name=name))
+
+    def get_war(self, war_id: int):
+        return self.wars.setdefault(war_id, WarW(id=war_id))
 
 
 def _encoder(obj):
