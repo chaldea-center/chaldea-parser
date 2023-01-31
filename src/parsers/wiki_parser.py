@@ -171,25 +171,29 @@ class WikiParser:
     def mc_svt(self):
         index_data = _mc_index_data("英灵图鉴/数据")
 
-        def _parse_one(record: dict):
-            svt_add = self.wiki_data.get_svt(int(record["id"]))
-            svt_add.mcLink = record["name_link"]
+        def _parse_one(svt_id: int):
+            svt_add = self.wiki_data.get_svt(svt_id)
+            record = index_data.get(svt_id)
             nicknames: set[str] = set()
-            nicknames.update([s.strip() for s in record["name_other"].split("&")])
-            obtains = [
-                SvtObtain.from_cn(m)
-                for m in re.split(r"<br>|&", record["method"])
-                if m not in ("活动通关奖励", "事前登录赠送")
-            ]
-            obtains = list(set(obtains))
-            if len(obtains) > 1 and SvtObtain.unknown in obtains:
-                obtains.remove(SvtObtain.unknown)
-            if not obtains:
-                obtains.append(SvtObtain.unknown)
-            svt_add.obtains = sorted(obtains)
+            if record:
+                svt_add.mcLink = record["name_link"]
+                nicknames.update([s.strip() for s in record["name_other"].split("&")])
+                obtains = [
+                    SvtObtain.from_cn(m)
+                    for m in re.split(r"<br>|&", record["method"])
+                    if m not in ("活动通关奖励", "事前登录赠送")
+                ]
+                obtains = list(set(obtains))
+                if len(obtains) > 1 and SvtObtain.unknown in obtains:
+                    obtains.remove(SvtObtain.unknown)
+                if not obtains:
+                    obtains.append(SvtObtain.unknown)
+                svt_add.obtains = sorted(obtains)
+
+            if not svt_add.mcLink:
+                return
 
             # profile
-
             wikitext = mwparse(MOONCELL.get_page_text(svt_add.mcLink))
             params = parse_template(wikitext, r"^{{基础数值")
             name_cn, name_cn2 = params.get2("中文名"), params.get2("中文名2")
@@ -257,54 +261,63 @@ class WikiParser:
                         svt_add.spriteModels.append(MOONCELL.hash_file_url(value))
                         svt_add.mcSprites.append(MOONCELL.norm_filename(value))
 
-        worker = Worker.from_map(_parse_one, index_data, name="mc_svt")
+        worker = Worker.from_map(
+            _parse_one,
+            set(self.wiki_data.servants.keys()) | set(index_data.keys()),
+            name="mc_svt",
+        )
         worker.wait()
 
     def mc_ce(self):
         index_data = _mc_index_data("礼装图鉴/数据")
-        index_data.extend(
-            [
-                {
+        index_data.update(
+            {
+                102022: {
                     "id": "102022",
                     "name": "简中版6周年纪念",
                     "name_link": "简中版6周年纪念",
                     "des": "支援中获得的友情点＋10(可以重复)",
                     "type": "纪念",
                 },
-                {
+                102023: {
                     "id": "102023",
                     "name": "简中版3周年纪念",
                     "name_link": "简中版3周年纪念",
                     "type": "纪念",
                 },
-                {
+                102024: {
                     "id": "102024",
                     "name": "简中版4周年纪念",
                     "name_link": "简中版4周年纪念",
                     "type": "纪念",
                 },
-                {
+                102025: {
                     "id": "102025",
                     "name": "简中版5周年纪念",
                     "name_link": "简中版5周年纪念",
                     "type": "纪念",
                 },
-            ]
+            }
         )
 
-        def _parse_one(record: dict):
-            ce_add = self.wiki_data.get_ce(int(record["id"]))
-            ce_add.mcLink = record["name_link"]
-            ce_add.obtain = CEObtain.from_cn(record["type"])
+        def _parse_one(ce_id: int):
+            ce_add = self.wiki_data.get_ce(ce_id)
+            record = index_data.get(ce_id)
+            if record:
+                ce_add.mcLink = record["name_link"]
+                ce_add.obtain = CEObtain.from_cn(record["type"])
 
-            des = record.get("des")
-            if des and des != "无效果":
-                des = remove_tag(des).replace("\n", "")
-                self.mc_transl.ce_skill_des[ce_add.collectionNo] = des
-            des_max = record.get("des_max")
-            if des_max and des_max != "无效果":
-                des_max = remove_tag(des_max).replace("\n", "")
-                self.mc_transl.ce_skill_des_max[ce_add.collectionNo] = des_max
+                des = record.get("des")
+                if des and des != "无效果":
+                    des = remove_tag(des).replace("\n", "")
+                    self.mc_transl.ce_skill_des[ce_add.collectionNo] = des
+                des_max = record.get("des_max")
+                if des_max and des_max != "无效果":
+                    des_max = remove_tag(des_max).replace("\n", "")
+                    self.mc_transl.ce_skill_des_max[ce_add.collectionNo] = des_max
+
+            if not ce_add.mcLink:
+                return
 
             wikitext = mwparse(MOONCELL.get_page_text(ce_add.mcLink))
             params = parse_template(wikitext, r"^{{概念礼装")
@@ -328,20 +341,28 @@ class WikiParser:
                 else:
                     ce_add.unknownCharacters.append(chara)
 
-        worker = Worker.from_map(_parse_one, index_data, name="mc_ce")
+        worker = Worker.from_map(
+            _parse_one,
+            set(self.wiki_data.craftEssences.keys()) | set(index_data.keys()),
+            name="mc_ce",
+        )
         worker.wait()
 
     def mc_cc(self):
         index_data = _mc_index_data("指令纹章图鉴/数据")
 
-        def _parse_one(record: dict):
-            cc_add = self.wiki_data.get_cc(int(record["id"]))
-            cc_add.mcLink = record["name_link"]
+        def _parse_one(cc_id: int):
+            cc_add = self.wiki_data.get_cc(cc_id)
+            record = index_data.get(cc_id)
+            if record:
+                cc_add.mcLink = record["name_link"]
+                des = record.get("des")
+                if des:
+                    des = remove_tag(des).replace("\n", "")
+                    self.mc_transl.cc_skill_des[cc_add.collectionNo] = des
 
-            des = record.get("des")
-            if des:
-                des = remove_tag(des).replace("\n", "")
-                self.mc_transl.cc_skill_des[cc_add.collectionNo] = des
+            if not cc_add.mcLink:
+                return
 
             wikitext = mwparse(MOONCELL.get_page_text(cc_add.mcLink))
             params = parse_template(wikitext, r"^{{指令纹章")
@@ -366,7 +387,11 @@ class WikiParser:
                 else:
                     cc_add.unknownCharacters.append(chara)
 
-        worker = Worker.from_map(_parse_one, index_data, name="mc_cc")
+        worker = Worker.from_map(
+            _parse_one,
+            set(self.wiki_data.commandCodes.keys()) | set(index_data.keys()),
+            name="mc_cc",
+        )
         worker.wait()
 
     def _parse_chara(self, chara: str) -> int | None:
@@ -742,16 +767,16 @@ class WikiParser:
         )
 
 
-def _mc_index_data(page: str) -> list[dict[str, Optional[str]]]:
+def _mc_index_data(page: str) -> dict[int, dict[str, str]]:
     text = MOONCELL.get_page_text(page, allow_cache=settings.is_debug)
-    data: list[dict[str, Optional[str]]] = []
+    data: list[dict[str, str]] = []
     for block in text.split("\n\n"):
         d = {}
         for row in block.split("\n"):
             key, value = row.split("=", 1)
             d[key] = value.strip()
         data.append(d)
-    return data
+    return {int(x["id"]): x for x in data if x["id"]}
 
 
 def _gen_summon_key(jp_url: str | None) -> Optional[str]:

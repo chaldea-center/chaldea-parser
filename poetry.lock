@@ -389,7 +389,7 @@ uvicorn = {version = "^0.20.0", extras = ["standard"]}
 type = "git"
 url = "https://github.com/chaldea-center/fgo-game-data-api.git"
 reference = "HEAD"
-resolved_reference = "5949ecaa29cf2db6718221e214e998b1e94f1304"
+resolved_reference = "17802322ab3a27ec64421a9e1a3d0e114e2e3c47"
 
 [[package]]
 name = "frozenlist"
