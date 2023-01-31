@@ -273,7 +273,12 @@ class MainParser:
             logger.info(f"No new user playable card added")
             return
 
-        add_fv = self._normal_dump(added, "addData")
+        def _encoder(obj):
+            if isinstance(obj, BaseModel):
+                return obj.dict(exclude_none=True, exclude_defaults=True)
+            return pydantic_encoder(obj)
+
+        add_fv = self._normal_dump(added, "addData", encoder=_encoder)
         version.files[add_fv.filename] = add_fv
         version.timestamp = int(self.now.timestamp())
         version.utc = self.now.isoformat(timespec="seconds").split("+")[0]
@@ -709,7 +714,7 @@ class MainParser:
             _last_version = cur_version.copy(deep=True)
         if not settings.is_debug:
             for f in settings.output_dist.glob("**/*"):
-                if f.name in ("news.json", "config.json"):
+                if f.name in ("news.json", "config.json", "addData.json"):
                     continue
                 elif f.is_file():
                     f.unlink()
