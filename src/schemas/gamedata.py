@@ -55,6 +55,14 @@ class MstViewEnemy(BaseModelORJson):
     npcSvtId: int | None
 
 
+class MstClassRelation(BaseModelORJson):
+    atkClass: int
+    defClass: int
+    attackRate: int
+    # advIconId: int
+    # disadvIconId: int
+
+
 class ExchangeTicket(BaseModel):
     id: int
     year: int
@@ -139,6 +147,7 @@ class MasterData(BaseModelORJson):
     NiceUserLevel: dict[int, MasterUserLvDetail] = {}
 
     # raw mst data
+    mstClassRelation: list[MstClassRelation] = []
     viewEnemy: list[MstViewEnemy] = []
     mstConstant: dict[str, int] = {}
 

@@ -71,6 +71,7 @@ class ConstGameData(BaseModel):
     cardInfo: dict[NiceCardType, dict[int, CardInfo]]
     classAttackRate: dict[SvtClass, int]
     classRelation: dict[SvtClass, dict[SvtClass, int]]
+    classRelation2: dict[int, dict[int, int]]
     constants: dict[str, int]
     svtGrailCost: dict[int, dict[int, GrailCostDetail]]
     userLevel: dict[int, MasterUserLvDetail]

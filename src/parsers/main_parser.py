@@ -3,6 +3,7 @@ import itertools
 import re
 import shutil
 import time
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, AnyStr, Iterable, Match, TypeVar
@@ -76,6 +77,7 @@ from ..schemas.gamedata import (
     FixedDrop,
     MappingData,
     MasterData,
+    MstClassRelation,
     MstViewEnemy,
     NewAddedData,
     NiceBaseSkill,
@@ -111,6 +113,11 @@ _KV = TypeVar("_KV", str, int)
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
 MIN_APP = "2.2.3"
+
+# TODO in 2.2.4
+# remove classAttackRate=data.NiceClassAttackRate,
+# remove classRelation=data.NiceClassRelation,
+
 
 # cn_ces: dict[int, tuple[str, float]] = {102022: ("STAR影法師", 1461.5)}
 ADD_CES = {
@@ -376,6 +383,10 @@ class MainParser:
         master_data.viewEnemy = parse_obj_as(
             list[MstViewEnemy],
             requests.get(raw_fmt.format(region=region, name="viewEnemy")).json(),
+        )
+        master_data.mstClassRelation = parse_obj_as(
+            list[MstClassRelation],
+            requests.get(raw_fmt.format(region=region, name="mstClassRelation")).json(),
         )
 
         master_data.mstConstant = {
@@ -830,6 +841,9 @@ class MainParser:
         if data.cachedQuestPhases:
             _dump_by_count(list(data.cachedQuestPhases.values()), 100, "questPhases")
         _normal_dump(data.extraMasterMission, "extraMasterMission")
+        class_relations: dict[int, dict[int, int]] = defaultdict(dict)
+        for relation in data.mstClassRelation:
+            class_relations[relation.atkClass][relation.defClass] = relation.attackRate
         _normal_dump(
             ConstGameData(
                 attributeRelation=data.NiceAttributeRelation,
@@ -838,6 +852,7 @@ class MainParser:
                 cardInfo=data.NiceCard,
                 classAttackRate=data.NiceClassAttackRate,
                 classRelation=data.NiceClassRelation,
+                classRelation2=class_relations,
                 constants=data.NiceConstant,
                 svtGrailCost=data.NiceSvtGrailCost,
                 userLevel=data.NiceUserLevel,
@@ -1831,8 +1846,16 @@ class MainParser:
     def gametop():
         fp = settings.output_dist / "gametop.json"
         data = {
-            "JP": {"region": "JP", "gameServer": "game.fate-go.jp"},
-            "NA": {"region": "NA", "gameServer": "game.fate-go.us"},
+            "JP": {
+                "region": "JP",
+                "gameServer": "game.fate-go.jp",
+                "bundle": "com.aniplex.fategrandorder",
+            },
+            "NA": {
+                "region": "NA",
+                "gameServer": "game.fate-go.us",
+                "bundle": "com.aniplex.fategrandorder.en",
+            },
         }
         for region in ["JP", "NA"]:
             data_repo = f"https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}"
@@ -1845,8 +1868,13 @@ class MainParser:
                 ver_codes = requests.get(
                     f"https://raw.githubusercontent.com/O-Isaac/FGO-VerCode-extractor/{region}/VerCode.json"
                 ).json()
+            app_ver = requests.get(
+                f'https://worker-cn.chaldea.center/proxy/gplay-ver?id={data[region]["bundle"]}'
+            ).text
+            if not re.match(r"\d+\.\d+\.\d+", app_ver):
+                app_ver = ver_codes["appVer"]
             data[region] |= {
-                "appVer": ver_codes["appVer"],
+                "appVer": app_ver,
                 "verCode": ver_codes["verCode"],
                 "dataVer": top["dataVer"],
                 "dateVer": top["dateVer"],
