@@ -12,6 +12,8 @@ from app.schemas.gameenums import (
 from app.schemas.nice import NiceGift
 from pydantic import BaseModel
 
+from .common import MstClass
+
 
 class BuffActionDetail(BaseModel):
     limit: NiceBuffLimit
@@ -68,6 +70,7 @@ class ConstGameData(BaseModel):
     attributeRelation: dict[Attribute, dict[Attribute, int]]
     buffActions: dict[NiceBuffAction, BuffActionDetail]
     classInfo: dict[int, NiceClassInfo]
+    classInfo2: dict[int, MstClass]
     cardInfo: dict[NiceCardType, dict[int, CardInfo]]
     classAttackRate: dict[SvtClass, int]
     classRelation: dict[SvtClass, dict[SvtClass, int]]

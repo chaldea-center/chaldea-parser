@@ -233,3 +233,43 @@ class DataVersion(BaseModel):
     utc: str
     minimalApp: str
     files: dict[str, FileVersion] = {}
+
+
+# raw
+
+
+class MstViewEnemy(BaseModel):
+    questId: int
+    enemyId: int
+    name: str
+    classId: int
+    svtId: int
+    limitCount: int
+    iconId: int
+    displayType: int
+    # missionIds: list[int]
+    npcSvtId: int | None
+
+
+class MstClass(BaseModel):
+    id: int
+    attri: int
+    name: str
+    individuality: int
+    attackRate: int
+    imageId: int
+    iconImageId: int
+    frameId: int
+    priority: int
+    groupType: int
+    relationId: int
+    supportGroup: int
+    autoSelSupportType: int
+
+
+class MstClassRelation(BaseModel):
+    atkClass: int
+    defClass: int
+    attackRate: int
+    # advIconId: int
+    # disadvIconId: int

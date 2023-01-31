@@ -70,6 +70,9 @@ from ..schemas.common import (
     FileVersion,
     MappingBase,
     MappingStr,
+    MstClass,
+    MstClassRelation,
+    MstViewEnemy,
     OpenApiInfo,
 )
 from ..schemas.const_data import ConstGameData
@@ -77,8 +80,6 @@ from ..schemas.gamedata import (
     FixedDrop,
     MappingData,
     MasterData,
-    MstClassRelation,
-    MstViewEnemy,
     NewAddedData,
     NiceBaseSkill,
     NiceBaseTd,
@@ -115,6 +116,7 @@ _KV = TypeVar("_KV", str, int)
 MIN_APP = "2.2.3"
 
 # TODO in 2.2.4
+# remove classInfo=data.NiceClass,
 # remove classAttackRate=data.NiceClassAttackRate,
 # remove classRelation=data.NiceClassRelation,
 
@@ -383,6 +385,10 @@ class MainParser:
         master_data.viewEnemy = parse_obj_as(
             list[MstViewEnemy],
             requests.get(raw_fmt.format(region=region, name="viewEnemy")).json(),
+        )
+        master_data.mstClass = parse_obj_as(
+            list[MstClass],
+            requests.get(raw_fmt.format(region=region, name="mstClass")).json(),
         )
         master_data.mstClassRelation = parse_obj_as(
             list[MstClassRelation],
@@ -848,8 +854,9 @@ class MainParser:
             ConstGameData(
                 attributeRelation=data.NiceAttributeRelation,
                 buffActions=data.NiceBuffList_ActionList,
-                classInfo={x.id: x for x in data.NiceClass},
                 cardInfo=data.NiceCard,
+                classInfo={x.id: x for x in data.NiceClass},
+                classInfo2={x.id: x for x in data.mstClass},
                 classAttackRate=data.NiceClassAttackRate,
                 classRelation=data.NiceClassRelation,
                 classRelation2=class_relations,

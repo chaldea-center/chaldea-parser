@@ -30,8 +30,8 @@ from app.schemas.nice import (
 from app.schemas.raw import MstCv, MstIllustrator
 from pydantic import BaseModel, Field
 
-from ..schemas.common import MappingBase
 from ..utils import NEVER_CLOSED_TIMESTAMP, sort_dict
+from .common import MappingBase, MstClass, MstClassRelation, MstViewEnemy
 from .const_data import (
     BuffActionDetail,
     CardInfo,
@@ -40,27 +40,6 @@ from .const_data import (
     NiceClassInfo,
 )
 from .mappings import MappingData
-
-
-class MstViewEnemy(BaseModelORJson):
-    questId: int
-    enemyId: int
-    name: str
-    classId: int
-    svtId: int
-    limitCount: int
-    iconId: int
-    displayType: int
-    # missionIds: list[int]
-    npcSvtId: int | None
-
-
-class MstClassRelation(BaseModelORJson):
-    atkClass: int
-    defClass: int
-    attackRate: int
-    # advIconId: int
-    # disadvIconId: int
 
 
 class ExchangeTicket(BaseModel):
@@ -147,6 +126,7 @@ class MasterData(BaseModelORJson):
     NiceUserLevel: dict[int, MasterUserLvDetail] = {}
 
     # raw mst data
+    mstClass: list[MstClass] = []
     mstClassRelation: list[MstClassRelation] = []
     viewEnemy: list[MstViewEnemy] = []
     mstConstant: dict[str, int] = {}
