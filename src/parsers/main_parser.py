@@ -850,6 +850,9 @@ class MainParser:
         class_relations: dict[int, dict[int, int]] = defaultdict(dict)
         for relation in data.mstClassRelation:
             class_relations[relation.atkClass][relation.defClass] = relation.attackRate
+        for cls_info in data.mstClass:
+            if not isinstance(cls_info.individuality, int):
+                cls_info.individuality = 0
         _normal_dump(
             ConstGameData(
                 attributeRelation=data.NiceAttributeRelation,

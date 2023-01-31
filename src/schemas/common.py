@@ -255,7 +255,7 @@ class MstClass(BaseModel):
     id: int
     attri: int
     name: str
-    individuality: int
+    individuality: int | list | None  # CN use empty list
     attackRate: int
     imageId: int
     iconImageId: int
