@@ -36,4 +36,4 @@ jobs:
         working-directory: ${{ env.cache_dir }}
 
       - name: Upload to OSS
-        run: ossutil cp chaldea_parser_cache.tar.gz oss://${{ secrets.OSS_BUCKET_NAME }}/chaldea_parser_cache.tar.gz -f
+        run: ossutil cp chaldea_parser_cache.tar.gz oss://${{ secrets.OSS_BUCKET_NAME }}/cache/chaldea_parser_cache.tar.gz -f

@@ -117,11 +117,6 @@ class EnumMapping(BaseModel):
 
 class EventTrait(MappingStr):
     eventId: int = 0
-    JP: str | None = None
-    CN: str | None = None
-    TW: str | None = None
-    NA: str | None = None
-    KR: str | None = None
 
 
 class MappingData(BaseModel):

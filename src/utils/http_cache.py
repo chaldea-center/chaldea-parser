@@ -117,7 +117,6 @@ class HttpApiUtil(abc.ABC):
             if time.time() > resp.created_at.timestamp() + expire_after:
                 should_delete = True
         if not should_delete and resp and filter_fn is not None:
-            resp.created_at
             try:
                 should_delete = (
                     filter_fn if isinstance(filter_fn, bool) else filter_fn(resp)

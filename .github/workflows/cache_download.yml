@@ -32,7 +32,7 @@ jobs:
           access-key-secret: ${{ secrets.OSS_ACCESS_KEY_SECRET }}
 
       - name: Download from OSS
-        run: ossutil cp oss://${{ secrets.OSS_BUCKET_NAME }}/chaldea_parser_cache.tar.gz chaldea_parser_cache.tar.gz
+        run: ossutil cp oss://${{ secrets.OSS_BUCKET_NAME }}/cache/chaldea_parser_cache.tar.gz chaldea_parser_cache.tar.gz
 
       - name: Extra cache
         run: |

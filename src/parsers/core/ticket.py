@@ -17,6 +17,7 @@ def parse_exchange_tickets(nice_item: list[NiceItem]) -> list[ExchangeTicket]:
         202007: MappingBase(NA=[6535, 6509, 6549]),  # 3 黑灰-小钟
         202008: MappingBase(NA=[6537, 6526, 6550]),  # 3 树种-鳞粉
         202012: MappingBase(NA=[6537, 6550, 6527]),  # 2 鬼灯-鳞粉
+        202102: MappingBase(NA=[6538, 6526, 6549]),  # 3 龙牙-小钟
     }
     for item in nice_item:
         if item.type != NiceItemType.itemSelect:
