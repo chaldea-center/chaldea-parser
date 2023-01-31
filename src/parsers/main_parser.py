@@ -1127,7 +1127,9 @@ class MainParser:
         for key in self.jp_data.mappingData.event_names.keys():
             mappings.war_names.pop(key, None)
         for key in self.jp_data.mappingData.svt_names.keys():
-            mappings.entity_names.pop(key, None)
+            entity = mappings.entity_names.pop(key, None)
+            if entity:
+                self.jp_data.mappingData.svt_names[key].update_from(entity)
         for key in self.jp_data.mappingData.ce_names.keys():
             mappings.entity_names.pop(key, None)
             mappings.skill_names.pop(key, None)

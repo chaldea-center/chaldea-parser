@@ -196,7 +196,9 @@ class WikiParser:
             # profile
             wikitext = mwparse(MOONCELL.get_page_text(svt_add.mcLink))
             params = parse_template(wikitext, r"^{{基础数值")
-            name_cn, name_cn2 = params.get2("中文名"), params.get2("中文名2")
+            name_cn, name_cn2 = params.get2("直译名") or params.get2("中文名"), params.get2(
+                "中文名2"
+            )
             name_jp, name_jp2 = params.get2("日文名"), params.get2("日文名2")
             if name_cn and name_jp:
                 self.mc_transl.svt_names[name_jp] = name_cn
@@ -258,7 +260,6 @@ class WikiParser:
             for params in parse_template_list(wikitext, r"^{{战斗形象"):
                 for key, value in params.items():
                     if "模型" in key or "灵衣" in key and str(value).endswith(".png"):
-                        svt_add.spriteModels.append(MOONCELL.hash_file_url(value))
                         svt_add.mcSprites.append(MOONCELL.norm_filename(value))
 
         worker = Worker.from_map(
@@ -335,11 +336,9 @@ class WikiParser:
                 chara = params.get2(key)
                 if not chara:
                     continue
-                parsed_chara = self._parse_chara(chara)
-                if parsed_chara:
-                    ce_add.characters.append(parsed_chara)
-                else:
-                    ce_add.unknownCharacters.append(chara)
+                known_, unknown_ = self._parse_chara(chara)
+                ce_add.characters.extend(known_)
+                ce_add.unknownCharacters.extend(unknown_)
 
         worker = Worker.from_map(
             _parse_one,
@@ -381,11 +380,9 @@ class WikiParser:
                 chara = params.get2(key)
                 if not chara:
                     continue
-                parsed_chara = self._parse_chara(chara)
-                if parsed_chara:
-                    cc_add.characters.append(parsed_chara)
-                else:
-                    cc_add.unknownCharacters.append(chara)
+                known_, unknown_ = self._parse_chara(chara)
+                cc_add.characters.extend(known_)
+                cc_add.unknownCharacters.extend(unknown_)
 
         worker = Worker.from_map(
             _parse_one,
@@ -394,16 +391,24 @@ class WikiParser:
         )
         worker.wait()
 
-    def _parse_chara(self, chara: str) -> int | None:
-        if chara in self._chara_cache:
-            return self._chara_cache[chara]
-        svt_text = MOONCELL.get_page_text(chara)
-        param_svt = parse_template(svt_text, r"^{{基础数值")
-        svt_no = param_svt.get_cast("序号", cast=int)
-        if svt_no:
-            self._chara_cache[chara] = svt_no
-            return svt_no
-        self.unknown_chara_mapping.setdefault(chara, MappingStr())
+    def _parse_chara(self, charas: str) -> tuple[list[int], list[str]]:
+        known: list[int] = []
+        unknown: list[str] = []
+        for chara in charas.split(";;"):
+            chara = chara.strip()
+            if chara in self._chara_cache:
+                known.append(self._chara_cache[chara])
+            else:
+                svt_text = MOONCELL.get_page_text(chara)
+                param_svt = parse_template(svt_text, r"^{{基础数值")
+                svt_no = param_svt.get_cast("序号", cast=int)
+                if svt_no:
+                    self._chara_cache[chara] = svt_no
+                    known.append(svt_no)
+                else:
+                    unknown.append(chara)
+                    self.unknown_chara_mapping.setdefault(chara, MappingStr())
+        return known, unknown
 
     def fandom_svt(self):
         def _parse_one(collection_no: int, link: str):

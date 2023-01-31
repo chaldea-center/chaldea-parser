@@ -66,7 +66,6 @@ class ServantW(ServantWBase):
     obtains: list[SvtObtain] = []
     aprilFoolAssets: list[str] = []
     aprilFoolProfile: MappingStr = MappingStr()
-    spriteModels: list[str] = []
     mcSprites: list[str] = []
     fandomSprites: list[str] = []
     mcProfiles: dict[int, list[str]] = {}
