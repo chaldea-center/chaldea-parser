@@ -455,7 +455,10 @@ class WikiParser:
             # print(sub)
             subpage_text = FANDOM.get_page_text(f"Sub:Servant List by ID/{sub}")
             for row in wikitextparser.parse(subpage_text).tables[0].data()[1:]:
-                worker.add(_parse_one, int(row[3]), FANDOM.resolve_wikilink(row[1]))
+                idx = parse_int(row[3])
+                if not idx:
+                    continue
+                worker.add(_parse_one, idx, FANDOM.resolve_wikilink(row[1]))
         worker.wait()
 
     def fandom_ce(self):
@@ -482,7 +485,10 @@ class WikiParser:
         ):
             text = FANDOM.get_page_text(f"Craft Essence List/By ID/{sub}")
             for row in wikitextparser.parse(text).tables[0].data()[1:]:
-                worker.add(_parse_one, int(row[3]), FANDOM.resolve_wikilink(row[1]))
+                idx = parse_int(row[3])
+                if not idx:
+                    continue
+                worker.add(_parse_one, idx, FANDOM.resolve_wikilink(row[1]))
         worker.wait()
 
     def fandom_cc(self):
@@ -505,7 +511,8 @@ class WikiParser:
                 continue
             infoboxcc = parse_template(wikitext, r"^{{Infoboxcc")
             collection_no = infoboxcc.get_cast("id", cast=int)
-            assert collection_no, infoboxcc
+            if not collection_no or not infoboxcc:
+                continue
             cc_add = self.wiki_data.get_cc(collection_no)
             cc_add.fandomLink = fa_link
             params = parse_template(wikitext, r"^{{Craftlore")
@@ -520,7 +527,7 @@ class WikiParser:
         def _parse_one(event: EventW):
             if event.fandomLink and not FANDOM.get_page_text(event.fandomLink):
                 logger.warning(
-                    f'Fandom event page not found, may be moved: "{event.mcLink}"'
+                    f'Fandom event page not found, may be moved: "{event.fandomLink}"'
                 )
             if not event.mcLink:
                 return
@@ -769,14 +776,16 @@ class WikiParser:
 
 def _mc_index_data(page: str) -> dict[int, dict[str, str]]:
     text = MOONCELL.get_page_text(page, allow_cache=settings.is_debug)
-    data: list[dict[str, str]] = []
+    data: dict[int, dict[str, str]] = {}
     for block in text.split("\n\n"):
         d = {}
         for row in block.split("\n"):
             key, value = row.split("=", 1)
             d[key] = value.strip()
-        data.append(d)
-    return {int(x["id"]): x for x in data if x["id"]}
+        idx = parse_int(d["id"])
+        if idx:
+            data[idx] = d
+    return data
 
 
 def _gen_summon_key(jp_url: str | None) -> Optional[str]:
@@ -785,5 +794,12 @@ def _gen_summon_key(jp_url: str | None) -> Optional[str]:
     assert "fate-go.jp" in jp_url.lower(), jp_url
     try:
         return urlparse(jp_url).path.strip("/").replace("/", "_")
+    except:
+        return None
+
+
+def parse_int(x) -> int | None:
+    try:
+        return int(x)
     except:
         return None
