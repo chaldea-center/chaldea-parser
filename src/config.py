@@ -85,6 +85,7 @@ class PayloadSetting(BaseSettings):
     skip_quests: bool = False
     recent_quest_expire: int = 20
     main_story_quest_expire: int = 90
+    expired_wars: list[int] = []
     skip_prev_quest_drops: bool = False
     run_wiki_parser: bool = False
     slow_mode: bool = False

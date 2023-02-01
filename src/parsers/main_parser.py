@@ -511,6 +511,11 @@ class MainParser:
         except Exception as e:
             logger.error(f"fail to reading fixed drop data of previous build: {e}")
 
+        def _get_expire(quest: NiceQuest, default_days: int | None) -> int | None:
+            if quest.warId in self.payload.expired_wars:
+                return 0
+            return default_days
+
         def _save_free_phase(quest: NiceQuest, phase=3):
             assert (
                 phase in quest.phases
@@ -524,7 +529,7 @@ class MainParser:
                 quest.id,
                 phase,
                 # filter_fn=_check_quest_phase_in_recent,
-                expire_after=self.payload.main_story_quest_expire * 24 * 3600,
+                expire_after=_get_expire(quest, self.payload.main_story_quest_expire),
             )
             assert phase_data
             self.jp_data.cachedQuestPhases[quest.id * 100 + phase] = phase_data
@@ -540,7 +545,7 @@ class MainParser:
             for phase in quest.phases:
                 phase_key = quest.id * 100 + phase
                 previous_data = previous_fixed_drops.get(phase_key)
-                if previous_data:
+                if previous_data and quest.warId not in self.payload.expired_wars:
                     # 关闭未过3天且20天内开放
                     retry_jp = (
                         quest.closedAt > close_at_limit
@@ -567,6 +572,7 @@ class MainParser:
                         Region.JP,
                         filter_fn=quest.closedAt > close_at_limit
                         and quest.openedAt > open_at_limit,
+                        expire_after=_get_expire(quest, None),
                     )
                 elif quest_na and phase in quest_na.phasesWithEnemies:
                     phase_data = AtlasApi.quest_phase(
