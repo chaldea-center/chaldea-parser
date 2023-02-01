@@ -20,13 +20,14 @@ python-dotenv = "^0.21.0"
 lxml = "^4.9.1"
 discord-webhook = "^1.0.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 fgo-game-data-api = { git = "https://github.com/chaldea-center/fgo-game-data-api.git" }
 iPython = "^8.0.1"
 black = "^22.1.0"
 isort = "^5.10.1"
 pyperclip = "^1.8.2"
 packaging = "^21.3"
+gspread = "^5.7.2"
 
 [[tool.poetry.source]]
 name = "tsinghua"

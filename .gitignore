@@ -8,6 +8,7 @@
 /static
 /commit-msg.txt
 /payload.json
+/secrets
 
 .idea/
 /test*.py
