@@ -108,6 +108,7 @@ from .domus_aurea import run_drop_rate_update
 from .update_mapping import run_mapping_update
 
 
+_T = TypeVar("_T")
 _KT = TypeVar("_KT", str, int)
 _KV = TypeVar("_KV", str, int)
 
@@ -679,9 +680,7 @@ class MainParser:
             )
             assert _text
             _bytes = _text.encode()
-        # '魔{jin}剑', 鯖江
-        for a, b in {"\ue000": "{jin}", "\ue001": "鯖"}.items():
-            _bytes = _bytes.replace(a.encode(), b.encode())
+        _bytes = self._replace_dw_chars(_bytes)
         _hash = hashlib.md5(_bytes).hexdigest()[:6]
         fv = FileVersion(
             key=key,
@@ -812,8 +811,11 @@ class MainParser:
 
         logger.info("Updating mappings")
         run_mapping_update(data.mappingData)  # before dump
+        mappings_new, mapping_patch = self._patch_mappings(
+            data.mappingData, _last_version
+        )
         _dump_by_ranges(
-            self._encode_mapping_data(data.mappingData),
+            mappings_new,
             ranges=[
                 ["skill_detail", "td_detail"],
                 ["quest_names", "entity_names"],
@@ -822,6 +824,10 @@ class MainParser:
             key="mappingData",
             use_dict=True,
         )
+        if mapping_patch:
+            _normal_dump(mapping_patch, "mappingPatch")
+        else:
+            logger.info("no mapping patch generated")
 
         _dump_by_ranges(
             data.event_dict,
@@ -918,6 +924,60 @@ class MainParser:
             msg = describe_regions(self.payload.regions) + msg
         settings.commit_msg.write_text(msg)
         self.gametop()
+
+    @staticmethod
+    def _replace_dw_chars(content: _T) -> _T:
+        # '魔{jin}剑', 鯖江
+        chars = {"\ue000": "{jin}", "\ue001": "鯖"}
+        if isinstance(content, str):
+            for k, v in chars.items():
+                content = content.replace(k, v)
+        elif isinstance(content, bytes):
+            for k, v in chars.items():
+                content = content.replace(k.encode(), v.encode())
+        return content
+
+    def _patch_mappings(
+        self, mappings: MappingData, last_ver: DataVersion
+    ) -> tuple[dict, dict]:
+        encoded = dump_json(
+            self._encode_mapping_data(mappings),
+            default=self._encoder,
+            indent2=False,
+            new_line=False,
+        )
+        assert encoded
+        encoded = self._replace_dw_chars(encoded)
+
+        data1: dict = orjson.loads(encoded)
+        if not self.payload.patch_mappings:
+            return data1, {}
+        data0 = {}
+        for file in last_ver.files.values():
+            if file.key == "mappingData":
+                data0.update(
+                    orjson.loads((settings.output_dist / file.filename).read_text())
+                )
+        if not data0:
+            return data1, {}
+
+        def _create_patch(new_: dict, old_: dict) -> dict:
+            # only addition and changes, no deletion
+            patch = {}
+            for k, v in new_.items():
+                if k not in old_:
+                    patch[k] = v
+                else:
+                    v_old = old_[k]
+                    if isinstance(v, dict) and isinstance(v_old, dict):
+                        sub_patch = _create_patch(v, v_old)
+                        if sub_patch:
+                            patch[k] = sub_patch
+                    elif v != v_old:
+                        patch[k] = v
+            return patch
+
+        return data0, _create_patch(data1, data0)
 
     @staticmethod
     def _encode_mapping_data(data: MappingData) -> dict[str, Any]:

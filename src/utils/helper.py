@@ -51,7 +51,7 @@ def sort_dict(d: Mapping) -> dict:
     return dict(sorted(d.items(), key=itemgetter(0)))
 
 
-def load_json(fp: str | Path, default=None) -> Optional[Any]:
+def load_json(fp: str | Path, default=None) -> Any:
     fp = Path(fp)
     if fp.exists():
         obj = orjson.loads(fp.read_bytes())
@@ -68,7 +68,7 @@ def dump_json(
     new_line: bool = True,
     option: Optional[int] = None,
     sort_keys: Optional[bool] = None,
-) -> Optional[str]:
+) -> str:
     if option is None:
         option = 0
     if new_line:
@@ -86,8 +86,7 @@ def dump_json(
         if not fp.parent.exists():
             fp.parent.mkdir(parents=True)
         fp.write_bytes(_bytes)
-    else:
-        return text
+    return text
 
 
 def dump_json_beautify(

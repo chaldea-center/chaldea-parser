@@ -89,6 +89,7 @@ class PayloadSetting(BaseSettings):
     skip_prev_quest_drops: bool = False
     run_wiki_parser: bool = False
     slow_mode: bool = False
+    patch_mappings: bool = False
 
     class Config:
         @classmethod
