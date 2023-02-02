@@ -734,14 +734,6 @@ class MainParser:
             )
         except:  # noqa
             _last_version = cur_version.copy(deep=True)
-        if not settings.is_debug:
-            for f in settings.output_dist.glob("**/*"):
-                if f.name in ("news.json", "config.json", "addData.json"):
-                    continue
-                elif f.is_file():
-                    f.unlink()
-                elif f.is_dir():
-                    shutil.rmtree(f)
 
         def _normal_dump(
             obj,
@@ -800,6 +792,20 @@ class MainParser:
                 fn = f"{key}.json"
             _normal_dump(None, key, fn, _bytes=fp.read_bytes())
 
+        # start writing files
+        mappings_new, mapping_patch = self._patch_mappings(
+            data.mappingData, _last_version
+        )
+        # delete files after old mappings read
+        if not settings.is_debug:
+            for f in settings.output_dist.glob("**/*"):
+                if f.name in ("news.json", "config.json", "addData.json"):
+                    continue
+                elif f.is_file():
+                    f.unlink()
+                elif f.is_dir():
+                    shutil.rmtree(f)
+
         _dump_by_count(data.nice_servant_lore, 100, "servants")
         _dump_by_count(data.nice_equip_lore, 500, "craftEssences")
         _normal_dump(data.nice_command_code, "commandCodes")
@@ -811,9 +817,6 @@ class MainParser:
 
         logger.info("Updating mappings")
         run_mapping_update(data.mappingData)  # before dump
-        mappings_new, mapping_patch = self._patch_mappings(
-            data.mappingData, _last_version
-        )
         _dump_by_ranges(
             mappings_new,
             ranges=[
