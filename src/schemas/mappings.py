@@ -174,4 +174,5 @@ class MappingData(BaseModel):
 
     enums: EnumMapping = EnumMapping()
     misc: dict[str, MappingStr] = {}
+    misc2: dict[str, dict[str, MappingStr]] = {}
     cn_replace: dict[str, str] = {}
