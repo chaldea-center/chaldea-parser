@@ -13,7 +13,6 @@ jobs:
     env:
       output_dir: "data/"
       cache_dir: "cache/"
-      static_dir: "static/"
       mc_user: ${{ secrets.MC_USER }}
       mc_pwd: ${{ secrets.MC_PWD }}
       fandom_user: ${{ secrets.FANDOM_USER }}
@@ -27,16 +26,25 @@ jobs:
           /bin/date
           echo "date=$(/bin/date -u "+%Y%m%d%H%M")" >> $GITHUB_OUTPUT
           curl -s https://ipinfo.io/ip
-          echo https://github.com/chaldea-center/chaldea-data/commits/main
         shell: bash
 
-      - name: Checkout chaldea-parser
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+        with:
+          repository: chaldea-center/fgo-game-data-api
+          token: ${{ secrets.GH_PAGES_TOKEN }}
+          path: fgo-game-data-api
 
       - name: Configure git author
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Save payload
+        if: ${{ github.event.client_payload }}
+        run: |
+          echo '${{ toJson(github.event.client_payload) }}' >> payload.json
+          cat payload.json
 
       - name: Cache Atlas and wiki api response
         uses: actions/cache@v3
@@ -53,10 +61,6 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - uses: actions/checkout@v3
-        with:
-          repository: chaldea-center/fgo-game-data-api
-          path: fgo-game-data-api
 
       - name: Install dependencies
         run: |
@@ -69,33 +73,18 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: chaldea-center/chaldea-data
-          token: ${{ secrets.GH_PAGES_TOKEN }}
           path: ${{ env.output_dir }}
 
-      - name: Checkout static repo
-        uses: actions/checkout@v3
-        with:
-          repository: chaldea-center/static-resource
-          token: ${{ secrets.GH_PAGES_TOKEN }}
-          path: ${{ env.static_dir }}
-
-      - name: Run wiki parser
+      - name: Parse wiki
         run: python main.py wiki
 
       - name: Commit wiki update
         working-directory: ${{ env.output_dir }}
         run: |
           git add .
-          git commit -m "update wiki data" || echo "Nothing to update"
+          git commit -m "update wiki data" || echo "Nothing to commit"
 
-      - name: Publish static
-        working-directory: ${{ env.static_dir }}
-        run: |
-          git add .
-          git commit -m "update static files" || echo "Nothing to update"
-          git push
-
-      - name: Run Atlas parser
+      - name: Parse atlas
         run: python main.py atlas
 
       - name: Publish data
@@ -104,8 +93,8 @@ jobs:
           git add .
           if [ -e commit-msg.txt ]
           then
-              git commit -F commit-msg.txt || echo "Nothing to update"
+              git commit -F commit-msg.txt || echo "Nothing to commit"
           else
-              git commit -m "atlas parser: update data" || echo "Nothing to update"
+              git commit -m "atlas parser: update data" || echo "Nothing to commit"
           fi
           git push

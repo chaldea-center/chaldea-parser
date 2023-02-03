@@ -196,13 +196,14 @@ class WikiTool:
         sha1value = image.imageinfo["sha1"]
         url = re.sub(r"^http://", "https://", origin_url)
         url += "?sha1=" + sha1value
-        filepath: Path = Path(settings.static_dir) / self.host / sha1value
-        if (
-            not filepath.exists()
-            or sha1(filepath.read_bytes()).hexdigest() != sha1value
-        ):
-            if not settings.is_debug:
-                self._download_image(origin_url, filepath)
+        # # deprecated: "removed sha1 and `_download_image`"
+        # filepath: Path = Path(settings.static_dir) / self.host / sha1value
+        # if (
+        #     not filepath.exists()
+        #     or sha1(filepath.read_bytes()).hexdigest() != sha1value
+        # ):
+        #     if not settings.is_debug:
+        #         self._download_image(origin_url, filepath)
         return url
 
     @staticmethod

@@ -992,7 +992,7 @@ class MainParser:
             if not isinstance(map, dict):
                 return map
             return {
-                k: v if k in ("enums", "misc") else _clean_map(v)
+                k: v if k in ("enums", "misc", "misc2") else _clean_map(v)
                 for k, v in map.items()
                 if v
             }

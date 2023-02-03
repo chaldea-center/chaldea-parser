@@ -9,7 +9,6 @@ jobs:
     env:
       output_dir: "data/"
       cache_dir: "cache/"
-      static_dir: "static/"
       mc_user: ${{ secrets.MC_USER }}
       mc_pwd: ${{ secrets.MC_PWD }}
       fandom_user: ${{ secrets.FANDOM_USER }}
@@ -22,11 +21,14 @@ jobs:
         run: |
           /bin/date
           echo "date=$(/bin/date -u "+%Y%m%d%H%M")" >> $GITHUB_OUTPUT
-          echo https://github.com/chaldea-center/chaldea-data/commits/main
+          curl -s https://ipinfo.io/ip
         shell: bash
 
-      - name: Checkout chaldea-parser
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+        with:
+          repository: chaldea-center/fgo-game-data-api
+          path: fgo-game-data-api
 
       - name: Configure git author
         run: |
@@ -54,10 +56,6 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - uses: actions/checkout@v3
-        with:
-          repository: chaldea-center/fgo-game-data-api
-          path: fgo-game-data-api
 
       - name: Install dependencies
         run: |
@@ -73,40 +71,16 @@ jobs:
           token: ${{ secrets.GH_PAGES_TOKEN }}
           path: ${{ env.output_dir }}
 
-      - run: echo "LAST_AUTHOR=$(git log -1 --pretty=format:'%an')" >> $GITHUB_ENV
-        working-directory: ${{ env.output_dir }}
-      - run: echo "NEED_WIKI=${{ !contains(env.LAST_AUTHOR, '[bot]') || (github.event.client_payload && github.event.client_payload.run_wiki_parser) }}" >> $GITHUB_ENV
-        working-directory: ${{ env.output_dir }}
+      - name: Try parsing wiki
+        run: python main.py trywiki
 
-      - name: Checkout static repo
-        if: env.NEED_WIKI == 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: chaldea-center/static-resource
-          token: ${{ secrets.GH_PAGES_TOKEN }}
-          path: ${{ env.static_dir }}
-
-      - name: Run wiki parser
-        if: env.NEED_WIKI == 'true'
-        run: python main.py wiki
-
-      - name: Publish wiki data
-        if: env.NEED_WIKI == 'true'
+      - name: Commit wiki update
         working-directory: ${{ env.output_dir }}
         run: |
           git add .
-          git commit -m "update wiki data" || echo "Nothing to update"
-          # git push
+          git commit -m "update wiki data" || echo "Nothing to commit"
 
-      - name: Publish static
-        if: env.NEED_WIKI == 'true'
-        working-directory: ${{ env.static_dir }}
-        run: |
-          git add .
-          git commit -m "update static files" || echo "Nothing to update"
-          git push
-
-      - name: Run atlas parser
+      - name: Parse atlas
         run: python main.py atlas
 
       - name: Publish data
@@ -115,8 +89,8 @@ jobs:
           git add .
           if [ -e commit-msg.txt ]
           then
-              git commit -F commit-msg.txt || echo "Nothing to update"
+              git commit -F commit-msg.txt || echo "Nothing to commit"
           else
-              git commit -m "atlas parser: update data" || echo "Nothing to update"
+              git commit -m "atlas parser: update data" || echo "Nothing to commit"
           fi
           git push
