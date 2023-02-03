@@ -76,6 +76,7 @@ Path(settings.log_dir).mkdir(parents=True, exist_ok=True)
 class PayloadSetting(BaseSettings):
     regions: list[Region] = []  # from aa/api
     event: str | None = None
+    run_wiki_parser: bool | None = None
     force_update_export: bool = False
     clear_cache_http: bool = False
     clear_cache_wiki: bool = False
@@ -87,7 +88,6 @@ class PayloadSetting(BaseSettings):
     main_story_quest_expire: int = 90
     expired_wars: list[int] = []
     skip_prev_quest_drops: bool = False
-    run_wiki_parser: bool = False
     slow_mode: bool = False
     patch_mappings: bool = False
 

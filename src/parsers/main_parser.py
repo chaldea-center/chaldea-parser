@@ -515,7 +515,9 @@ class MainParser:
         def _get_expire(quest: NiceQuest, default_days: int | None) -> int | None:
             if quest.warId in self.payload.expired_wars:
                 return 0
-            return default_days
+            if default_days is not None:
+                return default_days * 24 * 3600
+            return None
 
         def _save_free_phase(quest: NiceQuest, phase=3):
             assert (

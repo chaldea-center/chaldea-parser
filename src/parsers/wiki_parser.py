@@ -74,6 +74,9 @@ class WikiParser:
 
     @count_time
     def start(self):
+        if self.payload.run_wiki_parser is False:
+            logger.info("run_wiki_parser=False, skip")
+            return
         self._jp._get_svts()
         self._mc._get_svts()
         self._fandom._get_svts()
