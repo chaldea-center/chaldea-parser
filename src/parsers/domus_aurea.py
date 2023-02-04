@@ -1,431 +1,175 @@
 """
 Drop data from fgo domus aurea
-
-free counts: quest_id -> war -> checkbox
 """
+import csv
 import time
+from dataclasses import dataclass
 from io import StringIO
 
-import numpy
-import pandas as pd
 import requests
 from app.schemas.gameenums import NiceQuestAfterClearType, NiceQuestType
-from app.schemas.nice import NiceQuestPhase, NiceWar
+from app.schemas.nice import NiceItem, NiceQuest, NiceWar
+from app.schemas.raw import MstQuestPhase
+from pydantic import parse_file_as, parse_obj_as
 
 from src.config import settings
+from src.parsers.domus_aurea_data import FIX_SPOT_QUEST_MAPPING, ITEM_NAME_MAPPING
 from src.schemas.drop_data import DropRateData, DropRateSheet
-from src.utils import AtlasApi, logger
-from src.utils.helper import LocalProxy, dump_json_beautify, load_json
+from src.utils import logger
+from src.utils.helper import LocalProxy, dump_json_beautify
 
 
-sheet_url = (
-    "1H4x2FOF-9eHy0CByuRQR74x37qji2i5HqTKYpQw9oO8",
-    "777678446",
-    False,
-)  # drop rate
-# sheet_url = ("1H4x2FOF-9eHy0CByuRQR74x37qji2i5HqTKYpQw9oO8", "397765373", False)  # ap rate
-legacy_sheet_url = (
-    "1npusaiDGRMD0KlG10gLUNI_KNLnM1UBDTzc-wuJZcgA",
-    "56582984",
-    True,
-)  # drop rate
+class DOMUS_URLS:
+    drop_rate = "https://docs.google.com/spreadsheets/d/1H4x2FOF-9eHy0CByuRQR74x37qji2i5HqTKYpQw9oO8/export?gid=756436527&format=csv"
+    ap_rate = "https://docs.google.com/spreadsheets/d/1H4x2FOF-9eHy0CByuRQR74x37qji2i5HqTKYpQw9oO8/export?gid=397765373&format=csv"
+    drop_rate_old = "https://docs.google.com/spreadsheets/d/1npusaiDGRMD0KlG10gLUNI_KNLnM1UBDTzc-wuJZcgA/export?gid=56582984&format=csv"
+    ap_rate_old = "https://docs.google.com/spreadsheets/d/1npusaiDGRMD0KlG10gLUNI_KNLnM1UBDTzc-wuJZcgA/export?gid=1041274460&format=csv"
 
 
-# legacy_sheet_url = ("1npusaiDGRMD0KlG10gLUNI_KNLnM1UBDTzc-wuJZcgA", "1041274460", True)  # ap rate
+@dataclass
+class _MasterData:
+    quests: dict[int, NiceQuest]
+    questPhases: dict[int, MstQuestPhase]
+    spotNameQuestIdMap: dict[str, int]
+
+
+def get_master_data():
+    # check item id and name
+    items = parse_file_as(
+        list[NiceItem], settings.atlas_export_dir / "JP/nice_item.json"
+    )
+    items = {item.id: item for item in items}
+    for item_name, (item_id, raw_name) in ITEM_NAME_MAPPING.items():
+        assert items[item_id].name == raw_name, (
+            item_name,
+            (item_id, raw_name),
+            items[item_id].name,
+        )
+
+    valid_items = [x[0] for x in ITEM_NAME_MAPPING.values()]
+    assert len(valid_items) == len(set(valid_items))
+
+    # wars: main story and daily(1002)
+    extra_quest_ids = set(FIX_SPOT_QUEST_MAPPING.values())
+    wars = parse_file_as(list[NiceWar], settings.atlas_export_dir / "JP/nice_war.json")
+    valid_quests: dict[int, NiceQuest] = {}
+    spot_map: dict[str, int] = {}
+    for war in wars:
+        if war.id != 1002 and war.id >= 1000:
+            continue
+        for spot in war.spots:
+            frees = [
+                quest
+                for quest in spot.quests
+                if (
+                    quest.type == NiceQuestType.free
+                    and quest.afterClear == NiceQuestAfterClearType.repeatLast
+                )
+                or quest.id in extra_quest_ids
+            ]
+            valid_quests.update({x.id: x for x in frees})
+            if len(frees) == 1:
+                spot_map[spot.name] = frees[0].id
+    spot_map |= FIX_SPOT_QUEST_MAPPING
+
+    for quest_id in extra_quest_ids:
+        valid_quests[quest_id]
+        assert quest_id in valid_quests, f"quest {quest_id} not found"
+
+    resp = requests.get(
+        "https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/JP/master/mstQuestPhase.json"
+    )
+    mst_phases = parse_obj_as(list[MstQuestPhase], resp.json())
+    quest_phases = {
+        quest.questId: quest
+        for quest in mst_phases
+        if quest.questId in valid_quests
+        and quest.phase == valid_quests[quest.questId].phases[-1]
+    }
+    phase_not_found = set(valid_quests).difference(quest_phases.keys())
+    assert not phase_not_found, f"quest phases not found: {phase_not_found}"
+
+    return _MasterData(
+        quests=valid_quests,
+        questPhases=quest_phases,
+        spotNameQuestIdMap=spot_map,
+    )
+
+
+#%%
+def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
+    with LocalProxy(enabled=settings.is_debug):
+        csv_fp = settings.output_wiki / "domus_aurea_drop_sheet.csv"
+        if settings.is_debug:
+            csv_contents = csv_fp.read_text()
+        else:
+            logger.info(f"downloading sheet from {csv_url}")
+            csv_contents = requests.get(csv_url).text
+            csv_fp.write_text(csv_contents)
+    table: list[list[str]] = list(csv.reader(StringIO(csv_contents)))
+
+    HEAD_ROW = 2
+    SPOT_COL = 1
+    RUN_COL = 3
+    table = table[HEAD_ROW:]
+
+    # <itemId, col>
+    item_id_col_map: dict[int, int] = {
+        ITEM_NAME_MAPPING[name.strip()][0]: col
+        for col, name in enumerate(table[0])
+        if name.strip() in ITEM_NAME_MAPPING
+    }
+    item_not_found = set(v[0] for v in ITEM_NAME_MAPPING.values()).difference(
+        item_id_col_map.keys()
+    )
+    assert not item_not_found, f"items not found: {item_id_col_map}"
+
+    # <questId, row>
+    quest_id_row_map: dict[int, int] = {
+        mst_data.spotNameQuestIdMap[row_data[SPOT_COL]]: row
+        for row, row_data in enumerate(table)
+        if row_data[SPOT_COL] in mst_data.spotNameQuestIdMap
+    }
+    quest_not_found = set(mst_data.quests).difference(quest_id_row_map.keys())
+    assert not quest_not_found, f"quests not found: {quest_not_found}"
+
+    sheet = DropRateSheet()
+    sheet.itemIds = list(item_id_col_map.keys())
+    for quest_id, row in quest_id_row_map.items():
+        ap = mst_data.quests[quest_id].consume
+        bond = mst_data.questPhases[quest_id].friendshipExp
+        exp = mst_data.questPhases[quest_id].playerExp
+        run = int(table[row][RUN_COL].replace(",", ""))
+        sheet.add_quest(quest_id, ap=ap, run=run, bond=bond, exp=exp)
+
+    for x, item_id in enumerate(item_id_col_map.keys()):
+        col = item_id_col_map[item_id]
+        for y, quest_id in enumerate(quest_id_row_map.keys()):
+            row = quest_id_row_map[quest_id]
+            cell = table[row][col].strip()
+            if not cell:
+                continue
+            sheet.sparseMatrix.setdefault(x, {})[y] = float(cell.replace(",", ""))
+    return sheet
 
 
 def run_drop_rate_update():
+    mst_data = get_master_data()
+    fp = settings.output_wiki / "dropRate.json"
+    if fp.exists():
+        legacy_data = DropRateData.parse_file(fp)
+    else:
+        legacy_data = None
     data = DropRateData(
         updatedAt=int(time.time()),
-        legacyData=_parse_sheet_data(*legacy_sheet_url),
-        newData=_parse_sheet_data(*sheet_url),
+        legacyData=legacy_data.legacyData if legacy_data else DropRateSheet(),
+        newData=_parse_sheet_data(DOMUS_URLS.drop_rate, mst_data=mst_data),
     )
-    dump_json_beautify(data, settings.output_wiki / "dropRate.json")
+    dump_json_beautify(data, fp)
     print("Saved drop rate data")
 
 
-def _full_sheet_url(key, gid):
-    return f"https://docs.google.com/spreadsheets/d/{key}/export?gid={gid}&format=csv"
-
-
-def _parse_sheet_data(key: str, gid: str, legacy: bool) -> DropRateSheet:
-    with LocalProxy(enabled=settings.is_debug):
-        url = _full_sheet_url(key, gid)
-        logger.info(f"downloading sheet from {url}")
-        csv_contents = requests.get(url).content.decode("utf8")
-        fn = "domus_aurea_drop_sheet" + ("_legacy.csv" if legacy else ".csv")
-        settings.output_wiki.joinpath(fn).write_text(csv_contents)
-    df: pd.DataFrame = pd.read_csv(
-        StringIO(csv_contents), header=None, encoding="utf8", thousands=","
-    )
-    df.drop(index=0, inplace=True)
-
-    # drop quest_name, item_name, last rows. EXCEPT first pair
-    rows = [r for r in df.index if df.loc[r, 1] == "クエスト名"]  # type: ignore
-    rows_drop = []
-    for r in rows[1:]:
-        rows_drop.extend([r, r + 1])  # type: ignore
-    rows_drop.extend([r for r in df.index if r > rows_drop[-1]])
-    for i, r in enumerate(df.index):
-        if i > 3 and pd.isna(df.loc[r, 1]):  # type: ignore
-            rows_drop.append(r)
-    rows_drop = list(set(rows_drop))
-    # print(rows_drop)
-    df.drop(index=rows_drop, inplace=True)
-
-    # drop 空列, "nan != nan"
-    # df.dropna(axis=1, how='all', inplace=True)
-    cols1 = [
-        c
-        for i, c in enumerate(df.columns)
-        if df.iloc[0, i] != df.iloc[0, i] and df.iloc[1, i] != df.iloc[1, i] and i > 5
-    ]
-    df.drop(
-        columns=cols1,
-        inplace=True,
-    )
-    # drop 重复的quest列
-    cols2 = [c for c in df.columns if df.loc[1, c] == "クエスト名"]  # type: ignore
-    df.drop(columns=cols2[1:], inplace=True)
-
-    for i, c in enumerate(list(df.columns)):
-        if df.iloc[0, i] == "猛火":
-            df = df.iloc[:, :i]
-            break
-    assert not df.iloc[2:, 1].isnull().any(), list(df.iloc[2:, 1])
-    assert df.iloc[0, -35] == "輝石"  # (3+2)*7
-    settings.tmp_vars[f"df_{legacy}"] = df
-    df = df.apply(lambda x: x.str.replace(",", ""), axis=1)  # type: ignore
-
-    sheet_data = DropRateSheet()
-    sheet_items = [
-        _tuple for _tuple in (_LEGACY_ITEM_MAPPING if legacy else _ITEM_MAPPING)
-    ]
-    assert tuple(df.iloc[1, 4:]) == tuple(
-        [_tuple[0] for _tuple in sheet_items]
-    ), f"\n{tuple(df.iloc[1, 4:])}\n{tuple([_tuple[0] for _tuple in sheet_items])}"
-    if legacy:
-        assert tuple(df.iloc[0, :4]) == ("エリア", "クエスト名", "AP", "サンプル数")
-    else:
-        assert tuple(df.iloc[0, :2]) == ("エリア", "クエスト名")
-
-    sheet_data.itemIds = [_tuple[1] for _tuple in sheet_items]
-    sheet_data.apCosts = list(df.iloc[2:, 2].astype("int"))
-    # print('sampleNum: ', df.iloc[2:, 3][:10])
-    sheet_data.runs = list(df.iloc[2:, 3].fillna(0).astype("int"))
-    sheet_quests = list(df.iloc[2:, 1])
-    quest_ids, unknown_quests = [], []
-    spot_map = _get_quest_spot_map()
-    for name in sheet_quests:
-        if name in spot_map:
-            # if spot_map[name] == 0:
-            #     print(f'skip {name}')
-            #     continue
-            quest_ids.append(spot_map[name])
-        else:
-            unknown_quests.append(name)
-    assert not unknown_quests, f"these quests not found: {unknown_quests}"
-    sheet_data.questIds = quest_ids
-    assert len(sheet_data.questIds) == len(sheet_data.apCosts) == len(sheet_data.runs)
-    for index in range(len(sheet_data.questIds)):
-        quest_id = sheet_data.questIds[index]
-        sheet_ap = sheet_data.apCosts[index]
-        fix_ap = _FIX_AP.get(quest_id)
-        if fix_ap and fix_ap != sheet_ap:
-            if sheet_ap * 2 == fix_ap:
-                print(f"{quest_id} {sheet_ap}->{fix_ap}")
-                sheet_data.apCosts[index] = fix_ap
-            else:
-                print(f"ERROR: unexpected AP: {quest_id} {sheet_ap}<->{fix_ap}")
-
-    quests: list[NiceQuestPhase] = []
-    for questId in sheet_data.questIds:
-        # 94-daily, 93-free
-        q = AtlasApi.quest_phase(questId, 3 if str(questId).startswith("93") else 1)
-        assert q
-        quests.append(q)
-    sheet_data.bonds = [q.bond for q in quests]
-    sheet_data.exps = [q.exp for q in quests]
-
-    matrix: pd.DataFrame = df.iloc[2:, 4:]
-    sparse_matrix: dict[int, dict[int, float]] = {}
-    for j, _ in enumerate(matrix.columns):
-        for i, __ in enumerate(matrix.index):
-            v = matrix.iloc[i, j]  # type: ignore
-            if pd.notna(v):
-                sparse_matrix.setdefault(j, {})[i] = float(v)  # type: ignore
-    sheet_data.sparseMatrix = sparse_matrix
-    return sheet_data
-
-
-def _get_quest_spot_map():
-    wars: list[NiceWar] = [
-        NiceWar.parse_obj(war)
-        for war in load_json(settings.atlas_export_dir / "JP/nice_war.json") or []
-    ]
-
-    spot_map: dict[str, int] = {}
-    for war in wars:
-        if war.id >= 1000:
-            continue
-        for spot in war.spots:
-            free_quests = [
-                q
-                for q in spot.quests
-                if q.type == NiceQuestType.free
-                and q.afterClear == NiceQuestAfterClearType.repeatLast
-            ]
-            if len(free_quests) == 1:
-                spot_map[spot.name] = free_quests[0].id
-
-    return spot_map | _FIX_NAME_ID_MAPPING
-
-
-_FIX_NAME_ID_MAPPING: dict[str, int] = {
-    "殺極級": 94066106,
-    "殺超級": 94006828,
-    "殺上級": 94006827,
-    "殺中級": 94006826,
-    "殺初級": 94006825,
-    "術極級": 94066105,
-    "術超級": 94006824,
-    "術上級": 94006823,
-    "術中級": 94006822,
-    "術初級": 94006821,
-    "騎極級": 94066104,
-    "騎超級": 94006820,
-    "騎上級": 94006819,
-    "騎中級": 94006818,
-    "騎初級": 94006817,
-    "狂極級": 94066103,
-    "狂超級": 94006816,
-    "狂上級": 94006815,
-    "狂中級": 94006814,
-    "狂初級": 94006813,
-    "槍極級": 94066102,
-    "槍超級": 94006812,
-    "槍上級": 94006811,
-    "槍中級": 94006810,
-    "槍初級": 94006809,
-    "弓極級": 94066101,
-    "弓超級": 94006808,
-    "弓上級": 94006807,
-    "弓中級": 94006806,
-    "弓初級": 94006805,
-    "剣極級": 94066107,
-    "剣超級": 94006804,
-    "剣上級": 94006803,
-    "剣中級": 94006802,
-    "剣初級": 94006801,
-    # huyuki
-    "X-A（屋敷跡）": 93000001,
-    "X-B（爆心地）": 93000002,
-    "X-C（大橋）": 93000003,
-    "X-D（港）": 93000004,
-    "X-E（教会）": 93000005,
-    "X-F（校舎）": 93000006,
-    "X-G（燃え盛る森）": 93000007,
-    "変動座標点0号（大空洞）": 93000008,
-    # dup
-    "群島（静かな入り江）": 93000308,
-    "群島（隠された島）": 93000312,
-    "裏山（名もなき霊峰）": 93020307,
-    "裏山（戦戦恐恐）": 93020309,
-    # "代々木ニ丁目" ニ 二
-    "代々木二丁目": 93020101,
-}
-
-
-_RANK_AP = {
-    "極級": 40,
-    "超級": 40,
-    "上級": 30,
-    "中級": 20,
-    "初級": 10,
-}
-
-_FIX_AP = {
-    _FIX_NAME_ID_MAPPING[cls_name + rank]: _RANK_AP[rank]
-    for cls_name in ["殺", "術", "騎", "狂", "槍", "弓", "剣"]
-    for rank in _RANK_AP
-}
-
-_LEGACY_ITEM_MAPPING = (
-    ("証", 6503, "英雄の証"),
-    ("骨", 6516, "凶骨"),
-    ("牙", 6512, "竜の牙"),
-    ("塵", 6505, "虚影の塵"),
-    ("鎖", 6522, "愚者の鎖"),
-    ("毒針", 6527, "万死の毒針"),
-    ("髄液", 6530, "魔術髄液"),
-    ("鉄杭", 6533, "宵哭きの鉄杭"),
-    ("火薬", 6534, "励振火薬"),
-    ("小鐘", 6549, "赦免の小鐘"),
-    ("種", 6502, "世界樹の種"),
-    ("ﾗﾝﾀﾝ", 6508, "ゴーストランタン"),
-    ("八連", 6515, "八連双晶"),
-    ("蛇玉", 6509, "蛇の宝玉"),
-    ("羽根", 6501, "鳳凰の羽根"),
-    ("歯車", 6510, "無間の歯車"),
-    ("頁", 6511, "禁断の頁"),
-    ("ホム", 6514, "ホムンクルスベビー"),
-    ("蹄鉄", 6513, "隕蹄鉄"),
-    ("勲章", 6524, "大騎士勲章"),
-    ("貝殻", 6526, "追憶の貝殻"),
-    ("勾玉", 6532, "枯淡勾玉"),
-    ("結氷", 6535, "永遠結氷"),
-    ("指輪", 6537, "巨人の指輪"),
-    ("ｵｰﾛﾗ", 6536, "オーロラ鋼"),
-    ("鈴", 6538, "閑古鈴"),
-    ("矢尻", 6541, "禍罪の矢尻"),
-    ("冠", 6543, "光銀の冠"),
-    ("霊子", 6545, "神脈霊子"),
-    ("糸玉", 6547, "虹の糸玉"),
-    ("鱗粉", 6550, "夢幻の鱗粉"),
-    ("爪", 6507, "混沌の爪"),
-    ("心臓", 6517, "蛮神の心臓"),
-    ("逆鱗", 6506, "竜の逆鱗"),
-    ("根", 6518, "精霊根"),
-    ("幼角", 6519, "戦馬の幼角"),
-    ("涙石", 6520, "血の涙石"),
-    ("脂", 6521, "黒獣脂"),
-    ("ﾗﾝﾌﾟ", 6523, "封魔のランプ"),
-    ("ｽｶﾗﾍﾞ", 6525, "智慧のスカラベ"),
-    ("産毛", 6528, "原初の産毛"),
-    ("胆石", 6529, "呪獣胆石"),
-    ("神酒", 6531, "奇奇神酒"),
-    ("炉心", 6539, "暁光炉心"),
-    ("鏡", 6540, "九十九鏡"),
-    ("卵", 6542, "真理の卵"),
-    ("ｶｹﾗ", 6544, "煌星のカケラ"),
-    ("実", 6546, "悠久の実"),
-    ("鬼灯", 6548, "鬼炎鬼灯"),
-    ("剣", 6001, "剣の輝石"),
-    ("弓", 6002, "弓の輝石"),
-    ("槍", 6003, "槍の輝石"),
-    ("騎", 6004, "騎の輝石"),
-    ("術", 6005, "術の輝石"),
-    ("殺", 6006, "殺の輝石"),
-    ("狂", 6007, "狂の輝石"),
-    ("剣", 6101, "剣の魔石"),
-    ("弓", 6102, "弓の魔石"),
-    ("槍", 6103, "槍の魔石"),
-    ("騎", 6104, "騎の魔石"),
-    ("術", 6105, "術の魔石"),
-    ("殺", 6106, "殺の魔石"),
-    ("狂", 6107, "狂の魔石"),
-    ("剣", 6201, "剣の秘石"),
-    ("弓", 6202, "弓の秘石"),
-    ("槍", 6203, "槍の秘石"),
-    ("騎", 6204, "騎の秘石"),
-    ("術", 6205, "術の秘石"),
-    ("殺", 6206, "殺の秘石"),
-    ("狂", 6207, "狂の秘石"),
-    ("剣", 7001, "セイバーピース"),
-    ("弓", 7002, "アーチャーピース"),
-    ("槍", 7003, "ランサーピース"),
-    ("騎", 7004, "ライダーピース"),
-    ("術", 7005, "キャスターピース"),
-    ("殺", 7006, "アサシンピース"),
-    ("狂", 7007, "バーサーカーピース"),
-    ("剣", 7101, "セイバーモニュメント"),
-    ("弓", 7102, "アーチャーモニュメント"),
-    ("槍", 7103, "ランサーモニュメント"),
-    ("騎", 7104, "ライダーモニュメント"),
-    ("術", 7105, "キャスターモニュメント"),
-    ("殺", 7106, "アサシンモニュメント"),
-    ("狂", 7107, "バーサーカーモニュメント"),
-)
-
-_ITEM_MAPPING = (
-    ("証", 6503, "英雄の証"),
-    ("骨", 6516, "凶骨"),
-    ("牙", 6512, "竜の牙"),
-    ("塵", 6505, "虚影の塵"),
-    ("鎖", 6522, "愚者の鎖"),
-    ("毒針", 6527, "万死の毒針"),
-    ("髄液", 6530, "魔術髄液"),
-    ("鉄杭", 6533, "宵哭きの鉄杭"),
-    ("火薬", 6534, "励振火薬"),
-    ("小鐘", 6549, "赦免の小鐘"),
-    ("剣", 6551, "黄昏の儀式剣"),
-    ("灰", 6552, "忘れじの灰"),
-    ("種", 6502, "世界樹の種"),
-    ("ﾗﾝﾀﾝ", 6508, "ゴーストランタン"),
-    ("八連", 6515, "八連双晶"),
-    ("蛇玉", 6509, "蛇の宝玉"),
-    ("羽根", 6501, "鳳凰の羽根"),
-    ("歯車", 6510, "無間の歯車"),
-    ("頁", 6511, "禁断の頁"),
-    ("ホム", 6514, "ホムンクルスベビー"),
-    ("蹄鉄", 6513, "隕蹄鉄"),
-    ("勲章", 6524, "大騎士勲章"),
-    ("貝殻", 6526, "追憶の貝殻"),
-    ("勾玉", 6532, "枯淡勾玉"),
-    ("結氷", 6535, "永遠結氷"),
-    ("指輪", 6537, "巨人の指輪"),
-    ("ｵｰﾛﾗ", 6536, "オーロラ鋼"),
-    ("鈴", 6538, "閑古鈴"),
-    ("矢尻", 6541, "禍罪の矢尻"),
-    ("冠", 6543, "光銀の冠"),
-    ("霊子", 6545, "神脈霊子"),
-    ("糸玉", 6547, "虹の糸玉"),
-    ("鱗粉", 6550, "夢幻の鱗粉"),
-    ("爪", 6507, "混沌の爪"),
-    ("心臓", 6517, "蛮神の心臓"),
-    ("逆鱗", 6506, "竜の逆鱗"),
-    ("根", 6518, "精霊根"),
-    ("幼角", 6519, "戦馬の幼角"),
-    ("涙石", 6520, "血の涙石"),
-    ("脂", 6521, "黒獣脂"),
-    ("ﾗﾝﾌﾟ", 6523, "封魔のランプ"),
-    ("ｽｶﾗﾍﾞ", 6525, "智慧のスカラベ"),
-    ("産毛", 6528, "原初の産毛"),
-    ("胆石", 6529, "呪獣胆石"),
-    ("神酒", 6531, "奇奇神酒"),
-    ("炉心", 6539, "暁光炉心"),
-    ("鏡", 6540, "九十九鏡"),
-    ("卵", 6542, "真理の卵"),
-    ("ｶｹﾗ", 6544, "煌星のカケラ"),
-    ("実", 6546, "悠久の実"),
-    ("鬼灯", 6548, "鬼炎鬼灯"),
-    # ("NewItem", 9999, "OnlyInNewSheet", True)
-    ("剣輝", 6001, "剣の輝石"),
-    ("弓輝", 6002, "弓の輝石"),
-    ("槍輝", 6003, "槍の輝石"),
-    ("騎輝", 6004, "騎の輝石"),
-    ("術輝", 6005, "術の輝石"),
-    ("殺輝", 6006, "殺の輝石"),
-    ("狂輝", 6007, "狂の輝石"),
-    ("剣魔", 6101, "剣の魔石"),
-    ("弓魔", 6102, "弓の魔石"),
-    ("槍魔", 6103, "槍の魔石"),
-    ("騎魔", 6104, "騎の魔石"),
-    ("術魔", 6105, "術の魔石"),
-    ("殺魔", 6106, "殺の魔石"),
-    ("狂魔", 6107, "狂の魔石"),
-    ("剣秘", 6201, "剣の秘石"),
-    ("弓秘", 6202, "弓の秘石"),
-    ("槍秘", 6203, "槍の秘石"),
-    ("騎秘", 6204, "騎の秘石"),
-    ("術秘", 6205, "術の秘石"),
-    ("殺秘", 6206, "殺の秘石"),
-    ("狂秘", 6207, "狂の秘石"),
-    ("剣ピ", 7001, "セイバーピース"),
-    ("弓ピ", 7002, "アーチャーピース"),
-    ("槍ピ", 7003, "ランサーピース"),
-    ("騎ピ", 7004, "ライダーピース"),
-    ("術ピ", 7005, "キャスターピース"),
-    ("殺ピ", 7006, "アサシンピース"),
-    ("狂ピ", 7007, "バーサーカーピース"),
-    ("剣モ", 7101, "セイバーモニュメント"),
-    ("弓モ", 7102, "アーチャーモニュメント"),
-    ("槍モ", 7103, "ランサーモニュメント"),
-    ("騎モ", 7104, "ライダーモニュメント"),
-    ("術モ", 7105, "キャスターモニュメント"),
-    ("殺モ", 7106, "アサシンモニュメント"),
-    ("狂モ", 7107, "バーサーカーモニュメント"),
-)
-
+# %%
 if __name__ == "__main__":
     run_drop_rate_update()
+    pass
