@@ -1243,6 +1243,8 @@ class MainParser:
 
         enums = self.jp_data.mappingData.enums
         enums.update_enums()
+        for cls_info in self.jp_data.mstClass:
+            enums.svt_class2.setdefault(cls_info.id, MappingBase())
 
     def _merge_official_mappings(self, region: Region):
         logger.info(f"merging official translations from {region}")

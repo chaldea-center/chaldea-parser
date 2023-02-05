@@ -55,6 +55,7 @@ CN_REPLACE = {
 
 class EnumMapping(BaseModel):
     svt_class: dict[SvtClass, MappingStr] = {}
+    svt_class2: dict[int, MappingStr] = {}
     attribute: dict[Attribute, MappingStr] = {}
     svt_type: dict[NiceSvtType, MappingStr] = {}
     servant_policy: dict[ServantPolicy, MappingStr] = {}
