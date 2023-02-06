@@ -2,8 +2,9 @@
 import argparse
 import subprocess
 import warnings
+from pathlib import Path
 
-from src.config import PayloadSetting
+from src.config import PayloadSetting, settings
 from src.parsers import MainParser, WikiParser, run_drop_rate_update, run_mapping_update
 from src.wiki import FANDOM, MOONCELL  # noqa
 
@@ -30,7 +31,10 @@ if __name__ == "__main__":
         # run_wiki_parser()
     elif task == "trywiki":
         summary = subprocess.check_output(
-            "git log -1 --pretty=format:'%an'", shell=True, text=True
+            "git log -1 --pretty=format:'%an'",
+            shell=True,
+            text=True,
+            cwd=Path(settings.output_dir).resolve(),
         )
         print("Last Author:", summary, flush=True)
         print("Payload:", payload.json(exclude_unset=True, indent=2), flush=True)
