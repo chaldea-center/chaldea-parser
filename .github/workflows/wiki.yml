@@ -32,7 +32,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           repository: chaldea-center/fgo-game-data-api
-          token: ${{ secrets.GH_PAGES_TOKEN }}
           path: fgo-game-data-api
 
       - name: Configure git author
@@ -73,6 +72,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: chaldea-center/chaldea-data
+          token: ${{ secrets.GH_PAGES_TOKEN }}
           path: ${{ env.output_dir }}
 
       - name: Parse wiki
