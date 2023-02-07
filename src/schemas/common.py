@@ -94,6 +94,7 @@ class SvtObtain(StrEnum):
             "无法获得": SvtObtain.unavailable,
             "活动赠送": SvtObtain.eventReward,
             "通关报酬": SvtObtain.clearReward,
+            "未知": SvtObtain.unknown,
         }[s]
 
 
