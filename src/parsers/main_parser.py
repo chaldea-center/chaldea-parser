@@ -801,7 +801,12 @@ class MainParser:
         # delete files after old mappings read
         if not settings.is_debug:
             for f in settings.output_dist.glob("**/*"):
-                if f.name in ("news.json", "config.json", "addData.json"):
+                if f.name in (
+                    "news.json",
+                    "config.json",
+                    "addData.json",
+                    "mappingPatch.json",
+                ):
                     continue
                 elif f.is_file():
                     f.unlink()
@@ -1259,6 +1264,9 @@ class MainParser:
                 sorted(set(data.ce_dict.keys()) | set(ADD_CES.get(region, {}).keys())),
             )
             mappings.svt_release.update(region, sorted(data.svt_dict.keys()))
+            mappings.entity_release.update(
+                region, sorted([svt.id for svt in data.basic_svt])
+            )
             mappings.cc_release.update(region, sorted(data.cc_dict.keys()))
             mappings.mc_release.update(region, sorted(data.mc_dict.keys()))
 

@@ -167,6 +167,7 @@ class MappingData(BaseModel):
     td_priority: dict[int, MappingBase[dict[int, int]]] = {}
 
     svt_release: MappingBase[list[int]] = MappingBase()
+    entity_release: MappingBase[list[int]] = MappingBase()
     ce_release: MappingBase[list[int]] = MappingBase()
     cc_release: MappingBase[list[int]] = MappingBase()
     mc_release: MappingBase[list[int]] = MappingBase()

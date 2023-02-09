@@ -32,6 +32,7 @@ def run_mapping_update(mappings: MappingData | None = None):
             "skill_priority",
             "td_priority",
             "svt_release",
+            "entity_release",
             "ce_release",
             "cc_release",
             "mc_release",
