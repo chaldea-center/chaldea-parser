@@ -94,11 +94,6 @@ MAPPING_FILES = [
     "war_names",
 ]
 
-gc = gspread.oauth(
-    credentials_filename=ROOT / "secrets/google-credentials.json",
-    authorized_user_filename=ROOT / "secrets/google-token.json",
-)
-workbook = gc.open_by_key(SPREADSHEET_ID)
 
 #%%
 def merge_dict(d1: Mapping[_KT], d2: Mapping[_KT], force=False):
@@ -118,7 +113,20 @@ def merge_dict(d1: Mapping[_KT], d2: Mapping[_KT], force=False):
     return out
 
 
+gc: gspread.Client | None = None
+workbook: gspread.Spreadsheet | None = None
+
+
 def get_worksheet(name: str):
+    global gc, workbook
+    if gc is None:
+        gc = gspread.oauth(
+            credentials_filename=ROOT / "secrets/google-credentials.json",
+            authorized_user_filename=ROOT / "secrets/google-token.json",
+        )
+    if workbook is None:
+        workbook = gc.open_by_key(SPREADSHEET_ID)
+
     try:
         return workbook.worksheet(name)
     except gspread.WorksheetNotFound:
@@ -162,8 +170,11 @@ def upload_l10n():
                 local_data[k][lang] = v
 
     remote_data = sheet2json(sh.get_values(), ArbLang)
-
-    merged = merge_dict(remote_data, local_data, force=True)
+    unused_keys = set(remote_data.keys()).difference(local_data.keys())
+    if unused_keys:
+        print("  unused remote keys:", unused_keys)
+    merged = merge_dict(local_data, remote_data, force=False)
+    # merged = merge_dict(remote_data, local_data, force=True)
 
     cells: list[list[str]] = []
     cells.append(["key"] + [f"{x}" for x in ArbLang])
@@ -199,6 +210,10 @@ def upload_mapping(name: str):
         local_data = parse_obj_as(Mapping[Region], event_traits)
     else:
         local_data = parse_file_as(Mapping[Region], fp)
+
+    unused_keys = set(remote_data.keys()).difference(local_data.keys())
+    if unused_keys:
+        print("  unused remote keys:", unused_keys)
 
     merged = merge_dict(local_data, remote_data, force=False)
 
@@ -262,5 +277,3 @@ if __name__ == "__main__":
         download_all_mappings()
     elif args.um:
         upload_all_mappings()
-    else:
-        parser.print_help()

@@ -89,7 +89,7 @@ class PayloadSetting(BaseSettings):
     expired_wars: list[int] = []
     skip_prev_quest_drops: bool = False
     slow_mode: bool = False
-    patch_mappings: bool = False
+    patch_mappings: bool = True
 
     class Config:
         @classmethod
