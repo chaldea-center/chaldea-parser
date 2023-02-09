@@ -100,12 +100,10 @@ def get_master_data():
 def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
     with LocalProxy(enabled=settings.is_debug):
         csv_fp = settings.output_wiki / "domus_aurea_drop_sheet.csv"
-        if settings.is_debug:
-            csv_contents = csv_fp.read_text()
-        else:
-            logger.info(f"downloading sheet from {csv_url}")
-            csv_contents = requests.get(csv_url).text
-            csv_fp.write_text(csv_contents)
+        # csv_contents = csv_fp.read_text()
+        logger.info(f"downloading sheet from {csv_url}")
+        csv_contents = requests.get(csv_url).content.decode('utf8')
+        csv_fp.write_text(csv_contents)
     table: list[list[str]] = list(csv.reader(StringIO(csv_contents)))
 
     HEAD_ROW = 2

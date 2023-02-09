@@ -1,4 +1,5 @@
 #%%
+import argparse
 from collections import defaultdict
 from copy import deepcopy
 from enum import StrEnum
@@ -149,6 +150,7 @@ def sheet2json(table: list[list], column: Callable[[str], _KT]) -> Mapping[_KT]:
 
 
 def upload_l10n():
+    print("uploading l10n...")
     sh = get_worksheet("l10n")
 
     local_data: Mapping[ArbLang] = defaultdict(dict)
@@ -171,6 +173,7 @@ def upload_l10n():
 
 
 def download_l10n():
+    print("downloading l10n...")
     sh = get_worksheet("l10n")
     remote_data = sheet2json(sh.get_values(), ArbLang)
 
@@ -243,10 +246,21 @@ def download_all_mappings():
 
 #%%
 if __name__ == "__main__":
-    # upload_l10n()
-    # download_l10n()
-    # upload_all_mappings()
-    download_all_mappings()
-    # for x in ['entity_names','event_names']:
-    #     upload_mapping(x)
-    pass
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-dl", help="download l10n", action="store_true")
+    parser.add_argument("-ul", help="upload l10n", action="store_true")
+    parser.add_argument("-dm", help="download mappings", action="store_true")
+    parser.add_argument("-um", help="upload i10n", action="store_true")
+
+    args = parser.parse_args()
+
+    if args.dl:
+        download_l10n()
+    elif args.ul:
+        upload_l10n()
+    if args.dm:
+        download_all_mappings()
+    elif args.um:
+        upload_all_mappings()
+    else:
+        parser.print_help()
