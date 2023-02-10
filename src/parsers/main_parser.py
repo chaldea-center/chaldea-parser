@@ -132,6 +132,12 @@ ADD_CES = {
     }
 }
 
+# svt_no, questIds
+STORY_UPGRADE_QUESTS = {
+    1: [1000624, 3000124, 3000607, 3001301, 1000631],
+    38: [3000915],  # Cú Chulainn
+}
+
 
 class MainParser:
     def __init__(self):
@@ -1622,7 +1628,10 @@ class MainParser:
                 )
         # svt related quest release
         for svt in jp_data.nice_servant_lore:
-            for quest_id in svt.relateQuestIds:
+            quest_ids = list(svt.relateQuestIds)
+            if svt.collectionNo in STORY_UPGRADE_QUESTS:
+                quest_ids += STORY_UPGRADE_QUESTS[svt.collectionNo]
+            for quest_id in quest_ids:
                 quest_jp = jp_data.quest_dict[quest_id]
                 release = mappings.quest_release.setdefault(quest_id, MappingBase())
                 release.update(Region.JP, quest_jp.openedAt)
