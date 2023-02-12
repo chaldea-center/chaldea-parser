@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 import requests
 import wikitextparser
 from app.schemas.nice import NiceServant
+from pydantic import parse_file_as
 
 from ..config import PayloadSetting, settings
 from ..schemas.common import CEObtain, MappingStr, Region, SummonType, SvtObtain
@@ -731,23 +732,14 @@ class WikiParser:
                 self.mc_transl.costume_details[collection] = detail_cn
 
     def fandom_quests(self):
-        quest_nav = FANDOM.get_page_text("Template:quest_nav")
-        links = FANDOM.resolve_all_wikilinks(quest_nav)
-        for link in links:
-            title = str(link.title)
-            if title in (
-                "Chaldea Gate",
-                "Daily Event Quests: Chaldea Gate",
-                "Interlude: Chaldea Gate",
-                "Servant Strengthening Quests",
-            ):
-                continue
+        def _with_subs(title: str, is_event: bool):
             titles = [title]
-            title = title.replace("_", " ")
             text = FANDOM.get_page_text(title)
+            title = title.replace("_", " ")
             for x in text.replace("_", " ").split(title)[1:]:
                 for subtitle in re.findall(r"^\/([^\}]*)\}\}", x):
-                    titles.append(f"{title}/{subtitle}")
+                    if not is_event or "quest" in str(subtitle).lower():
+                        titles.append(f"{title}/{subtitle}")
             for title in titles:
                 text = FANDOM.get_page_text(title)
                 for params in parse_template_list(text, r"^{{Questheader"):
@@ -759,6 +751,26 @@ class WikiParser:
                     name_en = params.get2("enname")
                     if name_jp and name_en:
                         self.fandom_transl.quest_names[name_jp] = name_en
+
+        # event
+        events = parse_file_as(list[EventW], settings.output_dist / "wiki.events.json")
+        for event in events:
+            if event.fandomLink:
+                _with_subs(event.fandomLink, True)
+
+        # main scenario
+        quest_nav = FANDOM.get_page_text("Template:quest_nav")
+        links = FANDOM.resolve_all_wikilinks(quest_nav)
+        for link in links:
+            title = str(link.title)
+            if title in (
+                "Chaldea Gate",
+                "Daily Event Quests: Chaldea Gate",
+                "Interlude: Chaldea Gate",
+                "Servant Strengthening Quests",
+            ):
+                continue
+            _with_subs(title, False)
 
     def fandom_extra(self):
         for page_name in [
