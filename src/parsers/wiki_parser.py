@@ -82,7 +82,6 @@ class WikiParser:
         self._fandom._get_svts()
         MOONCELL.load()
         FANDOM.load()
-        self.payload.clear_cache_http
         if self.payload.clear_wiki_changed > 0:
             MOONCELL.remove_recent_changed(self.payload.clear_wiki_changed)
             FANDOM.remove_recent_changed(self.payload.clear_wiki_changed)
@@ -110,6 +109,8 @@ class WikiParser:
         self.fandom_ce()
         logger.info("[Fandom] parsing command code data")
         self.fandom_cc()
+        logger.info("[Fandom] parsing quest from main story")
+        self.fandom_quests()
         logger.info("[Fandom] parsing extra data")
         self.fandom_extra()
 
@@ -728,6 +729,29 @@ class WikiParser:
             detail_cn = params.get2("中文简介")
             if collection and detail_cn:
                 self.mc_transl.costume_details[collection] = detail_cn
+
+    def fandom_quests(self):
+        quest_nav = FANDOM.get_page_text("Template:quest_nav")
+        links = FANDOM.resolve_all_wikilinks(quest_nav)
+        for link in links:
+            title = str(link.title)
+            if title in (
+                "Chaldea Gate",
+                "Daily Event Quests: Chaldea Gate",
+                "Interlude: Chaldea Gate",
+                "Servant Strengthening Quests",
+            ):
+                continue
+            text = FANDOM.get_page_text(title)
+            for params in parse_template_list(text, r"^{{Questheader"):
+                spot_jp = params.get2("jpnodename")
+                spot_en = params.get2("ennodename")
+                if spot_jp and spot_en:
+                    self.fandom_transl.spot_names[spot_jp] = spot_en
+                name_jp = params.get2("jpname")
+                name_en = params.get2("enname")
+                if name_jp and name_en:
+                    self.fandom_transl.quest_names[name_jp] = name_en
 
     def fandom_extra(self):
         for page_name in [

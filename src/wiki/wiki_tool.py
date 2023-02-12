@@ -438,9 +438,13 @@ class WikiTool:
         s = re.sub("(<!--.*?-->)", "", s, flags=re.DOTALL)
         return s
 
-    @staticmethod
-    def resolve_wikilink(s: str):
-        links = mwparserfromhell.parse(s).filter_wikilinks()
+    @classmethod
+    def resolve_all_wikilinks(cls, s: str) -> list[mwparserfromhell.nodes.Wikilink]:
+        return mwparserfromhell.parse(s).filter_wikilinks()
+
+    @classmethod
+    def resolve_wikilink(cls, s: str) -> str | None:
+        links = cls.resolve_all_wikilinks(s)
         if links:
             return str(links[0].title)
 
