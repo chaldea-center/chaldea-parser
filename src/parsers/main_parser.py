@@ -16,6 +16,7 @@ from app.schemas.enums import OLD_TRAIT_MAPPING, NiceSvtType
 from app.schemas.gameenums import (
     NiceGiftType,
     NiceQuestAfterClearType,
+    NiceSpotOverwriteType,
     NiceSvtFlag,
     NiceWarOverwriteType,
     SvtType,
@@ -1380,6 +1381,9 @@ class MainParser:
             _update_mapping(
                 mappings.spot_names, spot_jp.name, spot.name if spot else None
             )
+            for spotAdd in spot_jp.spotAdds:
+                if spotAdd.overrideType == NiceSpotOverwriteType.name:
+                    _update_mapping(mappings.spot_names, spotAdd.targetText, None)
 
         def __update_ascension_add(
             m: dict[str, MappingStr],
