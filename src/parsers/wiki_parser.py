@@ -742,16 +742,23 @@ class WikiParser:
                 "Servant Strengthening Quests",
             ):
                 continue
+            titles = [title]
+            title = title.replace("_", " ")
             text = FANDOM.get_page_text(title)
-            for params in parse_template_list(text, r"^{{Questheader"):
-                spot_jp = params.get2("jpnodename")
-                spot_en = params.get2("ennodename")
-                if spot_jp and spot_en:
-                    self.fandom_transl.spot_names[spot_jp] = spot_en
-                name_jp = params.get2("jpname")
-                name_en = params.get2("enname")
-                if name_jp and name_en:
-                    self.fandom_transl.quest_names[name_jp] = name_en
+            for x in text.replace("_", " ").split(title)[1:]:
+                for subtitle in re.findall(r"^\/([^\}]*)\}\}", x):
+                    titles.append(f"{title}/{subtitle}")
+            for title in titles:
+                text = FANDOM.get_page_text(title)
+                for params in parse_template_list(text, r"^{{Questheader"):
+                    spot_jp = params.get2("jpnodename")
+                    spot_en = params.get2("ennodename")
+                    if spot_jp and spot_en:
+                        self.fandom_transl.spot_names[spot_jp] = spot_en
+                    name_jp = params.get2("jpname")
+                    name_en = params.get2("enname")
+                    if name_jp and name_en:
+                        self.fandom_transl.quest_names[name_jp] = name_en
 
     def fandom_extra(self):
         for page_name in [
