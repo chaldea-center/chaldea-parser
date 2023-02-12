@@ -4,6 +4,7 @@ from ..config import settings
 from .helper import NumDict, count_time, dump_json, load_json, sort_dict
 from .http_cache import HttpApiUtil
 from .log import logger
+from .url import DownUrl
 from .worker import Worker
 
 

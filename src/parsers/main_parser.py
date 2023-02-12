@@ -91,6 +91,7 @@ from ..schemas.wiki_data import AppNews, CommandCodeW, WikiData, WikiTranslation
 from ..utils import (
     NEVER_CLOSED_TIMESTAMP,
     AtlasApi,
+    DownUrl,
     McApi,
     NumDict,
     Worker,
@@ -222,9 +223,7 @@ class MainParser:
                         out[entry[field_key]] = entry
             return out
 
-        remote_svts: list[dict] = requests.get(
-            "https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/JP/master/mstSvt.json"
-        ).json()
+        remote_svts: list[dict] = DownUrl.gitaa("mstSvt")
         local_svts = load_data_dict("servants", "collectionNo")
         for svt in remote_svts:
             collection = svt["collectionNo"]
@@ -250,9 +249,7 @@ class MainParser:
                 continue
             added.svt.append(svt)
 
-        remote_ces = requests.get(
-            "https://api.atlasacademy.io/export/JP/basic_equip.json"
-        ).json()
+        remote_ces = DownUrl.export("basic_equip")
         local_ces = load_data_dict("craftEssences", "collectionNo")
         for ce in remote_ces:
             collection = ce["collectionNo"]
@@ -265,9 +262,7 @@ class MainParser:
                 continue
             added.ce.append(ce)
 
-        remote_ccs = requests.get(
-            "https://api.atlasacademy.io/export/JP/basic_command_code.json"
-        ).json()
+        remote_ccs = DownUrl.export("basic_command_code")
         local_ccs = load_data_dict("commandCodes", "collectionNo")
         for cc in remote_ccs:
             collection = cc["collectionNo"]
@@ -278,9 +273,7 @@ class MainParser:
                 continue
             added.cc.append(cc)
 
-        remote_items = requests.get(
-            "https://api.atlasacademy.io/export/JP/nice_item.json"
-        ).json()
+        remote_items = DownUrl.export("nice_item")
         local_items = load_data_dict("items", "id")
         for item in remote_items:
             if item["id"] not in local_items:
@@ -331,9 +324,7 @@ class MainParser:
             worker = Worker(f"exported_file_{region}")
             fp_info = settings.atlas_export_dir / region.value / "info.json"
             info_local = load_json(fp_info) or {}
-            info_remote = requests.get(
-                AtlasApi.full_url(f"export/{region}/info.json")
-            ).json()
+            info_remote = DownUrl.export("info.json", region)
             region_changed = (
                 region in self.payload.regions and self.payload.force_update_export
             ) or info_local != info_remote
@@ -391,23 +382,17 @@ class MainParser:
         # raw
         raw_fmt = "https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}/master/{name}.json"
         master_data.viewEnemy = parse_obj_as(
-            list[MstViewEnemy],
-            requests.get(raw_fmt.format(region=region, name="viewEnemy")).json(),
+            list[MstViewEnemy], DownUrl.gitaa("viewEnemy", region)
         )
         master_data.mstClass = parse_obj_as(
-            list[MstClass],
-            requests.get(raw_fmt.format(region=region, name="mstClass")).json(),
+            list[MstClass], DownUrl.gitaa("mstClass", region)
         )
         master_data.mstClassRelation = parse_obj_as(
-            list[MstClassRelation],
-            requests.get(raw_fmt.format(region=region, name="mstClassRelation")).json(),
+            list[MstClassRelation], DownUrl.gitaa("mstClassRelation", region)
         )
 
         master_data.mstConstant = {
-            e["name"]: e["value"]
-            for e in requests.get(
-                raw_fmt.format(region=region, name="mstConstant")
-            ).json()
+            e["name"]: e["value"] for e in DownUrl.gitaa("mstConstant", region)
         }
 
         master_data.sort()
@@ -1210,17 +1195,15 @@ class MainParser:
             self._merge_official_mappings(Region.CN)
             self._merge_wiki_translation(
                 Region.CN,
-                WikiTranslation.parse_obj(
-                    load_json(settings.output_wiki / "mcTransl.json", {})
-                ),
+                parse_file_as(WikiTranslation, settings.output_wiki / "mcTransl.json"),
             )
 
             self._merge_official_mappings(Region.NA)
-            self._add_na_mapping()
+            self._add_atlas_na_mapping()
             self._merge_wiki_translation(
                 Region.NA,
-                WikiTranslation.parse_obj(
-                    load_json(settings.output_wiki / "fandomTransl.json", {})
+                parse_file_as(
+                    WikiTranslation, settings.output_wiki / "fandomTransl.json"
                 ),
             )
 
@@ -1382,7 +1365,7 @@ class MainParser:
                 mappings.spot_names, spot_jp.name, spot.name if spot else None
             )
             for spotAdd in spot_jp.spotAdds:
-                if spotAdd.overrideType == NiceSpotOverwriteType.name:
+                if spotAdd.overrideType == NiceSpotOverwriteType.name_:
                     _update_mapping(mappings.spot_names, spotAdd.targetText, None)
 
         def __update_ascension_add(
@@ -1813,7 +1796,7 @@ class MainParser:
         _iter(mappings_dict)
         self.jp_data.mappingData = MappingData.parse_obj(mappings_dict)
 
-    def _add_na_mapping(self):
+    def _add_atlas_na_mapping(self):
         logger.info("merging Atlas translations for NA")
 
         mappings = self.jp_data.mappingData
@@ -1962,12 +1945,9 @@ class MainParser:
             },
         }
         for region in ["JP", "NA"]:
-            data_repo = f"https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}"
-            top = requests.get(
-                f"{data_repo}/gamedatatop.json?t=${int(time.time())}"
-            ).json()
+            top = DownUrl.gitaa("gamedatatop", Region(region), "")
             top = top["response"][0]["success"]
-            assetbundle = requests.get(f"{data_repo}/metadata/assetbundle.json").json()
+            assetbundle = DownUrl.gitaa("assetbundle", Region(region), "metadata/")
             with LocalProxy():
                 ver_codes = requests.get(
                     f"https://raw.githubusercontent.com/O-Isaac/FGO-VerCode-extractor/{region}/VerCode.json"

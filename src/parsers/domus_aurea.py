@@ -17,6 +17,7 @@ from src.parsers.domus_aurea_data import FIX_SPOT_QUEST_MAPPING, ITEM_NAME_MAPPI
 from src.schemas.drop_data import DropRateData, DropRateSheet
 from src.utils import logger
 from src.utils.helper import LocalProxy, dump_json_beautify
+from src.utils.url import DownUrl
 
 
 class DOMUS_URLS:
@@ -76,10 +77,7 @@ def get_master_data():
         valid_quests[quest_id]
         assert quest_id in valid_quests, f"quest {quest_id} not found"
 
-    resp = requests.get(
-        "https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/JP/master/mstQuestPhase.json"
-    )
-    mst_phases = parse_obj_as(list[MstQuestPhase], resp.json())
+    mst_phases = parse_obj_as(list[MstQuestPhase], DownUrl.gitaa("mstQuestPhase"))
     quest_phases = {
         quest.questId: quest
         for quest in mst_phases
