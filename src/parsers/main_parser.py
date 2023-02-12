@@ -1215,16 +1215,20 @@ class MainParser:
 
     def _post_mappings(self):
         mappings = self.jp_data.mappingData
-        for key in self.jp_data.mappingData.event_names.keys():
-            mappings.war_names.pop(key, None)
-        for key in self.jp_data.mappingData.svt_names.keys():
+        for key in mappings.war_names.keys():
+            name = mappings.event_names.get(key, None)
+            if name:
+                name.update_from(mappings.war_names[key])
+                mappings.war_names[key].update_from(name)
+            mappings.spot_names.pop(key, None)
+        for key in mappings.svt_names.keys():
             entity = mappings.entity_names.pop(key, None)
             if entity:
-                self.jp_data.mappingData.svt_names[key].update_from(entity)
-        for key in self.jp_data.mappingData.ce_names.keys():
+                mappings.svt_names[key].update_from(entity)
+        for key in mappings.ce_names.keys():
             mappings.entity_names.pop(key, None)
             mappings.skill_names.pop(key, None)
-        for key in self.jp_data.mappingData.cc_names.keys():
+        for key in mappings.cc_names.keys():
             mappings.skill_names.pop(key, None)
         mappings.cn_replace = dict(CN_REPLACE)
 
