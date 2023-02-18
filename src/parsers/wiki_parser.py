@@ -731,6 +731,17 @@ class WikiParser:
             if collection and detail_cn:
                 self.mc_transl.costume_details[collection] = detail_cn
 
+        # event item names
+        item_pages = ["道具一览"]
+        for x in MOONCELL.resolve_all_wikilinks(MOONCELL.get_page_text("道具一览/活动道具")):
+            item_pages.append(str(x.title))
+        for title in item_pages:
+            text = MOONCELL.get_page_text(title)
+            for params in parse_template_list(text, r"^{{活动道具表格"):
+                name_cn, name_jp = params.get2("中文名称"), params.get2("日文名称")
+                if name_cn and name_jp:
+                    self.mc_transl.item_names[name_jp] = name_cn
+
     def fandom_quests(self):
         def _with_subs(title: str, is_event: bool):
             titles = [title]

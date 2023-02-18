@@ -1691,6 +1691,8 @@ class MainParser:
             _update_mapping(mappings.ce_names, name_jp, name_cn)
         for name_jp, name_cn in transl.cc_names.items():
             _update_mapping(mappings.cc_names, name_jp, name_cn)
+        for name_jp, name_cn in transl.item_names.items():
+            _update_mapping(mappings.item_names, name_jp, name_cn)
         for name_jp, name_cn in transl.event_names.items():
             _update_mapping(mappings.event_names, name_jp, name_cn)
             name_jp = name_jp.replace("･", "・")

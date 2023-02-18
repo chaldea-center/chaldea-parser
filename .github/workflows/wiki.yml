@@ -9,7 +9,7 @@ on:
 
 jobs:
   wiki:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       output_dir: "data/"
       cache_dir: "cache/"
@@ -49,6 +49,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ env.cache_dir }}
+          fail-on-cache-miss: true
           key: api-cache-${{ runner.os }}-${{ steps.get-date.outputs.date }}
           restore-keys: |
             api-cache-${{ runner.os }}-
