@@ -1022,6 +1022,7 @@ class MainParser:
             "script",
             "skillAdd",
             "aiIds",
+            "groupOverwrites",
             "functions",
         ],
         NiceBaseTd: ["detail"],
