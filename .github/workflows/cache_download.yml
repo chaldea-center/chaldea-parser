@@ -19,6 +19,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ env.cache_dir }}
+          fail-on-cache-miss: false
           key: api-cache-${{ runner.os }}-${{ steps.get-date.outputs.date }}
           restore-keys: |
             api-cache-${{ runner.os }}-
