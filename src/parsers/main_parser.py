@@ -34,6 +34,7 @@ from app.schemas.nice import (
     NiceCommandCode,
     NiceEquip,
     NiceEvent,
+    NiceEventCooltimeReward,
     NiceEventDiggingBlock,
     NiceEventLotteryBox,
     NiceEventMission,
@@ -1073,6 +1074,7 @@ class MainParser:
         NiceEventLotteryBox: ["id", "priority", "detail", "icon", "banner"],
         NiceEventReward: ["bgImagePoint", "bgImageGet"],
         NiceEventPointBuff: ["detail"],
+        NiceEventCooltimeReward: ["commonRelease"],
         NiceShop: [
             "baseShopId",
             "eventId",
@@ -1130,14 +1132,17 @@ class MainParser:
             obj = obj.dict(
                 exclude_none=True, exclude_defaults=True, exclude=exclude | {"name"}
             )
+
+            def _clean_dict(d: dict):
+                for k in list(d.keys()):
+                    v = d[k]
+                    if isinstance(v, dict):
+                        _clean_dict(v)
+                    if v is None or v == [] or v == {}:
+                        d.pop(k)
+
             # print('start encoding ', type(obj))
-            for k in list(obj.keys()):
-                if isinstance(obj[k], dict):
-                    for kk in list(obj[k].keys()):
-                        if not obj[k][kk]:
-                            obj[k].pop(kk)
-                if not obj[k]:
-                    obj.pop(k)
+            _clean_dict(obj)
             # print('ended encoding ', type(obj))
             return obj
 
