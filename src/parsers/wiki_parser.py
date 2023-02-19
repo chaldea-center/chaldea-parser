@@ -360,10 +360,6 @@ class WikiParser:
             record = index_data.get(cc_id)
             if record:
                 cc_add.mcLink = record["name_link"]
-                des = record.get("des")
-                if des:
-                    des = remove_tag(des).replace("\n", "")
-                    self.mc_transl.cc_skill_des[cc_add.collectionNo] = des
 
             if not cc_add.mcLink:
                 return
@@ -375,6 +371,9 @@ class WikiParser:
             if name_cn and name_jp and cc_add.collectionNo != 113:
                 # 113-小犭贪
                 self.mc_transl.cc_names[name_jp] = name_cn
+            skill_des = params.get2("持有技能")
+            if skill_des:
+                self.mc_transl.cc_skill_des[cc_add.collectionNo] = skill_des
             profile_cn = params.get2("解说")
             if profile_cn:
                 cc_add.profile.CN = profile_cn
