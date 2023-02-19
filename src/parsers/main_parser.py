@@ -62,6 +62,7 @@ from app.schemas.nice import (
     NiceWar,
     QuestEnemy,
 )
+from app.schemas.raw import MstSvtExp
 from pydantic import BaseModel, parse_file_as, parse_obj_as
 from pydantic.json import pydantic_encoder
 
@@ -77,7 +78,7 @@ from ..schemas.common import (
     MstViewEnemy,
     OpenApiInfo,
 )
-from ..schemas.const_data import ConstGameData
+from ..schemas.const_data import ConstGameData, SvtExpCurve
 from ..schemas.gamedata import (
     FixedDrop,
     MappingData,
@@ -207,8 +208,49 @@ class MainParser:
         if not settings.output_wiki.joinpath("dropRate.json").exists():
             logger.info("dropRate.json not exist, run domus_aurea parser")
             run_drop_rate_update()
+        self.get_const_data()
         self.save_data()
         print(self.stopwatch.output())
+
+    def get_const_data(self):
+        data = self.jp_data
+        class_relations: dict[int, dict[int, int]] = defaultdict(dict)
+        for relation in data.mstClassRelation:
+            class_relations[relation.atkClass][relation.defClass] = relation.attackRate
+        for cls_info in data.mstClass:
+            if not isinstance(cls_info.individuality, int):
+                cls_info.individuality = 0
+
+        mst_exps = parse_obj_as(list[MstSvtExp], DownUrl.gitaa("mstSvtExp"))
+        exp_dict: dict[int, list[MstSvtExp]] = defaultdict(list)
+        for exp in mst_exps:
+            exp_dict[exp.type].append(exp)
+        for exp_list in exp_dict.values():
+            exp_list.sort(key=lambda x: x.lv)
+        exp_dict = sort_dict(exp_dict)
+        svt_exps: dict[int, SvtExpCurve] = {}
+        for key, exps in exp_dict.items():
+            svt_exps[key] = SvtExpCurve(
+                type=key,
+                lv=[x.lv for x in exps],
+                exp=[x.exp for x in exps],
+                curve=[x.curve for x in exps],
+            )
+
+        self.jp_data.constData = ConstGameData(
+            attributeRelation=data.NiceAttributeRelation,
+            buffActions=data.NiceBuffList_ActionList,
+            cardInfo=data.NiceCard,
+            classInfo={x.id: x for x in data.NiceClass},
+            classInfo2={x.id: x for x in data.mstClass},
+            classAttackRate=data.NiceClassAttackRate,
+            classRelation=data.NiceClassRelation,
+            classRelation2=class_relations,
+            constants=data.NiceConstant,
+            svtGrailCost=data.NiceSvtGrailCost,
+            userLevel=data.NiceUserLevel,
+            svtExp=svt_exps,
+        )
 
     def add_changes_only(self):
         added = NewAddedData(
@@ -862,28 +904,9 @@ class MainParser:
         if data.cachedQuestPhases:
             _dump_by_count(list(data.cachedQuestPhases.values()), 100, "questPhases")
         _normal_dump(data.extraMasterMission, "extraMasterMission")
-        class_relations: dict[int, dict[int, int]] = defaultdict(dict)
-        for relation in data.mstClassRelation:
-            class_relations[relation.atkClass][relation.defClass] = relation.attackRate
-        for cls_info in data.mstClass:
-            if not isinstance(cls_info.individuality, int):
-                cls_info.individuality = 0
-        _normal_dump(
-            ConstGameData(
-                attributeRelation=data.NiceAttributeRelation,
-                buffActions=data.NiceBuffList_ActionList,
-                cardInfo=data.NiceCard,
-                classInfo={x.id: x for x in data.NiceClass},
-                classInfo2={x.id: x for x in data.mstClass},
-                classAttackRate=data.NiceClassAttackRate,
-                classRelation=data.NiceClassRelation,
-                classRelation2=class_relations,
-                constants=data.NiceConstant,
-                svtGrailCost=data.NiceSvtGrailCost,
-                userLevel=data.NiceUserLevel,
-            ),
-            "constData",
-        )
+
+        assert data.constData
+        _normal_dump(data.constData, "constData")
         _dump_by_count(list(wiki_data.servants.values()), 100, "wiki.servants")
         _dump_by_count(
             list(wiki_data.craftEssences.values()), 500, "wiki.craftEssences"

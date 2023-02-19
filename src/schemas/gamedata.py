@@ -35,6 +35,7 @@ from .common import MappingBase, MstClass, MstClassRelation, MstViewEnemy
 from .const_data import (
     BuffActionDetail,
     CardInfo,
+    ConstGameData,
     GrailCostDetail,
     MasterUserLvDetail,
     NiceClassInfo,
@@ -140,6 +141,7 @@ class MasterData(BaseModelORJson):
     exchangeTickets: list[ExchangeTicket] = []
     remainedQuestIds: set[int] = set()
     extraMasterMission: list[NiceMasterMission] = []
+    constData: ConstGameData | None = None
 
     # base
     base_tds: dict[int, NiceBaseTd] = {}

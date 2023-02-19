@@ -10,6 +10,7 @@ from app.schemas.gameenums import (
     NiceSvtFrameType,
 )
 from app.schemas.nice import NiceGift
+from app.schemas.raw import MstSvtExp
 from pydantic import BaseModel
 
 from .common import MstClass
@@ -66,6 +67,13 @@ class MasterUserLvDetail(BaseModel):
     gift: Optional[NiceGift]
 
 
+class SvtExpCurve(BaseModel):
+    type: int
+    lv: list[int]
+    exp: list[int]
+    curve: list[int]
+
+
 class ConstGameData(BaseModel):
     attributeRelation: dict[Attribute, dict[Attribute, int]]
     buffActions: dict[NiceBuffAction, BuffActionDetail]
@@ -78,3 +86,4 @@ class ConstGameData(BaseModel):
     constants: dict[str, int]
     svtGrailCost: dict[int, dict[int, GrailCostDetail]]
     userLevel: dict[int, MasterUserLvDetail]
+    svtExp: dict[int, SvtExpCurve]
