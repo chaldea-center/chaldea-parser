@@ -1009,7 +1009,7 @@ class MainParser:
         return r
 
     _excludes: dict[type, list[str]] = {
-        NiceBaseSkill: ["detail"],
+        NiceBaseSkill: ["detail", "groupOverwrites"],
         NiceSkill: [
             "name",
             "originalName",
@@ -1048,7 +1048,7 @@ class MainParser:
         NiceTrait: ["name"],
         NiceGift: ["id", "priority"],
         NiceLore: ["comments", "voices"],
-        NiceWar: ["emptyMessage"],
+        NiceWar: ["originalLongName", "emptyMessage"],
         NiceMap: [],
         NiceMapGimmick: ["actionAnimTime", "actionEffectId", "startedAt", "endedAt"],
         NiceQuestPhase: ["supportServants"],
@@ -1106,12 +1106,16 @@ class MainParser:
 
         if _type == NiceSkill and isinstance(obj, NiceSkill):
             if obj.id not in self.jp_data.base_skills:
-                self.jp_data.base_skills[obj.id] = NiceBaseSkill.parse_obj(obj.dict())
+                self.jp_data.base_skills[obj.id] = NiceBaseSkill.parse_obj(
+                    obj.dict(exclude_none=True)
+                )
             if obj.ruby in ("", "-"):
                 exclude.add("ruby")
         elif _type == NiceTd and isinstance(obj, NiceTd):
             if obj.id not in self.jp_data.base_tds:
-                self.jp_data.base_tds[obj.id] = NiceBaseTd.parse_obj(obj.dict())
+                self.jp_data.base_tds[obj.id] = NiceBaseTd.parse_obj(
+                    obj.dict(exclude_none=True)
+                )
             base_td = self.jp_data.base_tds[obj.id]
             for key in ["card", "icon", "npDistribution"]:
                 if getattr(obj, key, None) == getattr(base_td, key, None):
@@ -1128,10 +1132,7 @@ class MainParser:
         elif isinstance(obj, NiceItemAmount):
             return {"itemId": obj.item.id, "amount": obj.amount}
         elif isinstance(obj, (ExtraAssets, AscensionAdd)):
-            # NiceTrait.name
-            obj = obj.dict(
-                exclude_none=True, exclude_defaults=True, exclude=exclude | {"name"}
-            )
+            obj = obj.dict(exclude_none=True, exclude_defaults=True, exclude=exclude)
 
             def _clean_dict(d: dict):
                 for k in list(d.keys()):
@@ -1141,10 +1142,7 @@ class MainParser:
                     if v is None or v == [] or v == {}:
                         d.pop(k)
 
-            # print('start encoding ', type(obj))
             _clean_dict(obj)
-            # print('ended encoding ', type(obj))
-            return obj
 
         if isinstance(obj, BaseModel):
             if isinstance(obj, NiceFunction):
@@ -1168,6 +1166,8 @@ class MainParser:
                     )
                 )
             return map
+        elif isinstance(obj, (list, dict)):
+            return obj
         return pydantic_encoder(obj)
 
     @staticmethod
