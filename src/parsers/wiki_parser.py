@@ -16,6 +16,7 @@ from pydantic import parse_file_as
 from ..config import PayloadSetting, settings
 from ..schemas.common import CEObtain, MappingStr, Region, SummonType, SvtObtain
 from ..schemas.wiki_data import (
+    BiliVideo,
     EventW,
     LimitedSummon,
     ProbGroup,
@@ -266,6 +267,12 @@ class WikiParser:
                 for key, value in params.items():
                     if "模型" in key or "灵衣" in key and str(value).endswith(".png"):
                         svt_add.mcSprites.append(MOONCELL.norm_filename(value))
+
+            td_av_text = MOONCELL.get_page_text(f"{svt_add.mcLink}/宝具动画")
+            for params in parse_template_list(td_av_text, r"^{{宝具动画"):
+                av = params.get_cast("av", int) or 74352743
+                p = params.get_cast("p", int) or 1
+                # svt_add.tdAnimations.append(BiliVideo(av=av, p=p))
 
         worker = Worker.from_map(
             _parse_one,

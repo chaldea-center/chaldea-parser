@@ -50,6 +50,12 @@ class WikiTranslation(BaseModelORJson):
         self.costume_details = sort_dict(self.costume_details)
 
 
+class BiliVideo(BaseModel):
+    av: int
+    # bv: str | None = None
+    p: int
+
+
 class ServantWBase(BaseModel):
     collectionNo: int
     mcLink: NoneStr = None
@@ -65,6 +71,7 @@ class ServantW(ServantWBase):
     fandomSprites: list[str] = []
     mcProfiles: dict[int, list[str]] = {}
     fandomProfiles: dict[int, list[str]] = {}
+    # tdAnimations: list[BiliVideo] = []
 
 
 class CraftEssenceW(BaseModel):
