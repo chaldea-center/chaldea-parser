@@ -423,9 +423,11 @@ class MainParser:
             mm for mm in master_data.nice_master_mission if mm.id == 10001
         ]
         # raw
-        raw_fmt = "https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}/master/{name}.json"
         master_data.viewEnemy = parse_obj_as(
             list[MstViewEnemy], DownUrl.gitaa("viewEnemy", region)
+        )
+        master_data.mstEnemyMaster = parse_obj_as(
+            list[dict], DownUrl.gitaa("mstEnemyMaster", region)
         )
         master_data.mstClass = parse_obj_as(
             list[MstClass], DownUrl.gitaa("mstClass", region)
@@ -1670,6 +1672,14 @@ class MainParser:
                     continue
                 name = data.view_enemy_names.get(quest_id, {}).get(svt_id)
                 _update_mapping(mappings.entity_names, name_jp, name)
+
+        for master_id, name_jp in jp_data.enemy_master_names.items():
+            if not name_jp.strip():
+                name_jp = f"Master {master_id}"
+            name = data.enemy_master_names.get(master_id)
+            if not name:
+                name = mappings.svt_names.get(name_jp, MappingStr()).of(region)
+            _update_mapping(mappings.misc2.setdefault("master_name", {}), name_jp, name)
 
         self.jp_data.mappingData = mappings
         del data

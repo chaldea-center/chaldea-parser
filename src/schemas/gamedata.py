@@ -131,6 +131,7 @@ class MasterData(BaseModelORJson):
     mstClassRelation: list[MstClassRelation] = []
     viewEnemy: list[MstViewEnemy] = []
     mstConstant: dict[str, int] = {}
+    mstEnemyMaster: list[dict] = []
 
     # extra
     # all_quests: dict[int, NiceQuest] = {}
@@ -320,3 +321,7 @@ class MasterData(BaseModelORJson):
         for enemy in self.viewEnemy:
             d.setdefault(enemy.questId, {}).setdefault(enemy.svtId, enemy.name)
         return d
+
+    @cached_property
+    def enemy_master_names(self) -> dict[int, str]:
+        return {master["id"]: master["name"] for master in self.mstEnemyMaster}
