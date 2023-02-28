@@ -118,7 +118,7 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
-MIN_APP = "2.2.3"
+MIN_APP = "2.2.6"
 
 # TODO in 2.2.4
 # remove classInfo=data.NiceClass,
