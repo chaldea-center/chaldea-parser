@@ -119,9 +119,9 @@ class MasterData(BaseModelORJson):
     NiceBuffList_ActionList: dict[NiceBuffAction, BuffActionDetail] = {}
     NiceCard: dict[NiceCardType, dict[int, CardInfo]] = {}
 
-    NiceClass: list[NiceClassInfo] = []
-    NiceClassAttackRate: dict[SvtClass, int] = {}
-    NiceClassRelation: dict[SvtClass, dict[SvtClass, int]] = {}
+    # NiceClass: list[NiceClassInfo] = []
+    # NiceClassAttackRate: dict[SvtClass, int] = {}
+    # NiceClassRelation: dict[SvtClass, dict[SvtClass, int]] = {}
     NiceConstant: dict[str, int] = {}
     NiceSvtGrailCost: dict[int, dict[int, GrailCostDetail]] = {}
     NiceUserLevel: dict[int, MasterUserLvDetail] = {}

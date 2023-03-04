@@ -54,8 +54,7 @@ CN_REPLACE = {
 
 
 class EnumMapping(BaseModel):
-    svt_class: dict[SvtClass, MappingStr] = {}
-    svt_class2: dict[int, MappingStr] = {}
+    svt_class: dict[int, MappingStr] = {}
     attribute: dict[Attribute, MappingStr] = {}
     svt_type: dict[NiceSvtType, MappingStr] = {}
     servant_policy: dict[ServantPolicy, MappingStr] = {}
@@ -85,7 +84,6 @@ class EnumMapping(BaseModel):
 
     def update_enums(self):
         enum_fields: dict[Type[StrEnum], dict[Any, MappingStr]] = {
-            SvtClass: self.svt_class,
             Attribute: self.attribute,
             NiceSvtType: self.svt_type,
             ServantPolicy: self.servant_policy,
@@ -175,6 +173,5 @@ class MappingData(BaseModel):
     quest_release: dict[int, MappingInt] = {}
 
     enums: EnumMapping = EnumMapping()
-    misc: dict[str, MappingStr] = {}
-    misc2: dict[str, dict[str, MappingStr]] = {}
+    misc: dict[str, dict[str, MappingStr]] = {}
     cn_replace: dict[str, str] = {}

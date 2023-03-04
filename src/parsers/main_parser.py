@@ -241,11 +241,8 @@ class MainParser:
             attributeRelation=data.NiceAttributeRelation,
             buffActions=data.NiceBuffList_ActionList,
             cardInfo=data.NiceCard,
-            classInfo={x.id: x for x in data.NiceClass},
-            classInfo2={x.id: x for x in data.mstClass},
-            classAttackRate=data.NiceClassAttackRate,
-            classRelation=data.NiceClassRelation,
-            classRelation2=class_relations,
+            classInfo={x.id: x for x in data.mstClass},
+            classRelation=class_relations,
             constants=data.NiceConstant,
             svtGrailCost=data.NiceSvtGrailCost,
             userLevel=data.NiceUserLevel,
@@ -1274,7 +1271,7 @@ class MainParser:
         enums = self.jp_data.mappingData.enums
         enums.update_enums()
         for cls_info in self.jp_data.mstClass:
-            enums.svt_class2.setdefault(cls_info.id, MappingBase())
+            enums.svt_class.setdefault(cls_info.id, MappingBase())
 
     def _merge_official_mappings(self, region: Region):
         logger.info(f"merging official translations from {region}")
@@ -1679,7 +1676,7 @@ class MainParser:
             name = data.enemy_master_names.get(master_id)
             if not name:
                 name = mappings.svt_names.get(name_jp, MappingStr()).of(region)
-            _update_mapping(mappings.misc2.setdefault("master_name", {}), name_jp, name)
+            _update_mapping(mappings.misc.setdefault("master_name", {}), name_jp, name)
 
         self.jp_data.mappingData = mappings
         del data
