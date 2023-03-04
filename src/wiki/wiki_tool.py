@@ -54,11 +54,11 @@ class WikiTool:
         if self._fp.exists():
             try:
                 data = load_json(self._fp) or {}
-                # if "images" in data and data["images"]:
-                #     value1 = list(data["images"].values())[0]
-                #     if "imageinfo" not in value1:
-                #         data["images"] = {}
                 self.cache = WikiCache.parse_obj(data)
+                for key in list(self.cache.images.keys()):
+                    img = self.cache.images[key]
+                    if not img.info or img.info.get("ns") != 6:
+                        self.cache.images.pop(key)
                 self.cache.host = self.host
                 logger.debug(
                     f"wiki {self.host}: loaded {len(self.cache.pages)} pages, "
@@ -74,6 +74,7 @@ class WikiTool:
     @sleep_and_retry
     @limits(3, 4)
     def _call_request_page(self, name: str) -> WikiPageInfo:
+        name = self.norm_key(name)
         name_json = f'"{name}"({len(name)})'  # in case there is any special char
         self.active_requests.add(name)
         retry_n, max_retry = 0, 5
@@ -83,28 +84,28 @@ class WikiTool:
                 now = int(time.time())
                 page = pywikibot.Page(self.site2, name)
                 text = page.text
-                if not text:
-                    logger.debug(f"{self.host}: {name_json} empty")
+                if not page.exists() or not text:
+                    logger.debug(f"{self.host}: {name_json} not exists")
                 redirect = page
                 if text:
                     while redirect.isRedirectPage():
                         redirect = redirect.getRedirectTarget()
+                info: WikiPageInfo | None = None
                 if redirect == page:
-                    result = self.cache.pages[
-                        self.norm_key(page.title())
-                    ] = WikiPageInfo(name=page.title(), text=page.text, updated=now)
+                    info = WikiPageInfo(name=page.title(), text=page.text, updated=now)
+                    self.cache.pages[name] = info
                 else:
-                    self.cache.pages[self.norm_key(page.title())] = WikiPageInfo(
+                    self.cache.pages[name] = WikiPageInfo(
                         name=page.title(),
                         redirect=redirect.title(),
                         text=page.text,
                         updated=now,
                     )
-                    result = self.cache.pages[
-                        self.norm_key(redirect.title())
-                    ] = WikiPageInfo(
+                    redirect_name = self.norm_key(redirect.title())
+                    info = WikiPageInfo(
                         name=redirect.title(), text=redirect.text, updated=now
                     )
+                    self.cache.pages[redirect_name] = info
                 if retry_n > 0:
                     logger.warning(
                         f"{prefix} downloaded {name_json} after {retry_n} retry"
@@ -117,31 +118,43 @@ class WikiTool:
                     self.save_cache()
                 if name in self.active_requests:
                     self.active_requests.remove(name)
-                return result
+                return info
             except Exception as e:
                 retry_n += 1
                 if retry_n >= max_retry:
                     logger.warning(
                         f"Fail download {name_json} after {retry_n} retry: {e}"
                     )
+                if name in self.active_requests:
+                    self.active_requests.remove(name)
                     raise
+                logger.error(f"api failed: {type(e)}: {e}")
                 time.sleep(min(5 * retry_n, 30))
 
     @sleep_and_retry
     @limits(3, 4)
-    def _call_request_img(self, name: str) -> WikiImageInfo:
+    def _call_request_img(self, name: str) -> WikiImageInfo | None:
+        name = self.norm_key(name)
         name_json = f'"{name}"({len(name)})'  # in case there is any special char
+        if not name:
+            return
         self.active_requests.add(name)
         retry_n, max_retry = 0, 5
         prefix = f"[{self.host}][image]"
         while True:
             try:
                 now = int(time.time())
-                cached = self.cache.images[name] = WikiImageInfo(
-                    name=name,
-                    updated=now,
-                    imageinfo=self.site.images[name].imageinfo,  # type: ignore
-                )
+                img = self.site.images[name]
+                if img and img.exists:
+                    info = WikiImageInfo(
+                        name=name,
+                        updated=now,
+                        info=img._info,
+                    )
+                    self.cache.images[name] = info
+                else:
+                    info = None
+                    logger.debug(f"{self.host}: {name_json} not exists")
                 if retry_n > 0:
                     logger.warning(
                         f"{prefix} downloaded {name_json} after {retry_n} retry"
@@ -154,64 +167,102 @@ class WikiTool:
                     self.save_cache()
                 if name in self.active_requests:
                     self.active_requests.remove(name)
-                return cached
+                return info
             except Exception as e:
                 retry_n += 1
                 if retry_n >= max_retry:
                     logger.warning(
                         f"Fail download {name_json} after {retry_n} retry: {e}"
                     )
+                    if name in self.active_requests:
+                        self.active_requests.remove(name)
                     raise
+                logger.error(f"api failed: {type(e)}: {e}")
                 time.sleep(min(5 * retry_n, 30))
 
-    def get_page_text(self, name: str, allow_cache=True, clear_tag=True):
+    def get_page_cache(self, name: str) -> WikiPageInfo | None:
+        name = self.norm_key(name)
+        page = self.cache.pages.get(name)
+        if page is None:
+            return
+        if page.redirect:
+            page = self.cache.pages.get(self.norm_key(page.redirect))
+            if page:
+                return page
+            else:
+                self.cache.pages.pop(name)
+        else:
+            return page
+
+    def get_page(self, name: str, allow_cache=True) -> WikiPageInfo | None:
         name = self.norm_key(name)
         if not name:
-            # print('name empty')
-            return name
+            return None
         key = unquote(name.strip())
         if key.startswith("#"):
             logger.warning(f"wiki page title startwith #: {key}")
-            return ""
-        result = None
+            return None
+        result: WikiPageInfo | None = None
         if allow_cache:
-            result = self.get_cache(key)
+            result = self.get_page_cache(key)
         # if result:
         #     print(f'{key}: use cached')
         if result is None:
-            page = self._call_request_page(name)
-            if page:
-                result = page.text
-        result = result or ""
-        if clear_tag:
-            result = self.remove_html_tags(result)
-        # print(f'{key}: {len(result)}')
-        if result:
-            # ----------------   LS    PS    LTR  --------------
-            result = re.sub(r"[\u2028\u2029\u200e]", "", result)
+            result = self._call_request_page(name)
         return result
 
-    def _process_url(self, image: WikiImageInfo) -> str:
-        origin_url = unquote(image.imageinfo["url"])
-        sha1value = image.imageinfo["sha1"]
-        url = re.sub(r"^http://", "https://", origin_url)
-        url += "?sha1=" + sha1value
-        # # deprecated: "removed sha1 and `_download_image`"
-        # filepath: Path = Path(settings.static_dir) / self.host / sha1value
-        # if (
-        #     not filepath.exists()
-        #     or sha1(filepath.read_bytes()).hexdigest() != sha1value
-        # ):
-        #     if not settings.is_debug:
-        #         self._download_image(origin_url, filepath)
+    def get_page_text(self, name: str, allow_cache=True, clear_tag=True) -> str:
+        page = self.get_page(name, allow_cache)
+        text = page.text if page else ""
+        if text:
+            if clear_tag:
+                text = self.remove_html_tags(text)
+            # ----------------   LS    PS   LTR  --------------
+            text = re.sub(r"[\u2028\u2029\u200e]", "", text)
+        return text
+
+    def remove_page_cache(self, name: str):
+        name = self.norm_key(name)
+        page = self.cache.pages.pop(name, None)
+        if page and page.redirect:
+            self.remove_page_cache(page.redirect)
+        return page
+
+    def get_image_cache(self, name: str) -> WikiImageInfo | None:
+        name = self.norm_key(name)
+        return self.cache.images.get(name)
+
+    def get_image(self, name: str, allow_cache: bool = True) -> WikiImageInfo | None:
+        if not name:
+            return None
+        image: WikiImageInfo | None = None
+        if allow_cache:
+            image = self.get_image_cache(name)
+        if image is None:
+            image = self._call_request_img(self.norm_key(name))
+        return image
+
+    def get_image_name(self, name: str, allow_cache: bool = True) -> str:
+        image = self.get_image(name, allow_cache)
+        if not image:
+            return self.norm_key(name)
+        return image.file_name
+
+    def get_image_url(self, name: str) -> str:
+        image = self.get_image(name)
+        if not image:
+            return self.hash_image_url(name)
+        url = unquote(image.url)
+        if self.img_url_prefix.startswith("https://") and url.startswith("http://"):
+            url = url.replace("http://", "https://", 1)
         return url
 
-    @staticmethod
-    def norm_filename(filename: str) -> str:
-        return unquote(filename).replace(" ", "_")
+    def get_image_url_null(self, name: str | None) -> str | None:
+        if name:
+            return self.get_image_url(name)
 
-    def hash_file_url(self, filename: str) -> str:
-        filename = self.norm_filename(filename)
+    def hash_image_url(self, filename: str) -> str:
+        filename = self.norm_key(filename)
         _hash = md5(filename.encode()).hexdigest()
         return f"{self.img_url_prefix}/{_hash[:1]}/{_hash[:2]}/{filename}"
 
@@ -223,43 +274,6 @@ class WikiTool:
         filepath.resolve().parent.mkdir(exist_ok=True, parents=True)
         filepath.write_bytes(requests.get(url).content)
         logger.info(f"Download image {filepath} from {url}")
-
-    def get_file_url(self, name: str) -> str:
-        name = self.norm_key(name)
-        if not name:
-            return name
-        cached = self.cache.images.get(name)
-        if cached and cached.imageinfo.get("url"):
-            return self._process_url(cached)
-        image = self._call_request_img(name)
-        if not image or not image.imageinfo:
-            return self.hash_file_url(name)
-        return self._process_url(image)
-
-    def get_file_url_null(self, name: str | None) -> str | None:
-        if name:
-            return self.get_file_url(name)
-
-    def get_cache(self, name: str) -> NoneStr:
-        name = self.norm_key(name)
-        page = self.cache.pages.get(name)
-        if page is None:
-            return
-        if page.redirect:
-            page = self.cache.pages.get(self.norm_key(page.redirect))
-            if page:
-                return page.text
-            else:
-                self.cache.pages.pop(name)
-        else:
-            return page.text
-
-    def remove_cache(self, name: str):
-        name = self.norm_key(name)
-        page = self.cache.pages.pop(name, None)
-        if page and page.redirect:
-            self.remove_cache(page.redirect)
-        return page
 
     @staticmethod
     def get_timestamp(s: str | None, tz: KnownTimeZone) -> Optional[int]:
@@ -377,7 +391,7 @@ class WikiTool:
         )
         for record in changes:
             title = self.norm_key(record.get("title"))
-            page = self.remove_cache(title)
+            page = self.remove_page_cache(title)
             if page:
                 dropped += 1
                 logger.debug(f'{self.host}: drop outdated: {dropped} - "{title}"')
@@ -407,8 +421,8 @@ class WikiTool:
             logger.debug(log_events)
             for event in log_events:
                 title: str = event["title"]
-                if self.get_cache(title):
-                    self.remove_cache(title)
+                if self.get_page_cache(title):
+                    self.remove_page_cache(title)
                     logger.debug(f'{self.host}: drop {letype}d page: "{title}"')
 
     def save_cache(self):
@@ -452,4 +466,4 @@ class WikiTool:
     def norm_key(name: str):
         if not name:
             return name
-        return name.strip().replace(" ", "_")
+        return unquote(name.strip()).replace(" ", "_")

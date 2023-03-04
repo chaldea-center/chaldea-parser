@@ -65,10 +65,10 @@ class ServantWBase(BaseModel):
 
 class ServantW(ServantWBase):
     obtains: list[SvtObtain] = []
-    aprilFoolAssets: list[str] = []
+    aprilFoolAssets: list[str] = []  # url
     aprilFoolProfile: MappingStr = MappingStr()
-    mcSprites: list[str] = []
-    fandomSprites: list[str] = []
+    mcSprites: list[str] = []  # filename
+    fandomSprites: list[str] = []  # filename
     mcProfiles: dict[int, list[str]] = {}
     fandomProfiles: dict[int, list[str]] = {}
     # tdAnimations: list[BiliVideo] = []

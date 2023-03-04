@@ -224,10 +224,10 @@ class WikiParser:
                     illustration = params.get(f"文件{index}")
                     if illustration:
                         svt_add.aprilFoolAssets.append(
-                            MOONCELL.get_file_url(f"{illustration}.png")
+                            MOONCELL.get_image_url(f"{illustration}.png")
                         )
             if svt_add.collectionNo == 83:
-                svt_add.aprilFoolAssets.append("083所罗门愚人节.png")
+                svt_add.aprilFoolAssets.append(MOONCELL.get_image_url("083所罗门愚人节.png"))
 
             april_profile_jp, april_profile_cn = [], []
             for params in parse_template_list(wikitext, r"^{{愚人节资料"):
@@ -265,14 +265,14 @@ class WikiParser:
                     self.mc_transl.td_ruby[td_ruby_jp] = td_ruby_cn
             for params in parse_template_list(wikitext, r"^{{战斗形象"):
                 for key, value in params.items():
-                    if "模型" in key or "灵衣" in key and str(value).endswith(".png"):
-                        svt_add.mcSprites.append(MOONCELL.norm_filename(value))
+                    if ("模型" in key or "灵衣" in key) and str(value).endswith(".png"):
+                        svt_add.mcSprites.append(MOONCELL.get_image_name(value))
 
-            td_av_text = MOONCELL.get_page_text(f"{svt_add.mcLink}/宝具动画")
-            for params in parse_template_list(td_av_text, r"^{{宝具动画"):
-                av = params.get_cast("av", int) or 74352743
-                p = params.get_cast("p", int) or 1
-                # svt_add.tdAnimations.append(BiliVideo(av=av, p=p))
+            # td_av_text = MOONCELL.get_page_text(f"{svt_add.mcLink}/宝具动画")
+            # for params in parse_template_list(td_av_text, r"^{{宝具动画"):
+            #     av = params.get_cast("av", int) or 74352743
+            #     p = params.get_cast("p", int) or 1
+            #     svt_add.tdAnimations.append(BiliVideo(av=av, p=p))
 
         worker = Worker.from_map(
             _parse_one,
@@ -460,7 +460,7 @@ class WikiParser:
                     if "Command Card" in name or "NP Logo" in name:
                         continue
                     if fn:
-                        sprites.append(FANDOM.norm_filename(fn))
+                        sprites.append(FANDOM.get_image_name(fn))
             svt_add.fandomSprites = sprites
 
         worker = Worker("fandom_svt")
@@ -561,8 +561,8 @@ class WikiParser:
                 self.mc_transl.event_names[name_jp] = name_cn
                 self.mc_transl.event_names[name_jp.replace("･", "・")] = name_cn
 
-            event.titleBanner.CN = MOONCELL.get_file_url_null(params.get("标题图文件名cn"))
-            event.titleBanner.JP = MOONCELL.get_file_url_null(params.get("标题图文件名jp"))
+            event.titleBanner.CN = MOONCELL.get_image_url_null(params.get("标题图文件名cn"))
+            event.titleBanner.JP = MOONCELL.get_image_url_null(params.get("标题图文件名jp"))
             event.noticeLink.CN = params.get("官网链接cn")
             event.noticeLink.JP = params.get("官网链接jp")
             # summons
@@ -607,8 +607,8 @@ class WikiParser:
                 return
             params = parse_template(text, r"^{{活动信息")
 
-            war.titleBanner.CN = MOONCELL.get_file_url_null(params.get("标题图文件名cn"))
-            war.titleBanner.JP = MOONCELL.get_file_url_null(params.get("标题图文件名jp"))
+            war.titleBanner.CN = MOONCELL.get_image_url_null(params.get("标题图文件名cn"))
+            war.titleBanner.JP = MOONCELL.get_image_url_null(params.get("标题图文件名jp"))
             war.noticeLink.CN = params.get("官网链接cn")
             war.noticeLink.JP = params.get("官网链接jp")
             self.wiki_data.wars[war.id] = war
@@ -694,8 +694,8 @@ class WikiParser:
             summon.endTime.CN = MOONCELL.get_timestamp(
                 params.get("卡池结束时间cn"), KnownTimeZone.cst
             )
-            summon.banner.JP = MOONCELL.get_file_url_null(params.get("卡池图文件名jp"))
-            summon.banner.CN = MOONCELL.get_file_url_null(params.get("卡池图文件名cn"))
+            summon.banner.JP = MOONCELL.get_image_url_null(params.get("卡池图文件名jp"))
+            summon.banner.CN = MOONCELL.get_image_url_null(params.get("卡池图文件名cn"))
             summon.noticeLink.JP = params.get("卡池官网链接jp")
             summon.noticeLink.CN = params.get("卡池官网链接cn")
 

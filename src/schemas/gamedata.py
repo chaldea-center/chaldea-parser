@@ -4,7 +4,7 @@ from typing import Optional
 from app.schemas.base import BaseModelORJson
 from app.schemas.basic import BasicServant
 from app.schemas.common import Region
-from app.schemas.enums import Attribute, SvtClass, Trait
+from app.schemas.enums import Attribute, Trait
 from app.schemas.gameenums import NiceBuffAction, NiceCardType
 from app.schemas.nice import (
     ExtraPassive,
@@ -38,7 +38,6 @@ from .const_data import (
     ConstGameData,
     GrailCostDetail,
     MasterUserLvDetail,
-    NiceClassInfo,
 )
 from .mappings import MappingData
 
