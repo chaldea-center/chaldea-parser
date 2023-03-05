@@ -11,6 +11,7 @@ from urllib.parse import unquote
 
 import mwclient
 import mwparserfromhell
+import orjson
 import pytz
 import pywikibot
 import requests
@@ -435,7 +436,10 @@ class WikiTool:
             f"[{self.host}] save cache({len(self.cache.pages)} pages,"
             f" {len(self.cache.images)} images) to {self._fp}"
         )
-        dump_json(self.cache, self._fp, indent2=False)
+        try:
+            dump_json(self.cache, self._fp, indent2=False)
+        except orjson.JSONEncodeError:
+            logger.exception("dump wiki cache failed")
 
     @contextlib.contextmanager
     def disable_cache(self):
