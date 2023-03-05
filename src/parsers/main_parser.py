@@ -26,6 +26,7 @@ from app.schemas.nice import (
     AscensionAddEntryStr,
     BasicServant,
     EnemyDrop,
+    EnemyTd,
     ExtraAssets,
     NiceBaseFunction,
     NiceBgm,
@@ -1091,6 +1092,7 @@ class MainParser:
         NiceQuest: [],
         QuestEnemy: ["drops", "limit"],
         EnemyDrop: ["dropExpected", "dropVariance"],
+        EnemyTd: ["noblePhantasmLv2", "noblePhantasmLv3"],  # noblePhantasmLv1
         NiceEvent: ["voicePlays"],
         NiceEventMissionCondition: ["missionTargetId", "detail"],
         NiceEventMission: [
