@@ -370,12 +370,20 @@ class WikiTool:
             params = params | resp["continue"]
         return result
 
+    def _get_expire_time(self, last_days: float, days: float | None = None):
+        _now = int(time.time())
+        last_timestamp = _now
+        if self.cache.updated > 0:
+            last_timestamp = min(
+                last_timestamp, self.cache.updated - last_days * 24 * 3600
+            )
+        if days is not None:
+            last_timestamp = min(last_timestamp, _now - days * 24 * 3600)
+        return int(last_timestamp)
+
     def remove_recent_changed(self, days: float | None = None):
         _now = int(time.time())
-        if days is not None:
-            last_timestamp = datetime.utcnow().timestamp() - days * 24 * 3600
-        else:
-            last_timestamp = self.cache.updated - 48 * 3600
+        last_timestamp = self._get_expire_time(0.5, days)
         changes = self.recent_changes(
             start=datetime.fromtimestamp(last_timestamp).isoformat(),
             dir="newer",
@@ -398,10 +406,7 @@ class WikiTool:
         self.cache.updated = _now
 
     def clear_moved_or_deleted(self, days: float | None = None):
-        if days is not None:
-            last_timestamp = datetime.utcnow().timestamp() - days * 24 * 3600
-        else:
-            last_timestamp = self.cache.updated - 96 * 3600
+        last_timestamp = self._get_expire_time(1, days)
 
         for letype in ["move", "delete"]:
             params = {

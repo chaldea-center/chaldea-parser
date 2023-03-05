@@ -453,7 +453,7 @@ class WikiParser:
             sprites = []
             if sprites_text:
                 for line in sprites_text.split("\n"):
-                    cells = line.strip().split("|")
+                    cells = [c.strip() for c in line.strip().split("|")]
                     if len(cells) != 2:
                         continue
                     fn, name = cells

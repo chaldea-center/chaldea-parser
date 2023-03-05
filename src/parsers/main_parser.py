@@ -1107,6 +1107,9 @@ class MainParser:
         ],
         NiceServant: [
             "originalBattleName",
+            "atkGrowth",
+            "hpGrowth",
+            "expGrowth",
             "expFeed",
             "hitsDistribution",
         ],
