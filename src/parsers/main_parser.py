@@ -62,7 +62,7 @@ from app.schemas.nice import (
     NiceWar,
     QuestEnemy,
 )
-from app.schemas.raw import MstSvtExp
+from app.schemas.raw import MstQuestPhase, MstSvtExp
 from pydantic import BaseModel, parse_file_as, parse_obj_as
 from pydantic.json import pydantic_encoder
 
@@ -522,6 +522,20 @@ class MainParser:
         )
         self.stopwatch.log(f"master data [{region}]")
         return master_data
+
+    def event_field_trait(self):
+        # field_indiv: warId[]
+        fields: dict[int, set[int]] = defaultdict(set)
+        quest_list = parse_obj_as(list[MstQuestPhase], DownUrl.gitaa("mstQuestPhase"))
+        for phase in quest_list:
+            quest = self.jp_data.quest_dict.get(phase.questId)
+            if not quest or quest.warId == 9999:
+                continue
+            for indiv in phase.individuality:
+                if indiv >= 90000000:
+                    fields[indiv].add(quest.warId)
+        sorted_fields = sort_dict({k: sorted(v) for k, v in fields.items()})
+        self.jp_data.mappingData.field_trait = sorted_fields
 
     def filter_quests(self):
         """
@@ -1243,6 +1257,7 @@ class MainParser:
         self._add_enum_mappings()
         self._merge_repo_mapping()
         self._fix_cn_translation()
+        self.event_field_trait()
 
     def _post_mappings(self):
         mappings = self.jp_data.mappingData

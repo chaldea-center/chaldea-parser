@@ -151,6 +151,7 @@ class MappingData(BaseModel):
     trait: dict[int, MappingStr] = {}  # trait.id
     # trait_redirect: dict[int, int] = {}  # event_trait -> normal trait
     event_trait: dict[int, EventTrait] = {}
+    field_trait: dict[int, list[int]] = {}
 
     # additional strings
     # ce_comment: dict[int, MappingStr] = {}  # in w
