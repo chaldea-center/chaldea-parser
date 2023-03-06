@@ -1278,6 +1278,8 @@ class MainParser:
             mappings.skill_names.pop(key, None)
         for key in mappings.cc_names.keys():
             mappings.skill_names.pop(key, None)
+        for key in mappings.event_trait.keys():
+            mappings.trait.pop(key, None)
         mappings.cn_replace = dict(CN_REPLACE)
 
     def _add_enum_mappings(self):
