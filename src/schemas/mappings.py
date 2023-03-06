@@ -120,6 +120,10 @@ class EventTrait(MappingStr):
     eventId: int = 0
 
 
+class FieldTrait(MappingStr):
+    warIds: list[int] = []
+
+
 class MappingData(BaseModel):
     item_names: dict[str, MappingStr] = {}  # jp_name
     # item_detail: dict[int, MappingStr] = {}  # item.id
@@ -153,7 +157,7 @@ class MappingData(BaseModel):
     trait: dict[int, MappingStr] = {}  # trait.id
     # trait_redirect: dict[int, int] = {}  # event_trait -> normal trait
     event_trait: dict[int, EventTrait] = {}
-    field_trait: dict[int, list[int]] = {}
+    field_trait: dict[int, FieldTrait] = {}
 
     # additional strings
     # ce_comment: dict[int, MappingStr] = {}  # in w

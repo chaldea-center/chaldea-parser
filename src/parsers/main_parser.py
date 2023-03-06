@@ -89,7 +89,7 @@ from ..schemas.gamedata import (
     NiceBaseTd,
     NiceEquipSort,
 )
-from ..schemas.mappings import CN_REPLACE
+from ..schemas.mappings import CN_REPLACE, FieldTrait
 from ..schemas.wiki_data import AppNews, CommandCodeW, WikiData, WikiTranslation
 from ..utils import (
     NEVER_CLOSED_TIMESTAMP,
@@ -202,8 +202,6 @@ class MainParser:
 
         self.filter_quests()
         self.stopwatch.log(f"quests")
-
-        self._post_mappings()
 
         self.jp_data.exchangeTickets = parse_exchange_tickets(self.jp_data.nice_item)
         if not settings.output_wiki.joinpath("dropRate.json").exists():
@@ -533,10 +531,12 @@ class MainParser:
             if not quest or quest.warId == 9999:
                 continue
             for indiv in phase.individuality:
-                if indiv >= 90000000:
+                if indiv >= 94000000:
                     fields[indiv].add(quest.warId)
-        sorted_fields = sort_dict({k: sorted(v) for k, v in fields.items()})
-        self.jp_data.mappingData.field_trait = sorted_fields
+        ids = sorted(fields.keys())
+        self.jp_data.mappingData.field_trait = {
+            k: FieldTrait(warIds=sorted(fields[k])) for k in ids
+        }
 
     def filter_quests(self):
         """
@@ -1260,6 +1260,7 @@ class MainParser:
         self._merge_repo_mapping()
         self._fix_cn_translation()
         self.event_field_trait()
+        self._post_mappings()
 
     def _post_mappings(self):
         mappings = self.jp_data.mappingData
@@ -1279,6 +1280,8 @@ class MainParser:
         for key in mappings.cc_names.keys():
             mappings.skill_names.pop(key, None)
         for key in mappings.event_trait.keys():
+            mappings.trait.pop(key, None)
+        for key in mappings.field_trait.keys():
             mappings.trait.pop(key, None)
         mappings.cn_replace = dict(CN_REPLACE)
 
@@ -1844,20 +1847,50 @@ class MainParser:
                 if cn_name2 != cn_name:
                     # print(f"Convert CN: {cn_name} -> {cn_name2}")
                     regions["CN"] = cn_name2
-        # self.test_mapping_dict = mappings_dict
-        def _iter(obj):
+        # Svt Class
+        cls_replace = {
+            "剑士": "Saber",
+            "弓兵": "Archer",
+            "枪兵": "Lancer",
+            "骑兵": "Rider",
+            "魔术师": "Caster",
+            "暗匿者": "Assassin",
+            "狂战士": "Berserker",
+            "裁定者": "Ruler",
+            "复仇者": "Avenger",
+            "月之癌": "MoonCancer",
+            "他人格": "Alterego",
+            "降临者": "Foreigner",
+            "身披角色者": "Pretender",
+            "盾兵": "Shielder",
+        }
+
+        def replace_cls(s: str, cls_cn: str, patterns: list[str]):
+            if cls_cn not in s:
+                return s
+            for pattern in patterns:
+                s = s.replace(
+                    pattern.format(cls_cn), pattern.format(cls_replace[cls_cn])
+                )
+            return s
+
+        def _iter(obj, patterns: list[str]):
             if not isinstance(obj, dict):
                 return
             v = obj.get("CN")
             if isinstance(v, str):
                 for a, b in CN_REPLACE.items():
                     v = v.replace(a, b)
+                for cls_cn in cls_replace.keys():
+                    v = replace_cls(v, cls_cn, patterns)
                 obj["CN"] = v
             for k, v in obj.items():
                 if k != "cn_replace":
-                    _iter(v)
+                    _iter(v, patterns)
 
-        _iter(mappings_dict)
+        _iter(mappings_dict, ["对{0}", "({0})", "（{0}）", "〔{0}〕", "{0}职阶"])
+        for key in ["svt_names", "entity_names"]:
+            _iter(mappings_dict[key], ["的{0}"])
         self.jp_data.mappingData = MappingData.parse_obj(mappings_dict)
 
     def _add_atlas_na_mapping(self):
