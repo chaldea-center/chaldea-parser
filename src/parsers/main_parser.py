@@ -121,19 +121,14 @@ _KV = TypeVar("_KV", str, int)
 
 MIN_APP = "2.2.6"
 
-# TODO in 2.2.4
-# remove classInfo=data.NiceClass,
-# remove classAttackRate=data.NiceClassAttackRate,
-# remove classRelation=data.NiceClassRelation,
-
 
 # cn_ces: dict[int, tuple[str, float]] = {102022: ("STAR影法師", 1461.5)}
 ADD_CES = {
     Region.CN: {
+        102019: ("STAR影法師", 1526.1),  # 3rd
+        102020: ("STAR影法師", 1526.2),  # 4th
+        102021: ("STAR影法師", 1526.3),  # 5th
         102022: ("STAR影法師", 1526.4),  # 6th anniversary
-        102023: ("STAR影法師", 1526.1),  # 3rd
-        102024: ("STAR影法師", 1526.2),  # 4th
-        102025: ("STAR影法師", 1526.3),  # 5th
     }
 }
 

@@ -34,8 +34,33 @@ def _encode_url(url: str):
     return quote(url, safe=";/?:@&=+$,")
 
 
-def md_link(name: str, link: str):
-    return f"[{name}]({_encode_url(link)})"
+def md_link(title: str, link: str):
+    return f"[{title}]({_encode_url(link)})"
+
+
+def mc_link(title: str):
+    return md_link(title, f"https://fgo.wiki/w/{title}")
+
+
+def fandom_link(title: str):
+    return md_link(title, f"https://fategrandorder.fandom.com/wiki/{title}")
+
+
+def mc_links(titles: list[str]):
+    return ", ".join([mc_link(x) for x in titles])
+
+
+def fandom_links(titles: list[str]):
+    return ", ".join([fandom_link(x) for x in titles])
+
+
+def mc(title: str, content: str):
+    webhook = get_webhook()
+    em = DiscordEmbed(title=title)
+    em.set_author("Mooncell", icon_url="https://fgo.wiki/ioslogo.png")
+    em.set_description(content)
+    webhook.add_embed(em)
+    _execute(webhook)
 
 
 def wiki_links(mc_links: list[str], fandom_links: list[str]):

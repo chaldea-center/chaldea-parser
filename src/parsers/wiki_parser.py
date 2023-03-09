@@ -665,7 +665,7 @@ class WikiParser:
                 )
             return instance
 
-        added_summons: set[str] = set()
+        added_summons: dict[str, str] = {}
 
         def _parse_one(title: str):
             wikitext = mwparse(MOONCELL.get_page_text(title))
@@ -674,8 +674,15 @@ class WikiParser:
             if not key:
                 return
             if key in added_summons:
-                raise KeyError(f'duplicated summon key "{key}": {title}')
-            added_summons.add(key)
+                discord.mc(
+                    "Duplicated Summon Key",
+                    f"{key}: " + discord.mc_links([title, added_summons[key]]),
+                )
+                raise KeyError(
+                    f"Duplicated Summon Key: '{key}': {title}, {added_summons[key]}"
+                )
+            added_summons[key] = title
+
             summon = self.wiki_data.summons.setdefault(key, LimitedSummon(id=key))
             summon.mcLink = title
             summon.name.JP = params.get2("卡池名jp")
