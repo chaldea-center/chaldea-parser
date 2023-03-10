@@ -50,12 +50,20 @@ class WikiTool:
     def site(self):
         return mwclient.Site(host=self.host, path=self._path)
 
-    def load(self):
+    def load(self, clear_empty: bool = False):
         self._fp.resolve().parent.mkdir(exist_ok=True, parents=True)
         if self._fp.exists():
             try:
                 data = load_json(self._fp)
                 self.cache = WikiCache.parse_obj(data)
+                if clear_empty:
+                    empty_count = 0
+                    for key in list(self.cache.pages.keys()):
+                        if not self.cache.pages[key].text:
+                            self.cache.pages.pop(key)
+                            empty_count += 1
+                    if empty_count > 0:
+                        logger.info(f"{self.host}: Removed {empty_count} empty pages")
                 for key in list(self.cache.images.keys()):
                     img = self.cache.images[key]
                     if not img.info or img.info.get("ns") != 6:
@@ -178,8 +186,8 @@ class WikiTool:
                     logger.warning(
                         f"Fail download {name_json} after {retry_n} retry: {e}"
                     )
-                if name in self.active_requests:
-                    self.active_requests.remove(name)
+                    if name in self.active_requests:
+                        self.active_requests.remove(name)
                     raise
                 logger.error(f"api failed: {type(e)}: {e}")
                 time.sleep(min(5 * retry_n, 30))

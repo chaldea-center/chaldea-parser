@@ -82,6 +82,7 @@ class PayloadSetting(BaseSettings):
     clear_cache_wiki: bool = False
     clear_wiki_changed: int | None = None  # last-6h
     clear_wiki_moved: int | None = None  # last-12h
+    clear_wiki_empty: bool = False
     skip_mapping: bool = False
     skip_quests: bool = False
     recent_quest_expire: int = 20

@@ -82,8 +82,8 @@ class WikiParser:
         self._jp._get_svts()
         self._mc._get_svts()
         self._fandom._get_svts()
-        MOONCELL.load()
-        FANDOM.load()
+        MOONCELL.load(self.payload.clear_wiki_empty)
+        FANDOM.load(self.payload.clear_wiki_empty)
         if not self.payload.clear_wiki_changed or self.payload.clear_wiki_changed > 0:
             MOONCELL.remove_recent_changed(self.payload.clear_wiki_changed)
             FANDOM.remove_recent_changed(self.payload.clear_wiki_changed)
