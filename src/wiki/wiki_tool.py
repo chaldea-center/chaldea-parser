@@ -10,12 +10,12 @@ from typing import Any, Callable, Optional
 from urllib.parse import unquote
 
 import mwclient
+import mwclient.page
 import mwparserfromhell
 import orjson
 import pytz
 import pywikibot
 import requests
-from pydantic import NoneStr
 from ratelimit import limits, sleep_and_retry
 
 from ..config import settings
@@ -54,16 +54,17 @@ class WikiTool:
         self._fp.resolve().parent.mkdir(exist_ok=True, parents=True)
         if self._fp.exists():
             try:
-                data = load_json(self._fp) or {}
+                data = load_json(self._fp)
                 self.cache = WikiCache.parse_obj(data)
                 for key in list(self.cache.images.keys()):
                     img = self.cache.images[key]
                     if not img.info or img.info.get("ns") != 6:
                         self.cache.images.pop(key)
                 self.cache.host = self.host
+                updated = datetime.fromtimestamp(self.cache.updated).isoformat()
                 logger.debug(
                     f"wiki {self.host}: loaded {len(self.cache.pages)} pages, "
-                    f"{len(self.cache.images)} images"
+                    f"{len(self.cache.images)} images, last updated: {updated}"
                 )
             except Exception as e:
                 logger.error(f"[{self.host}] failed to load wiki cache: {e}")
@@ -75,8 +76,25 @@ class WikiTool:
     def _call_page_site1(self, name: str) -> tuple[WikiPageInfo, WikiPageInfo | None]:
         name_json = f'"{name}"({len(name)})'
         now = int(time.time())
-        page = self.site.pages.get(name)
-        text = page.text()
+
+        def _get_text(p: mwclient.page.Page, retry=3) -> str:
+            text = p.text(cache=False)
+            if p.exists and p.length and not text:
+                logger.error(
+                    f"Page found but text empty: {name_json}, length={page.length}"
+                )
+                time.sleep(3)
+                if retry > 0:
+                    return _get_text(p, retry - 1)
+                else:
+                    raise ValueError(
+                        f"Page found but text empty after retries: {p.name}"
+                    )
+            return text
+
+        page: mwclient.page.Page = self.site.pages.get(name)
+
+        text = _get_text(page)
         if not page.exists or not text:
             logger.debug(f"{self.host}: {name_json} not exists")
         redirect = page
@@ -85,16 +103,17 @@ class WikiTool:
                 redirect = redirect.resolve_redirect()
 
         if redirect == page:
-            return WikiPageInfo(name=page.name, text=page.text(), updated=now), None
+            return WikiPageInfo(name=page.name, text=text, updated=now), None
         else:
             info = WikiPageInfo(
                 name=page.name,
                 redirect=redirect.name,
-                text=page.text(),
+                text=text,
                 updated=now,
             )
-            redirect_name = self.norm_key(redirect.name)
-            info2 = WikiPageInfo(name=redirect.name, text=redirect.text(), updated=now)
+            info2 = WikiPageInfo(
+                name=redirect.name, text=_get_text(redirect), updated=now
+            )
             return info, info2
 
     def _call_page_site2(self, name: str) -> tuple[WikiPageInfo, WikiPageInfo | None]:
@@ -118,7 +137,6 @@ class WikiTool:
                 text=page.text,
                 updated=now,
             )
-            redirect_name = self.norm_key(redirect.title())
             info2 = WikiPageInfo(name=redirect.title(), text=redirect.text, updated=now)
             return info, info2
 
@@ -146,7 +164,11 @@ class WikiTool:
                 self._count += 1
                 if self._count > 100:
                     self._count = 0
-                    self.save_cache()
+                    logger.debug(
+                        f"[{self.host}] cached {len(self.cache.pages)} pages,"
+                        f" {len(self.cache.images)} images"
+                    )
+
                 if name in self.active_requests:
                     self.active_requests.remove(name)
                 return page
@@ -195,7 +217,11 @@ class WikiTool:
                 self._count += 1
                 if self._count > 100:
                     self._count = 0
-                    self.save_cache()
+                    logger.debug(
+                        f"[{self.host}] cached {len(self.cache.pages)} pages,"
+                        f" {len(self.cache.images)} images"
+                    )
+
                 if name in self.active_requests:
                     self.active_requests.remove(name)
                 return info
@@ -374,7 +400,7 @@ class WikiTool:
         while offset is not None:
             params2 = dict(params)
             params2["query"] = f"{params2['query']}|offset={offset}"
-            resp: dict = self._api_call(params2)
+            resp: dict = self._api_call(params2)  # type: ignore
             offset = resp.get("query-continue-offset")
             answers = resp["query"].get("results", {})
             if isinstance(answers, dict):
@@ -394,7 +420,7 @@ class WikiTool:
     def _api_call_continue(self, params: dict, getter: Callable[[dict], Any]) -> list:
         result = []
         while True:
-            resp = self._api_call(params)
+            resp: Any = self._api_call(params)
             result.extend(getter(resp))
             if "continue" not in resp:
                 break
@@ -414,7 +440,7 @@ class WikiTool:
 
     def remove_recent_changed(self, days: float | None = None):
         _now = int(time.time())
-        last_timestamp = self._get_expire_time(0.5, days)
+        last_timestamp = self._get_expire_time(0.25, days)
         changes = self.recent_changes(
             start=datetime.fromtimestamp(last_timestamp).isoformat(),
             dir="newer",
@@ -437,7 +463,7 @@ class WikiTool:
         self.cache.updated = _now
 
     def clear_moved_or_deleted(self, days: float | None = None):
-        last_timestamp = self._get_expire_time(1, days)
+        last_timestamp = self._get_expire_time(0.5, days)
 
         for letype in ["move", "delete"]:
             params = {
@@ -463,9 +489,10 @@ class WikiTool:
 
     def save_cache(self):
         logger.debug(
-            f"[{self.host}] save cache({len(self.cache.pages)} pages,"
+            f"[{self.host}] total cache({len(self.cache.pages)} pages,"
             f" {len(self.cache.images)} images) to {self._fp}"
         )
+        # in multi-threading, saving (dict/list iteration) is not safe
         try:
             dump_json(self.cache, self._fp, indent2=False)
         except orjson.JSONEncodeError:

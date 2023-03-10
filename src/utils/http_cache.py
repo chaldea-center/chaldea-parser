@@ -131,7 +131,7 @@ class HttpApiUtil(abc.ABC):
         if resp is None:
             resp = self._limit_api_func(url, **kwargs)
 
-        return resp
+        return resp  # type: ignore
 
     def api_json(
         self,
@@ -166,7 +166,7 @@ class HttpApiUtil(abc.ABC):
                     print("validation error, delete and retry:", url)
                     self.cache_storage.delete_url(url)
                     # todo: not called
-                    return _parse_model(self._limit_api_func(url, **kwargs), False)
+                    return _parse_model(self._limit_api_func(url, **kwargs), False)  # type: ignore
             elif _response.status_code == 404:
                 return None
             else:
