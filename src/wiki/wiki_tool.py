@@ -72,6 +72,56 @@ class WikiTool:
         self.cache.pages.clear()
         self.cache.images.clear()
 
+    def _call_page_site1(self, name: str) -> tuple[WikiPageInfo, WikiPageInfo | None]:
+        name_json = f'"{name}"({len(name)})'
+        now = int(time.time())
+        page = self.site.pages.get(name)
+        text = page.text()
+        if not page.exists or not text:
+            logger.debug(f"{self.host}: {name_json} not exists")
+        redirect = page
+        if text:
+            while redirect.redirect:
+                redirect = redirect.resolve_redirect()
+
+        if redirect == page:
+            return WikiPageInfo(name=page.name, text=page.text(), updated=now), None
+        else:
+            info = WikiPageInfo(
+                name=page.name,
+                redirect=redirect.name,
+                text=page.text(),
+                updated=now,
+            )
+            redirect_name = self.norm_key(redirect.name)
+            info2 = WikiPageInfo(name=redirect.name, text=redirect.text(), updated=now)
+            return info, info2
+
+    def _call_page_site2(self, name: str) -> tuple[WikiPageInfo, WikiPageInfo | None]:
+        name_json = f'"{name}"({len(name)})'
+        now = int(time.time())
+        page = pywikibot.Page(self.site2, name)
+        text = page.text
+        if not page.exists() or not text:
+            logger.debug(f"{self.host}: {name_json} not exists")
+        redirect = page
+        if text:
+            while redirect.isRedirectPage():
+                redirect = redirect.getRedirectTarget()
+        if redirect == page:
+            info = WikiPageInfo(name=page.title(), text=page.text, updated=now)
+            return info, None
+        else:
+            info = WikiPageInfo(
+                name=page.title(),
+                redirect=redirect.title(),
+                text=page.text,
+                updated=now,
+            )
+            redirect_name = self.norm_key(redirect.title())
+            info2 = WikiPageInfo(name=redirect.title(), text=redirect.text, updated=now)
+            return info, info2
+
     @sleep_and_retry
     @limits(3, 4)
     def _call_request_page(self, name: str) -> WikiPageInfo:
@@ -82,31 +132,11 @@ class WikiTool:
         prefix = f"[{self.host}][page]"
         while True:
             try:
-                now = int(time.time())
-                page = pywikibot.Page(self.site2, name)
-                text = page.text
-                if not page.exists() or not text:
-                    logger.debug(f"{self.host}: {name_json} not exists")
-                redirect = page
-                if text:
-                    while redirect.isRedirectPage():
-                        redirect = redirect.getRedirectTarget()
-                info: WikiPageInfo | None = None
-                if redirect == page:
-                    info = WikiPageInfo(name=page.title(), text=page.text, updated=now)
-                    self.cache.pages[name] = info
-                else:
-                    self.cache.pages[name] = WikiPageInfo(
-                        name=page.title(),
-                        redirect=redirect.title(),
-                        text=page.text,
-                        updated=now,
-                    )
-                    redirect_name = self.norm_key(redirect.title())
-                    info = WikiPageInfo(
-                        name=redirect.title(), text=redirect.text, updated=now
-                    )
-                    self.cache.pages[redirect_name] = info
+                page, redirect = self._call_page_site1(name)
+                self.cache.pages[name] = page
+                if redirect:
+                    self.cache.pages[self.norm_key(redirect.name)] = redirect
+
                 if retry_n > 0:
                     logger.warning(
                         f"{prefix} downloaded {name_json} after {retry_n} retry"
@@ -119,7 +149,7 @@ class WikiTool:
                     self.save_cache()
                 if name in self.active_requests:
                     self.active_requests.remove(name)
-                return info
+                return page
             except Exception as e:
                 retry_n += 1
                 if retry_n >= max_retry:
