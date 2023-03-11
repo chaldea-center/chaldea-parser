@@ -28,18 +28,25 @@ class Worker:
         finished = 0
         steps = [i for i in (2, 5, 10, 20, 50, 100) if i <= len(self._tasks) // 5]
         step = steps[-1] if steps else 1
+        errors = []
         for f in as_completed(self._tasks):
             error = f.exception()
             if error:
-                logger.exception(error)
-                raise error
+                logger.error(error)
+                errors.append(error)
             finished += 1
             if show_progress:
                 if finished % step == 0:
                     logger.debug(f"Worker{name}: {finished}/{len(self._tasks)}   ")
                 elif settings.is_debug:
                     print(f"\rWorker{name}: {finished}/{len(self._tasks)}   ", end="")
-        logger.debug(f"Worker{name} finished: {finished}/{len(self._tasks)}   ")
+        msg = f"Worker{name} finished: {finished}/{len(self._tasks)}.  "
+        if errors:
+            msg += f"{len(errors)}/{len(self._tasks)} errors!"
+            logger.error(msg)
+            raise RuntimeError(msg)
+        else:
+            logger.info(msg)
 
     @staticmethod
     def map(fn, *iterables):

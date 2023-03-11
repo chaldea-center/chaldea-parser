@@ -23,3 +23,15 @@ class DropRateData(BaseModel):
     updatedAt: int
     newData: DropRateSheet
     legacyData: DropRateSheet
+
+
+class QuestDropData(BaseModel):
+    runs: int
+    items: dict[int, int]
+
+
+class DropData(BaseModel):
+    domusVer: int = 0
+    domusAurea: DropRateSheet = DropRateSheet()
+    freeDrops: dict[int, QuestDropData] = {}  # questId*100+phase: normal items
+    fixedDrops: dict[int, QuestDropData] = {}  # questId*100+phase: normal items

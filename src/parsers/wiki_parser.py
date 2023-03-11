@@ -483,14 +483,16 @@ class WikiParser:
             ce_add.fandomLink = link
             wikitext = mwparse(FANDOM.get_page_text(link))
             params = parse_template(wikitext, r"^{{Craftlore")
-            ce_add.profile.NA = params.get2("na") or params.get2("en")
+            profile = params.get2("na") or params.get2("en")
+            if profile:
+                ce_add.profile.NA = profile
 
             effect_params = parse_template(wikitext, r"^{{ceeffect")
             effect1 = effect_params.get2("effect1")
             effect2 = effect_params.get2("effect2")
-            if effect1 and effect1 != "N/A":
+            if effect1 and effect1.upper() != "N/A":
                 self.fandom_transl.ce_skill_des[ce_add.collectionNo] = effect1
-            if effect2 and effect2 != "N/A":
+            if effect2 and effect2.upper() != "N/A":
                 self.fandom_transl.ce_skill_des_max[ce_add.collectionNo] = effect2
 
         worker = Worker("fandom_ce")

@@ -39,6 +39,7 @@ from .const_data import (
     GrailCostDetail,
     MasterUserLvDetail,
 )
+from .drop_data import DropData
 from .mappings import MappingData
 
 
@@ -137,6 +138,7 @@ class MasterData(BaseModelORJson):
     all_quests_na: dict[int, NiceQuest] = {}  # only saved in jp_data
     cachedQuestPhases: dict[int, Optional[NiceQuestPhase]] = {}
     fixedDrops: dict[int, FixedDrop] = {}
+    dropData: DropData = DropData()
     mappingData: MappingData = MappingData()
     exchangeTickets: list[ExchangeTicket] = []
     remainedQuestIds: set[int] = set()
@@ -163,6 +165,8 @@ class MasterData(BaseModelORJson):
         phases.sort(key=lambda x: x.id * 100 + x.phase)
         self.cachedQuestPhases = {x.id * 100 + x.phase: x for x in phases}
         self.fixedDrops = sort_dict(self.fixedDrops)
+        self.dropData.fixedDrops = sort_dict(self.dropData.fixedDrops)
+        self.dropData.freeDrops = sort_dict(self.dropData.freeDrops)
         self.mappingData.costume_detail = sort_dict(self.mappingData.costume_detail)
         self.mappingData.trait = sort_dict(self.mappingData.trait)
         # self.mappingData.event_trait = sort_dict(self.mappingData.event_trait)

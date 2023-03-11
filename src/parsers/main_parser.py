@@ -14,8 +14,6 @@ import requests
 from app.schemas.common import NiceTrait, Region
 from app.schemas.enums import OLD_TRAIT_MAPPING, NiceSvtType
 from app.schemas.gameenums import (
-    NiceGiftType,
-    NiceQuestAfterClearType,
     NiceSpotOverwriteType,
     NiceSvtFlag,
     NiceWarOverwriteType,
@@ -55,7 +53,6 @@ from app.schemas.nice import (
     NiceMasterMission,
     NiceQuest,
     NiceQuestPhase,
-    NiceQuestType,
     NiceServant,
     NiceShop,
     NiceSkill,
@@ -80,8 +77,8 @@ from ..schemas.common import (
     OpenApiInfo,
 )
 from ..schemas.const_data import ConstGameData, SvtExpCurve
+from ..schemas.drop_data import DropRateData
 from ..schemas.gamedata import (
-    FixedDrop,
     MappingData,
     MasterData,
     NewAddedData,
@@ -96,9 +93,9 @@ from ..utils import (
     AtlasApi,
     DownUrl,
     McApi,
-    NumDict,
     Worker,
     count_time,
+    discord,
     dump_json,
     load_json,
     logger,
@@ -108,6 +105,7 @@ from ..utils.helper import LocalProxy, beautify_file, describe_regions
 from ..utils.stopwatch import Stopwatch
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.wiki_tool import KnownTimeZone
+from .core.quest import parse_quest_drops
 from .core.ticket import parse_exchange_tickets
 from .domus_aurea import run_drop_rate_update
 from .update_mapping import run_mapping_update
@@ -192,16 +190,13 @@ class MainParser:
         ]
         self.stopwatch.log(f"load wiki data")
         self.jp_data = self.load_master_data(Region.JP)
+
         self.merge_all_mappings()
         self.stopwatch.log(f"mappings finish")
-
-        self.filter_quests()
+        self.parse_quest_data()
         self.stopwatch.log(f"quests")
 
         self.jp_data.exchangeTickets = parse_exchange_tickets(self.jp_data.nice_item)
-        if not settings.output_wiki.joinpath("dropRate.json").exists():
-            logger.info("dropRate.json not exist, run domus_aurea parser")
-            run_drop_rate_update()
         self.get_const_data()
         self.save_data()
         print(self.stopwatch.output())
@@ -533,181 +528,15 @@ class MainParser:
             k: FieldTrait(warIds=sorted(fields[k])) for k in ids
         }
 
-    def filter_quests(self):
-        """
-        1. add main story's free quests + QP quest(10AP)' phase data to game_data.questPhases
-        2. count each war's one-off questPhase's fixed drop
-        """
-        if self.payload.skip_quests and settings.is_debug:
-            logger.warning("[debug] skip checking quests data")
-            return
-
-        logger.info("processing quest data")
-        previous_fixed_drops: dict[int, FixedDrop] = {}
-        used_previous_count = 0
-        close_at_limit = int(time.time() - 3 * 24 * 3600)
-        open_at_limit = int(time.time() - self.payload.recent_quest_expire * 24 * 3600)
-        try:
-            if not self.payload.skip_prev_quest_drops:
-                previous_fixed_drops = {
-                    v["id"]: FixedDrop.parse_obj(v)
-                    for v in load_json(settings.output_dist / "fixedDrops.json") or []
-                }
-        except Exception as e:
-            logger.error(f"fail to reading fixed drop data of previous build: {e}")
-
-        def _get_expire(quest: NiceQuest, default_days: int | None) -> int | None:
-            if quest.warId in self.payload.expired_wars:
-                return 0
-            if default_days is not None:
-                return default_days * 24 * 3600
-            return None
-
-        def _save_free_phase(quest: NiceQuest, phase=3):
-            assert (
-                phase in quest.phases
-                and quest.afterClear == NiceQuestAfterClearType.repeatLast
-            ), quest.id
-            assert quest.id in (94061636, 94061640) or (
-                quest.warId < 1000 and quest.type == NiceQuestType.free
-            ), quest.id
-
-            phase_data = AtlasApi.quest_phase(
-                quest.id,
-                phase,
-                # filter_fn=_check_quest_phase_in_recent,
-                expire_after=_get_expire(quest, self.payload.main_story_quest_expire),
-            )
-            assert phase_data
-            self.jp_data.cachedQuestPhases[quest.id * 100 + phase] = phase_data
-
-        def _check_fixed_drop(quest: NiceQuest):
-            assert quest.afterClear in (
-                NiceQuestAfterClearType.close,
-                NiceQuestAfterClearType.resetInterval,
-            ), quest.id
-
-            quest_na = self.jp_data.all_quests_na.get(quest.id)
-
-            for phase in quest.phases:
-                phase_key = quest.id * 100 + phase
-                previous_data = previous_fixed_drops.get(phase_key)
-                if previous_data and quest.warId not in self.payload.expired_wars:
-                    # 关闭未过3天且20天内开放
-                    retry_jp = (
-                        quest.closedAt > close_at_limit
-                        and quest.openedAt > open_at_limit
-                    )
-                    retry_na = (
-                        quest_na
-                        and quest_na.closedAt > close_at_limit
-                        and quest_na.openedAt > open_at_limit
-                    )
-                    retry = not self.payload.regions and (retry_jp or retry_na)
-                    if not retry:
-                        self.jp_data.fixedDrops[phase_key] = previous_data.copy(
-                            deep=True
-                        )
-                        nonlocal used_previous_count
-                        used_previous_count += 1
-                        continue
-                phase_data = None
-                if phase in quest.phasesWithEnemies:
-                    phase_data = AtlasApi.quest_phase(
-                        quest.id,
-                        phase,
-                        Region.JP,
-                        filter_fn=quest.closedAt > close_at_limit
-                        and quest.openedAt > open_at_limit,
-                        expire_after=_get_expire(quest, None),
-                    )
-                elif quest_na and phase in quest_na.phasesWithEnemies:
-                    phase_data = AtlasApi.quest_phase(
-                        quest_na.id,
-                        phase,
-                        Region.NA,
-                        filter_fn=quest_na.closedAt > close_at_limit
-                        and quest_na.openedAt > open_at_limit,
-                    )
-                if not phase_data:
-                    continue
-                phase_drops: NumDict[int, int] = NumDict()
-                for drop in [
-                    _drop
-                    for stage in phase_data.stages
-                    for enemy in stage.enemies
-                    for _drop in enemy.drops
-                ]:
-                    if drop.runs < 5:
-                        continue
-                    drop_prob = drop.dropCount / drop.runs
-                    if 0.95 < drop_prob < 1:
-                        drop_prob = 1
-                    if drop.type == NiceGiftType.item and drop_prob >= 1:
-                        phase_drops.add_one(drop.objectId, int(drop_prob) * drop.num)
-                phase_drops.drop_negative()
-                # always add even if there is nothing dropped
-                # if phase_drops:
-                self.jp_data.fixedDrops[phase_key] = FixedDrop(
-                    id=phase_key, items=phase_drops
-                )
-
-        worker = Worker("quest")
-        # _now = int(time.time()) + 60 * 24 * 3600
-
-        for war in self.jp_data.nice_war:
-            if war.id == 9999:  # Chaldea Gate
-                _now = time.time()
-                for spot in war.spots:
-                    spot.quests = [
-                        q
-                        for q in spot.quests
-                        if q.id in self.jp_data.remainedQuestIds or q.closedAt > _now
-                    ]
-                # continue
-            if war.id == 1002:  # 曜日クエスト
-                # remove closed quests
-                for spot in war.spots:
-                    spot.quests = [
-                        q
-                        for q in spot.quests
-                        if (
-                            q.closedAt > NEVER_CLOSED_TIMESTAMP
-                            and q.afterClear == NiceQuestAfterClearType.repeatLast
-                        )
-                    ]
-            for _quest in [q for spot in war.spots for q in spot.quests]:
-                if not _quest.phases:
-                    continue
-                # main story free quests
-                if (
-                    _quest.type == NiceQuestType.free
-                    and _quest.warId < 1000
-                    and _quest.afterClear == NiceQuestAfterClearType.repeatLast
-                ):
-                    worker.add(_save_free_phase, _quest, 3)
-                    continue
-                if _quest.warId == 1002:
-                    if _quest.id in (94061636, 94061640):  # 宝物庫の扉を開け 初級&極級
-                        worker.add(_save_free_phase, _quest, 1)
-                    continue
-                # one-off quests: event/main story
-                if _quest.afterClear not in (
-                    NiceQuestAfterClearType.close,
-                    NiceQuestAfterClearType.resetInterval,
-                ):
-                    continue
-                if _quest.phasesWithEnemies:
-                    worker.add(_check_fixed_drop, _quest)
-                else:
-                    _quest_na = self.jp_data.all_quests_na.get(_quest.id)
-                    if _quest_na and _quest_na.phasesWithEnemies:
-                        worker.add(_check_fixed_drop, _quest)
-        worker.wait()
-        logger.debug(
-            f"used {used_previous_count} quest phases' fixed drop from previous build"
-        )
-        logger.info("finished checking quests")
+    def parse_quest_data(self):
+        """Need NA data, run after mappings merged"""
+        if not settings.output_wiki.joinpath("dropRate.json").exists():
+            logger.info("dropRate.json not exist, run domus_aurea parser")
+            run_drop_rate_update()
+        domus_data = DropRateData.parse_file(settings.output_wiki / "dropRate.json")
+        self.jp_data.dropData.domusVer = domus_data.updatedAt
+        self.jp_data.dropData.domusAurea = domus_data.newData
+        parse_quest_drops(self.jp_data, self.payload)
 
     def _normal_dump(
         self,
@@ -850,6 +679,7 @@ class MainParser:
                     "config.json",
                     "addData.json",
                     "mappingPatch.json",
+                    "fixedDrops.json",
                 ):
                     continue
                 elif f.is_file():
@@ -908,8 +738,8 @@ class MainParser:
             key="wars",
         )
         # sometimes disabled quest parser when debugging
-        if data.fixedDrops:
-            _normal_dump(list(data.fixedDrops.values()), "fixedDrops")
+        _normal_dump(self.jp_data.dropData, "dropData")
+        _dump_file(settings.output_dist / "fixedDrops.json", "fixedDrops")
         if data.cachedQuestPhases:
             _dump_by_count(list(data.cachedQuestPhases.values()), 100, "questPhases")
         _normal_dump(data.extraMasterMission, "extraMasterMission")
@@ -958,7 +788,11 @@ class MainParser:
         if len(self.payload.regions) not in (0, len(Region.__members__)):
             msg = describe_regions(self.payload.regions) + msg
         settings.commit_msg.write_text(msg)
-        self.gametop()
+        try:
+            self.gametop()
+        except Exception as e:
+            logger.exception(f"update gametop failed")
+            discord.text(f"Update gametop failed: {e}")
 
     @staticmethod
     def _replace_dw_chars(content: _T) -> _T:
@@ -1922,10 +1756,7 @@ class MainParser:
             if settings.is_debug:
                 return load_json(na_folder / fn) or {}
             else:
-                url = (
-                    "https://raw.githubusercontent.com/atlasacademy/fgo-game-data-api/master/app/data/mappings/"
-                    + fn
-                )
+                url = f"https://raw.githubusercontent.com/atlasacademy/fgo-game-data-api/master/app/data/mappings/{fn}"
                 return requests.get(url).json()
 
         for src_fn, dest in src_mapping.items():
@@ -2045,7 +1876,7 @@ class MainParser:
                     f"https://raw.githubusercontent.com/O-Isaac/FGO-VerCode-extractor/{region}/VerCode.json"
                 ).json()
             app_ver = requests.get(
-                f'https://worker-cn.chaldea.center/proxy/gplay-ver?id={data[region]["bundle"]}'
+                f'https://worker.chaldea.center/proxy/gplay-ver?id={data[region]["bundle"]}'
             ).text
             if not re.match(r"\d+\.\d+\.\d+", app_ver):
                 app_ver = ver_codes["appVer"]

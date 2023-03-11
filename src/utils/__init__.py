@@ -9,11 +9,12 @@ from .worker import Worker
 
 
 NEVER_CLOSED_TIMESTAMP = 1800000000  # 1893423600
+SECS_PER_DAY = 24 * 3600
 
 
 AtlasApi = HttpApiUtil(
     api_server="https://api.atlasacademy.io",
-    rate_calls=5,
+    rate_calls=4,
     rate_period=1,
     db_path=str(Path(settings.cache_http_cache / "atlas")),
     expire_after=3600 * 24 * 60,

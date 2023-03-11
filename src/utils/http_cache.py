@@ -1,6 +1,7 @@
 import abc
 import asyncio
 import functools
+import re
 import time
 from contextlib import contextmanager
 from datetime import timedelta
@@ -68,11 +69,18 @@ class HttpApiUtil(abc.ABC):
         self.api_server = api_server
         self.cache_storage: SQLiteCache = SQLiteCache(db_path=db_path)
 
+        retry_at = 0
+
         @sleep_and_retry
         @limits(calls=rate_calls, period=rate_period)
         def _call_api(url, retry_n=5, **kwargs):
+            nonlocal retry_at
             origin_kwargs = dict(kwargs)
             t0 = time.time()
+            if t0 < retry_at:
+                time.sleep(retry_at - t0)
+                t0 = time.time()
+
             cache_session: CachedSession = CachedSession(
                 backend=self.cache_storage,
                 expire_after=kwargs.pop("expire_after", expire_after),
@@ -80,7 +88,19 @@ class HttpApiUtil(abc.ABC):
             r = cache_session.get(url, **kwargs)
             if r.status_code == 429:
                 logger.warning(r.text)
-                retry_after = float(r.headers.get("Retry-After") or "5")
+                try:
+                    header = r.headers.get("Retry-After")
+                    match = re.match(r"wait (\d+) second", r.text)
+                    if header:
+                        retry_after = float(header) + 1
+                    elif match:
+                        retry_after = float(match.group(1)) + 1
+                    else:
+                        retry_after = 6
+                except:
+                    retry_after = 6
+                retry_at = max(retry_at, time.time() + retry_after)
+                logger.debug(f"retry after {int(retry_after)} seconds")
                 time.sleep(retry_after)
                 return _call_api(url, retry_n - 1, **origin_kwargs)
             logger.debug(f"GOT url: {time.time() - t0:.3f}s: {url}")

@@ -87,17 +87,16 @@ class WikiTool:
 
         def _get_text(p: mwclient.page.Page, retry=3) -> str:
             text = p.text(cache=False)
+            if not text:
+                logger.warning(f"Page is empty: {name_json}")
+
             if p.exists and p.length and not text:
-                logger.error(
-                    f"Page found but text empty: {name_json}, length={page.length}"
-                )
+                logger.error(f"Page found but empty: {name_json}, length={page.length}")
                 time.sleep(3)
                 if retry > 0:
                     return _get_text(p, retry - 1)
                 else:
-                    raise ValueError(
-                        f"Page found but text empty after retries: {p.name}"
-                    )
+                    raise ValueError(f"Page found but empty after retries: {p.name}")
             return text
 
         page: mwclient.page.Page = self.site.pages.get(name)
