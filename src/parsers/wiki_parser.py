@@ -635,8 +635,20 @@ class WikiParser:
                         self.mc_transl.spot_names[spot_jp] = spot_cn
 
         worker = Worker("mc_quests")
+        titles: set[str] = {"迦勒底之门/进阶关卡"}
+        for event in self.wiki_data.events.values():
+            if event.mcLink and event.huntingId > 0:
+                titles.add(event.mcLink)
         for answer in MOONCELL.ask_query("[[分类:主线关卡 || 活动关卡]]"):
-            worker.add(_parse_one, answer["fulltext"])
+            titles.add(answer["fulltext"])
+        for svt in self._jp.released_svts.values():
+            if not svt.relateQuestIds:
+                continue
+            svt_add = self.wiki_data.servants.get(svt.collectionNo)
+            if svt_add and svt_add.mcLink:
+                titles.add(f"{svt_add.mcLink}/从者任务")
+        for title in titles:
+            worker.add(_parse_one, title)
         worker.wait()
 
     def mc_summon(self):
@@ -797,6 +809,15 @@ class WikiParser:
             ):
                 continue
             _with_subs(title, False)
+
+        # Hunting Quests and Advanced Quests
+        for event in self.wiki_data.events.values():
+            if not event.fandomLink:
+                continue
+            if event.huntingId > 0:
+                _with_subs(event.fandomLink, False)
+            if re.match(r"^Advanced.Quest", event.fandomLink):
+                _with_subs(event.fandomLink, True)
 
     def fandom_extra(self):
         for page_name in [

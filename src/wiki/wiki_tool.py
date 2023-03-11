@@ -447,7 +447,7 @@ class WikiTool:
 
     def remove_recent_changed(self, days: float | None = None):
         _now = int(time.time())
-        last_timestamp = self._get_expire_time(0.25, days)
+        last_timestamp = self._get_expire_time(2 / 24, days)
         changes = self.recent_changes(
             start=datetime.fromtimestamp(last_timestamp).isoformat(),
             dir="newer",
@@ -487,7 +487,7 @@ class WikiTool:
             log_events = self._api_call_continue(
                 params, lambda x: x["query"]["logevents"]
             )
-            logger.debug(log_events)
+            logger.debug(f"page {letype}: {log_events}")
             for event in log_events:
                 title: str = event["title"]
                 if self.get_page_cache(title):
