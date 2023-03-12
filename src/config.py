@@ -85,6 +85,7 @@ class PayloadSetting(BaseSettings):
     clear_wiki_empty: bool = False
     skip_mapping: bool = False
     skip_quests: bool = False
+    use_prev_drops: bool = True
     recent_quest_expire: int = 20
     main_story_quest_expire: int = 90
     expired_wars: list[int] = []

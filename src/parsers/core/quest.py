@@ -18,6 +18,7 @@ from ...utils import NEVER_CLOSED_TIMESTAMP, SECS_PER_DAY, AtlasApi
 from ...utils.helper import NumDict, load_json, sort_dict
 from ...utils.log import logger
 from ...utils.worker import Worker
+from ..helper import is_quest_in_expired_wars
 
 
 @dataclass
@@ -127,7 +128,11 @@ class _QuestParser:
 
         retry_jp = _check(quest.closedAt, quest.openedAt)
         retry_na = quest_na and _check(quest_na.closedAt, quest_na.openedAt)
-        retry = quest.warId in self.payload.expired_wars or retry_jp or retry_na
+        retry = (
+            is_quest_in_expired_wars(quest, self.payload.expired_wars)
+            or retry_jp
+            or retry_na
+        )
 
         for phase in quest.phases:
             phase_key = quest.id * 100 + phase
@@ -185,7 +190,11 @@ class _QuestParser:
         retry_na = quest_na and (
             quest_na.closedAt > close_at_limit or quest_na.openedAt > open_at_limit
         )
-        retry = quest.warId in self.payload.expired_wars or retry_jp or retry_na
+        retry = (
+            is_quest_in_expired_wars(quest, self.payload.expired_wars)
+            or retry_jp
+            or retry_na
+        )
 
         phase = quest.phases[-1]
         phase_key = quest.id * 100 + phase
@@ -228,7 +237,7 @@ class _QuestParser:
     def _get_expire(
         self, quest: NiceQuest, cache_days: int | None = None
     ) -> int | None:
-        if quest.warId in self.payload.expired_wars:
+        if is_quest_in_expired_wars(quest, self.payload.expired_wars):
             return 0
         close_limit = self._now - 3 * SECS_PER_DAY
         if close_limit < quest.closedAt < NEVER_CLOSED_TIMESTAMP:
@@ -251,7 +260,7 @@ def parse_quest_drops(jp_data: MasterData, payload: PayloadSetting):
         logger.warning("[debug] skip checking quests data")
         return
     fp = settings.output_dist / "dropData.json"
-    if fp.exists():
+    if payload.use_prev_drops and fp.exists():
         prev_data = DropData.parse_file(fp)
     else:
         prev_data = None
