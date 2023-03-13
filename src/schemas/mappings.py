@@ -81,7 +81,7 @@ class EnumMapping(BaseModel):
     effect_type: dict[str, MappingStr] = {}  # custom
     # long dict
     func_type: dict[NiceFuncType, MappingStr] = {}
-    buff_type: dict[NiceBuffType, MappingStr] = {}
+    buff_type: dict[str, MappingStr] = {}  # NiceBuffType, similar with BuffAction
     svt_voice_type: dict[NiceSvtVoiceType, MappingStr] = {}
 
     def update_enums(self):
@@ -108,12 +108,27 @@ class EnumMapping(BaseModel):
             SummonType: self.summon_type,
             # effect_type
             NiceFuncType: self.func_type,
-            NiceBuffType: self.buff_type,
+            # NiceBuffType: self.buff_type,
             NiceSvtVoiceType: self.svt_voice_type,
         }
         for k, v in enum_fields.items():
             for kk in k.__members__.values():
                 v.setdefault(kk, MappingBase())
+
+        _deprecated_buff_types = {
+            "commandattackFunction": "commandattackAfterFunction",
+            "upDefencecommanDamage": "upDefenceCommanddamage",
+            "downDefencecommanDamage": "downDefenceCommanddamage",
+            "attackFunction": "attackAfterFunction",
+            "commandcodeattackFunction": "commandcodeattackBeforeFunction",
+        }
+        for kk in NiceBuffType:
+            key = kk.value
+            vv = self.buff_type.setdefault(key, MappingBase())
+            if key in _deprecated_buff_types:
+                key2 = _deprecated_buff_types[key]
+                vv2 = self.buff_type.setdefault(key2, MappingBase())
+                vv2.update_from(vv)
 
 
 class EventTrait(MappingStr):
