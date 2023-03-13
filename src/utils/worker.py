@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from typing import Callable, Optional
 
 from src.config import settings
@@ -9,15 +9,24 @@ _executor = ThreadPoolExecutor()
 
 
 class Worker:
+    fake_mode = False
+
     def __init__(
-        self, name: str | None = None, func: Optional[Callable] = None
+        self,
+        name: str | None = None,
+        func: Callable | None = None,
+        fake_mode: bool | None = None,
     ) -> None:
-        self.name = name
-        self.func = func
-        self._tasks = []
+        self.name: str | None = name
+        self.func: Callable | None = func
+        self._tasks: list[Future] = []
+        self.fake_mode: bool = Worker.fake_mode if fake_mode is None else fake_mode
 
     def add(self, fn, *args, **kwargs):
-        self._tasks.append(_executor.submit(fn, *args, **kwargs))
+        if self.fake_mode:
+            fn(*args, **kwargs)
+        else:
+            self._tasks.append(_executor.submit(fn, *args, **kwargs))
 
     def add_default(self, *args, **kwargs):
         assert self.func is not None
@@ -48,13 +57,13 @@ class Worker:
         else:
             logger.info(msg)
 
-    @staticmethod
-    def map(fn, *iterables):
-        return _executor.map(fn, *iterables)
+    # @staticmethod
+    # def map(fn, *iterables):
+    #     return _executor.map(fn, *iterables)
 
     def map_add(self, fn, *iterables):
         for args in zip(*iterables):
-            self._tasks.append(_executor.submit(fn, *args))
+            self.add(fn, *args)
 
     @staticmethod
     def from_map(fn, *iterables, name: str | None = None) -> "Worker":

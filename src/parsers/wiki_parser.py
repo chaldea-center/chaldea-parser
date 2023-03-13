@@ -79,6 +79,7 @@ class WikiParser:
         if self.payload.run_wiki_parser is False:
             logger.info("run_wiki_parser=False, skip")
             return
+        Worker.fake_mode = True
         self._jp._get_svts()
         self._mc._get_svts()
         self._fandom._get_svts()
