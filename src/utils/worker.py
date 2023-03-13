@@ -20,10 +20,12 @@ class Worker:
         self.name: str | None = name
         self.func: Callable | None = func
         self._tasks: list[Future] = []
+        self._fake_count = 0
         self.fake_mode: bool = Worker.fake_mode if fake_mode is None else fake_mode
 
     def add(self, fn, *args, **kwargs):
         if self.fake_mode:
+            self._fake_count += 1
             fn(*args, **kwargs)
         else:
             self._tasks.append(_executor.submit(fn, *args, **kwargs))
@@ -38,6 +40,10 @@ class Worker:
         steps = [i for i in (2, 5, 10, 20, 50, 100) if i <= len(self._tasks) // 5]
         step = steps[-1] if steps else 1
         errors = []
+        if self._fake_count > 0:
+            logger.debug(
+                f"Worker{name}: {self._fake_count} fake tasks, {len(self._tasks)} futures  "
+            )
         for f in as_completed(self._tasks):
             error = f.exception()
             if error:

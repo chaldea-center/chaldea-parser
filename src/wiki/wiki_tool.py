@@ -194,7 +194,7 @@ class WikiTool:
     @sleep_and_retry
     @limits(3, 4)
     def _call_request_img(self, name: str) -> WikiImageInfo | None:
-        name = self.norm_key(name)
+        name = self.norm_img_key(name)
         name_json = f'"{name}"({len(name)})'  # in case there is any special char
         if not name:
             return
@@ -214,7 +214,7 @@ class WikiTool:
                     self.cache.images[name] = info
                 else:
                     info = None
-                    logger.debug(f"{self.host}: {name_json} not exists")
+                    logger.debug(f"{prefix}: {name_json} not exists")
                 if retry_n > 0:
                     logger.warning(
                         f"{prefix} downloaded {name_json} after {retry_n} retry"
@@ -293,7 +293,7 @@ class WikiTool:
         return page
 
     def get_image_cache(self, name: str) -> WikiImageInfo | None:
-        name = self.norm_key(name)
+        name = self.norm_img_key(name)
         return self.cache.images.get(name)
 
     def get_image(self, name: str, allow_cache: bool = True) -> WikiImageInfo | None:
@@ -303,7 +303,7 @@ class WikiTool:
         if allow_cache:
             image = self.get_image_cache(name)
         if image is None:
-            image = self._call_request_img(self.norm_key(name))
+            image = self._call_request_img(name)
         return image
 
     def get_image_name(self, name: str, allow_cache: bool = True) -> str:
@@ -540,3 +540,13 @@ class WikiTool:
         if not name:
             return name
         return unquote(name.strip()).replace(" ", "_")
+
+    @staticmethod
+    def norm_img_key(name: str):
+        if not name:
+            return name
+        if ":" in name:
+            ns, fn = name.split(":", 1)
+            if ns.strip().lower() in ("文件", "file"):
+                name = fn
+        return WikiTool.norm_key(name)
