@@ -648,7 +648,7 @@ class WikiParser:
             svt_add = self.wiki_data.servants.get(svt.collectionNo)
             if svt_add and svt_add.mcLink:
                 titles.add(f"{svt_add.mcLink}/从者任务")
-        for title in titles:
+        for title in sorted(titles):
             worker.add(_parse_one, title)
         worker.wait()
 
@@ -744,8 +744,9 @@ class WikiParser:
                         summon.subSummons.append(sub_summon)
 
         worker = Worker("mc_summon")
-        for answer in MOONCELL.ask_query("[[分类:限时召唤]]"):
-            worker.add(_parse_one, answer["fulltext"])
+        titles = [answer["fulltext"] for answer in MOONCELL.ask_query("[[分类:限时召唤]]")]
+        for title in sorted(titles):
+            worker.add(_parse_one, title)
         worker.wait()
 
     def mc_extra(self):
