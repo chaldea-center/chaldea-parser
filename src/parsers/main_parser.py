@@ -1068,12 +1068,11 @@ class MainParser:
     def merge_all_mappings(self):
         logger.info("merge all mappings")
         if not self.payload.skip_mapping:
-            # Disable CN due to April fool profiles
-            # self._merge_official_mappings(Region.CN)
-            # self._merge_wiki_translation(
-            #     Region.CN,
-            #     parse_file_as(WikiTranslation, settings.output_wiki / "mcTransl.json"),
-            # )
+            self._merge_official_mappings(Region.CN)
+            self._merge_wiki_translation(
+                Region.CN,
+                parse_file_as(WikiTranslation, settings.output_wiki / "mcTransl.json"),
+            )
 
             self._merge_official_mappings(Region.NA)
             self._add_atlas_na_mapping()
