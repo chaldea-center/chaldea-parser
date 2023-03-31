@@ -228,6 +228,11 @@ class WikiParser:
                         f"https://static.atlasacademy.io/JP/FGL/Figure/figure_{col_no:03}.png",
                     ]
                 )
+            if 306 < col_no <= 336 and col_no not in (333,):
+                svt_id = self._jp.released_svts[col_no].id
+                svt_add.aprilFoolAssets.append(
+                    f"https://static.atlasacademy.io/file/aa-fgo-extract-cn/CharaGraph/{svt_id}/{svt_id}c@1.png"
+                )
 
             for index in range(1, 15):
                 if "愚人节" in (params.get(f"立绘{index}") or ""):
