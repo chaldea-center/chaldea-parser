@@ -180,6 +180,7 @@ class WikiParser:
 
         def _parse_one(svt_id: int):
             svt_add = self.wiki_data.get_svt(svt_id)
+            col_no = svt_add.collectionNo
             record = index_data.get(svt_id)
             nicknames: set[str] = set()
             if record:
@@ -219,6 +220,14 @@ class WikiParser:
                 svt_add.nicknames.CN = sorted(nicknames)
             else:
                 svt_add.nicknames.CN = None
+
+            if col_no <= 375 and col_no not in (83, 149, 151, 152, 168, 240, 333):
+                svt_add.aprilFoolAssets.extend(
+                    [
+                        f"https://static.atlasacademy.io/JP/FGL/SaintGraph/card_sg_{col_no:03}.png",
+                        f"https://static.atlasacademy.io/JP/FGL/Figure/figure_{col_no:03}.png",
+                    ]
+                )
 
             for index in range(1, 15):
                 if "愚人节" in (params.get(f"立绘{index}") or ""):
