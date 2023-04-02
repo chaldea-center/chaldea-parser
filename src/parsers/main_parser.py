@@ -117,7 +117,7 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
-MIN_APP = "2.2.6"
+MIN_APP = "2.3.0"
 
 
 # cn_ces: dict[int, tuple[str, float]] = {102022: ("STAR影法師", 1461.5)}

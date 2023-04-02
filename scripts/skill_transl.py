@@ -1,3 +1,6 @@
+"""
+python -m scripts.skill_transl
+"""
 #%%
 import re
 from dataclasses import dataclass
@@ -63,6 +66,22 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
             "NA": "Increase {item} amount per drop by {count} [MAX] [Event Only]",
         },
     ),
+    _SkillDetail(
+        pattern=re.compile(r"^(.+)のドロップ獲得量を(\d+)%増やす【『(.+)』イベント期間限定】$"),
+        item_count_event=(0, 1, 2),
+        mapping={
+            "CN": "{item}的掉落获得量提升{count}%【活动限定】",
+            "NA": "Increase {item} amount per drop by {count}% [Event Only]",
+        },
+    ),
+    _SkillDetail(
+        pattern=re.compile(r"^(.+)のドロップ獲得量を(\d+)%増やす\[最大解放\]【『(.+)』イベント期間限定】$"),
+        item_count_event=(0, 1, 2),
+        mapping={
+            "CN": "{item}的掉落获得量提升{count}%[最大解放]【活动限定】",
+            "NA": "Increase {item} amount per drop by {count}% [MAX] [Event Only]",
+        },
+    ),
 ]
 
 
@@ -118,6 +137,8 @@ def _update_skill_detail(
     events: dict[str, dict[Region, str | None]],
 ):
     if transl[region] is not None:
+        return
+    if '期間限定' not in text_jp:
         return
     for detail in _SKILL_DETAIL_REPLACES:
         repl = detail.mapping.get(region)
