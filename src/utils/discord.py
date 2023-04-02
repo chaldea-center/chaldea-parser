@@ -12,7 +12,12 @@ def _execute(webhook: DiscordWebhook, **kwargs):
         logger.warning(f"Discord webhook not set, data={webhook.json}")
         return
     with LocalProxy():
-        return webhook.execute(**kwargs)
+        resp = webhook.execute(**kwargs)
+        if resp:
+            logger.debug(resp.text)
+        else:
+            logger.warning("No response from discord webhook")
+        return resp
 
 
 def get_webhook():

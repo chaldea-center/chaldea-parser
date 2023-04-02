@@ -16,7 +16,6 @@ from pydantic import parse_file_as
 from ..config import PayloadSetting, settings
 from ..schemas.common import CEObtain, MappingStr, Region, SummonType, SvtObtain
 from ..schemas.wiki_data import (
-    BiliVideo,
     EventW,
     LimitedSummon,
     ProbGroup,
@@ -125,6 +124,7 @@ class WikiParser:
             list(self.wiki_data.summons.values()),
             False,
         )
+        self.check_webcrow()
 
         logger.info("Saving data...")
         MOONCELL.save_cache()
@@ -892,6 +892,37 @@ class WikiParser:
                 msg += f"\n  Fandom pages: {self._fandom.invalid_links}"
             logger.warning(msg)
             discord.wiki_links(self._mc.invalid_links, self._fandom.invalid_links)
+
+    def check_webcrow(self):
+        webcrow_mappings = parse_file_as(
+            dict[int, int], settings.output_wiki / "webcrowMapping.json"
+        )
+        try:
+            resp = requests.get(
+                "https://raw.githubusercontent.com/FGOSim/Material/main/js/fgos_material.min.js"
+            )
+            content = resp.content.decode("utf8")
+        except Exception as e:
+            logger.exception("download failed")
+            return
+        match = re.search(
+            r"Servantdb\s*=\s*\[(.*?)var BronzeMaterialCount", content, re.DOTALL
+        )
+        assert match
+        msg: list[str] = []
+        db_str: str = match.group(1)
+        for wid in re.findall(r"id:(\d+),", db_str):
+            wid = int(wid)
+            if wid not in webcrow_mappings:
+                msg.append(f"**ID: {wid}**")
+                start = db_str.index(f"id:{wid},")
+                msg.append(f"```\n{db_str[start-1:start+50]}\n```")
+        if msg:
+            webhook = discord.get_webhook()
+            em = discord.DiscordEmbed(title="Webcrow ID Updated")
+            em.set_description("\n".join(msg))
+            webhook.add_embed(em)
+            discord._execute(webhook)
 
     def sort(self):
         self.wiki_data.sort()
