@@ -221,28 +221,45 @@ class WikiParser:
             else:
                 svt_add.nicknames.CN = None
 
-            if col_no <= 375 and col_no not in (83, 149, 151, 152, 168, 240, 333):
+            # FGL - aa
+            if 1 <= col_no <= 375 and col_no not in (83, 149, 151, 152, 168, 240, 333):
                 svt_add.aprilFoolAssets.extend(
                     [
                         f"https://static.atlasacademy.io/JP/FGL/SaintGraph/card_sg_{col_no:03}.png",
                         f"https://static.atlasacademy.io/JP/FGL/Figure/figure_{col_no:03}.png",
                     ]
                 )
-            if 306 < col_no <= 336 and col_no not in (333,):
+            # riyo - aa
+            if 1 <= col_no <= 336 and col_no not in (83, 149, 151, 152, 168, 240, 333):
                 svt_id = self._jp.released_svts[col_no].id
                 svt_add.aprilFoolAssets.append(
-                    f"https://static.atlasacademy.io/file/aa-fgo-extract-cn/CharaGraph/{svt_id}/{svt_id}c@1.png"
+                    f"https://static.atlasacademy.io/CN/af_2023/{svt_id}c@1.png"
                 )
-
+            # riyo - mc
+            if svt_add.collectionNo == 1:
+                svt_add.aprilFoolAssets.append(
+                    MOONCELL.get_image_url("玛修·基列莱特-卡面-y.png")
+                )
+            if svt_add.collectionNo == 83:
+                svt_add.aprilFoolAssets.append(MOONCELL.get_image_url("083所罗门愚人节.png"))
+            if svt_add.collectionNo == 150:
+                svt_add.aprilFoolAssets.append(MOONCELL.get_image_url("梅林-愚人节2021.png"))
+            # FGL - mc
             for index in range(1, 15):
-                if "愚人节" in (params.get(f"立绘{index}") or ""):
+                if "Grail League" in (params.get(f"立绘{index}") or ""):
                     illustration = params.get(f"文件{index}")
                     if illustration:
                         svt_add.aprilFoolAssets.append(
                             MOONCELL.get_image_url(f"{illustration}.png")
                         )
-            if svt_add.collectionNo == 83:
-                svt_add.aprilFoolAssets.append(MOONCELL.get_image_url("083所罗门愚人节.png"))
+            # riyo-old mc
+            for index in range(1, 15):
+                if "愚人节（背景变更前）" in (params.get(f"立绘{index}") or ""):
+                    illustration = params.get(f"文件{index}")
+                    if illustration:
+                        svt_add.aprilFoolAssets.append(
+                            MOONCELL.get_image_url(f"{illustration}.png")
+                        )
 
             april_profile_jp, april_profile_cn = [], []
             for params in parse_template_list(wikitext, r"^{{愚人节资料"):
