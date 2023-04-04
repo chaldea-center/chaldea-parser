@@ -14,7 +14,7 @@ from pydantic import parse_file_as, parse_obj_as
 
 from src.config import settings
 from src.parsers.domus_aurea_data import FIX_SPOT_QUEST_MAPPING, ITEM_NAME_MAPPING
-from src.schemas.drop_data import DropRateData, DropRateSheet
+from src.schemas.drop_data import DomusAureaData, DropRateSheet
 from src.utils import logger
 from src.utils.helper import LocalProxy, dump_json_beautify
 from src.utils.url import DownUrl
@@ -151,12 +151,12 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
 
 def run_drop_rate_update():
     mst_data = get_master_data()
-    fp = settings.output_wiki / "dropRate.json"
+    fp = settings.output_wiki / "domusAurea.json"
     if fp.exists():
-        legacy_data = DropRateData.parse_file(fp)
+        legacy_data = DomusAureaData.parse_file(fp)
     else:
         legacy_data = None
-    data = DropRateData(
+    data = DomusAureaData(
         updatedAt=int(time.time()),
         legacyData=legacy_data.legacyData if legacy_data else DropRateSheet(),
         newData=_parse_sheet_data(DOMUS_URLS.drop_rate, mst_data=mst_data),

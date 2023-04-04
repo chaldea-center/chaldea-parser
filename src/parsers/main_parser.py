@@ -77,7 +77,7 @@ from ..schemas.common import (
     OpenApiInfo,
 )
 from ..schemas.const_data import ConstGameData, SvtExpCurve
-from ..schemas.drop_data import DropRateData
+from ..schemas.drop_data import DomusAureaData
 from ..schemas.gamedata import (
     MappingData,
     MasterData,
@@ -530,10 +530,10 @@ class MainParser:
 
     def parse_quest_data(self):
         """Need NA data, run after mappings merged"""
-        if not settings.output_wiki.joinpath("dropRate.json").exists():
-            logger.info("dropRate.json not exist, run domus_aurea parser")
+        if not settings.output_wiki.joinpath("domusAurea.json").exists():
+            logger.info("domusAurea.json not exist, run domus_aurea parser")
             run_drop_rate_update()
-        domus_data = DropRateData.parse_file(settings.output_wiki / "dropRate.json")
+        domus_data = DomusAureaData.parse_file(settings.output_wiki / "domusAurea.json")
         self.jp_data.dropData.domusVer = domus_data.updatedAt
         self.jp_data.dropData.domusAurea = domus_data.newData
         parse_quest_drops(self.jp_data, self.payload)
@@ -679,7 +679,7 @@ class MainParser:
                     "config.json",
                     "addData.json",
                     "mappingPatch.json",
-                    "fixedDrops.json",
+                    "dropData.json",
                 ):
                     continue
                 elif f.is_file():
@@ -739,7 +739,6 @@ class MainParser:
         )
         # sometimes disabled quest parser when debugging
         _normal_dump(self.jp_data.dropData, "dropData")
-        _dump_file(settings.output_dist / "fixedDrops.json", "fixedDrops")
         if data.cachedQuestPhases:
             _dump_by_count(list(data.cachedQuestPhases.values()), 100, "questPhases")
         _normal_dump(data.extraMasterMission, "extraMasterMission")
@@ -755,7 +754,6 @@ class MainParser:
         _normal_dump(list(wiki_data.wars.values()), "wiki.wars")
         _dump_by_count(list(wiki_data.summons.values()), 100, "wiki.summons")
         _dump_file(settings.output_wiki / "webcrowMapping.json", "wiki.webcrowMapping")
-        _dump_file(settings.output_wiki / "dropRate.json", "dropRate")
         base_tds = list(self.jp_data.base_tds.values())
         base_tds.sort(key=lambda x: x.id)
         _normal_dump(base_tds, "baseTds")

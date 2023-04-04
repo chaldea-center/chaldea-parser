@@ -19,7 +19,7 @@ class DropRateSheet(BaseModel):
         self.exps.append(exp)
 
 
-class DropRateData(BaseModel):
+class DomusAureaData(BaseModel):
     updatedAt: int
     newData: DropRateSheet
     legacyData: DropRateSheet
