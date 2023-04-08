@@ -15,7 +15,6 @@ class Settings(BaseSettings):
     output_dir: str = "data/"
     cache_dir: str = "cache/"
     log_dir: str = "logs/"
-    static_dir: str = "static/"
 
     # keys
     mc_user: str = ""

@@ -550,3 +550,7 @@ class WikiTool:
             if ns.strip().lower() in ("文件", "file"):
                 name = fn
         return WikiTool.norm_key(name)
+
+    @staticmethod
+    def request(url: str, encoding="utf8") -> str:
+        return requests.get(url).content.decode(encoding)

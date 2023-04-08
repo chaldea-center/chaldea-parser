@@ -510,10 +510,15 @@ class WikiParser:
         worker.wait()
 
     def fandom_ce(self):
-        def _parse_one(collection_no: int, link: str):
+        def _parse_one(link: str):
+            wikitext = mwparse(FANDOM.get_page_text(link))
+            info_params = parse_template(wikitext, r"^{{Infoboxce2")
+            collection_no = info_params.get_cast("id", int)
+            if not collection_no:
+                return
+
             ce_add = self.wiki_data.get_ce(collection_no)
             ce_add.fandomLink = link
-            wikitext = mwparse(FANDOM.get_page_text(link))
             params = parse_template(wikitext, r"^{{Craftlore")
             profile = params.get2("na") or params.get2("en")
             if profile:
@@ -533,28 +538,34 @@ class WikiParser:
         for sub in re.findall(
             r"{{:Craft[_ ]Essence[_ ]List/By[_ ]ID/([\d\-]+)}}", list_text
         ):
-            text = FANDOM.get_page_text(f"Craft Essence List/By ID/{sub}")
-            for row in wikitextparser.parse(text).tables[0].data()[1:]:
-                idx = parse_int(row[3])
-                if not idx:
-                    continue
-                worker.add(_parse_one, idx, FANDOM.resolve_wikilink(row[1]))
+            html_text = FANDOM.request(
+                f"https://fategrandorder.fandom.com/wiki/Craft_Essence_List/By_ID/{sub}?action=render"
+            )
+            links: list[str] = parse_html_xpath(
+                html_text,
+                '//div[@class="mw-parser-output"]/table/tbody/tr/td[2]/a/@href',
+            )
+            prefix = "https://fategrandorder.fandom.com/wiki/"
+            for link in links:
+                assert link.startswith(prefix), link
+                worker.add(_parse_one, FANDOM.norm_key(link[len(prefix) :]))
         worker.wait()
 
     def fandom_cc(self):
         # Category:Command Code Display Order
-        list_page_html = requests.get(
-            "https://fategrandorder.fandom.com/wiki/Command_Code_List/By_ID"
-        ).text
+        list_page_html = FANDOM.request(
+            "https://fategrandorder.fandom.com/wiki/Command_Code_List/By_ID?action=render"
+        )
         pages = parse_html_xpath(
             list_page_html,
             '//div[@class="mw-parser-output"]/table/tbody/tr/td[3]/a/@href',
         )
         logger.debug(f"Fandom: {len(pages)} command codes")
+        prefix = "https://fategrandorder.fandom.com/wiki/"
         for page_link in pages:
             page_link = str(page_link)
-            assert page_link.startswith("/wiki/"), page_link
-            fa_link = page_link[6:]
+            assert page_link.startswith(prefix), page_link
+            fa_link = FANDOM.norm_key(page_link[len(prefix) :])
             wikitext = mwparse(FANDOM.get_page_text(fa_link))
             assert fa_link and wikitext, fa_link
             if not fa_link or not wikitext:
