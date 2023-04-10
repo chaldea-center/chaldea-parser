@@ -687,7 +687,12 @@ class MainParser:
                 elif f.is_dir():
                     shutil.rmtree(f)
 
-        _dump_by_count(data.nice_servant_lore, 100, "servants")
+        servants = list(data.nice_servant_lore)
+        hyde = AtlasApi.api_model("/nice/JP/svt/600710?lore=true", NiceServant, 0)
+        assert hyde is not None
+        servants.append(hyde)
+
+        _dump_by_count(servants, 100, "servants")
         _dump_by_count(data.nice_equip_lore, 500, "craftEssences")
         _normal_dump(data.nice_command_code, "commandCodes")
         _normal_dump(data.nice_mystic_code, "mysticCodes")
