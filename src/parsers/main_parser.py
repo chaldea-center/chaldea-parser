@@ -688,9 +688,9 @@ class MainParser:
                     shutil.rmtree(f)
 
         servants = list(data.nice_servant_lore)
-        hyde = AtlasApi.api_model("/nice/JP/svt/600710?lore=true", NiceServant, 0)
-        assert hyde is not None
-        servants.append(hyde)
+        # hyde = AtlasApi.api_model("/nice/JP/svt/600710?lore=true", NiceServant, 0)
+        # assert hyde is not None
+        # servants.append(hyde)
 
         _dump_by_count(servants, 100, "servants")
         _dump_by_count(data.nice_equip_lore, 500, "craftEssences")
