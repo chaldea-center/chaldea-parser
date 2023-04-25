@@ -586,6 +586,27 @@ class WikiParser:
 
     def mc_events(self):
         def _parse_one(event: EventW):
+            if event.mcLink:
+                move_target = MOONCELL.moved_pages.get(MOONCELL.norm_key(event.mcLink))
+                if move_target:
+                    discord.mc(
+                        "Event page moved",
+                        discord.mc_link(event.mcLink)
+                        + " -> "
+                        + discord.mc_link(move_target),
+                    )
+                    event.mcLink = move_target
+            if event.fandomLink:
+                move_target = FANDOM.moved_pages.get(FANDOM.norm_key(event.fandomLink))
+                if move_target:
+                    discord.fandom(
+                        "Event page moved",
+                        discord.fandom_link(event.fandomLink)
+                        + " -> "
+                        + discord.mc_link(move_target),
+                    )
+                    event.fandomLink = move_target
+
             if event.fandomLink and not FANDOM.get_page_text(event.fandomLink):
                 logger.warning(
                     f'Fandom event page not found, may be moved: "{event.fandomLink}"'

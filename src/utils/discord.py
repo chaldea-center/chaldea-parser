@@ -68,6 +68,17 @@ def mc(title: str, content: str):
     _execute(webhook)
 
 
+def fandom(title: str, content: str):
+    webhook = get_webhook()
+    em = DiscordEmbed(title=title)
+    em.set_author(
+        "Fandom", icon_url="https://www.fandom.com/f2/assets/favicons/favicon.ico"
+    )
+    em.set_description(content)
+    webhook.add_embed(em)
+    _execute(webhook)
+
+
 def wiki_links(mc_links: list[str], fandom_links: list[str]):
     if not mc_links and not fandom_links:
         return

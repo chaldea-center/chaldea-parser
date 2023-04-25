@@ -45,6 +45,7 @@ class WikiTool:
         self._count = 0
 
         self.active_requests: set[str] = set()
+        self.moved_pages: dict[str, str] = {}
 
     @cached_property
     def site(self):
@@ -493,6 +494,13 @@ class WikiTool:
                 if self.get_page_cache(title):
                     self.remove_page_cache(title)
                     logger.debug(f'{self.host}: drop {letype}d page: "{title}"')
+                if (
+                    letype == "move"
+                    and event["ns"] == event["params"]["target_ns"] == 0
+                ):
+                    self.moved_pages[self.norm_key(title)] = self.norm_key(
+                        event["params"]["target_title"]
+                    )
 
     def save_cache(self):
         logger.debug(
