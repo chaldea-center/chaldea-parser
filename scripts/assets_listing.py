@@ -3,15 +3,15 @@ import os
 import re
 from pathlib import Path
 
+if not os.getcwd().endswith("chaldea-parser"):
+    raise KeyError(os.getcwd())
+
 import orjson
 from pydantic import BaseModel
 from pydantic.json import pydantic_encoder
 
 from src.utils import HttpApiUtil
 
-
-if not os.getcwd().endswith("chaldea-parser"):
-    raise KeyError(os.getcwd())
 
 _fp_cache = "tmp/explorer/cache"
 _fp_data = "tmp/explorer/"

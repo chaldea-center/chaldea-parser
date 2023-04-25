@@ -912,6 +912,7 @@ class MainParser:
             "individuality",
             "script",
             "functions",
+            "npSvts",
         ],
         NiceBgm: ["name", "fileName", "notReleased", "audioAsset"],
         NiceTrait: ["name"],
