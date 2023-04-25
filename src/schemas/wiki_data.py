@@ -100,8 +100,8 @@ class CommandCodeW(BaseModel):
 
 class EventExtraItems(BaseModel):
     id: int
+    infinite: bool = False
     detail: MappingStr | None = None
-    fixedItems: dict[int, int] = {}  # <itemId, count>
     items: dict[int, MappingStr | None] = {}  # <itemId, ap or drop rate or hint>
 
 
