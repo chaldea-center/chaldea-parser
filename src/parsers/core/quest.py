@@ -218,20 +218,24 @@ class _QuestParser:
         if not phase_data:
             return
         phase_drops: dict[int, int] = {}
+        drop_groups: dict[int, int] = {}
         runs = phase_data.drops[0].runs if phase_data.drops else 0
         for drop in phase_data.drops:
             if (
                 drop.runs < 5
-                or not (6500 < drop.objectId < 6600)
+                or not (6500 < drop.objectId < 6600 or drop.objectId // 1000000 == 94)
                 or drop.type != NiceGiftType.item
             ):
                 continue
             phase_drops[drop.objectId] = (
                 phase_drops.get(drop.objectId, 0) + drop.num * drop.dropCount
             )
+            drop_groups[drop.objectId] = (
+                drop_groups.get(drop.objectId, 0) + drop.dropCount
+            )
         # always add even if there is nothing dropped
         self.jp_data.dropData.freeDrops[phase_key] = QuestDropData(
-            runs=runs, items=sort_dict(phase_drops)
+            runs=runs, items=sort_dict(phase_drops), groups=sort_dict(drop_groups)
         )
 
     def _get_expire(
