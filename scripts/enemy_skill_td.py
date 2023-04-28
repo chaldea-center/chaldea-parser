@@ -2,10 +2,11 @@
 import httpx
 from app.schemas.common import Region
 from app.schemas.raw import MstSkill, MstTreasureDevice
+from pydantic import parse_file_as, parse_obj_as
 
 from src.config import settings
 from src.schemas.common import MappingStr
-from src.utils.helper import dump_json, load_json
+from src.utils.helper import dump_json, load_json, sort_dict
 
 
 def _mstFile(region: Region, name: str):
@@ -26,9 +27,20 @@ def _load_mapping(fp) -> dict[str, MappingStr]:
 
 def _add_enemy_skill_trans():
     skills_jp: list[dict] = load_json(settings.output_dist / "baseSkills.json") or []
-    mappings: dict[str, MappingStr] = _load_mapping(
+    skill_names: dict[str, MappingStr] = _load_mapping(
         settings.output_mapping / "skill_names.json"
     )
+    skill_details: dict[str, MappingStr] = _load_mapping(
+        settings.output_mapping / "skill_detail.json"
+    )
+    for skill in skills_jp:
+        detail_jp: str | None = skill.get("unmodifiedDetail")
+        if not detail_jp:
+            continue
+        detail_jp = str(detail_jp).replace("[g][o]▲[/o][/g]", "▲")
+        if detail_jp not in skill_details:
+            skill_details[detail_jp] = MappingStr()
+
     for region in Region.__members__.values():
         if region == Region.JP:
             continue
@@ -38,9 +50,9 @@ def _add_enemy_skill_trans():
         }
         for skill_jp in skills_jp:
             name_jp = skill_jp["name"]
-            if not str(name_jp).strip() or name_jp not in mappings:
+            if not str(name_jp).strip() or name_jp not in skill_names:
                 continue
-            trans = mappings[name_jp]
+            trans = skill_names[name_jp]
             if trans.of(region) is not None:
                 continue
             skill_r = skills_r.get(skill_jp["id"])
@@ -50,7 +62,8 @@ def _add_enemy_skill_trans():
             if not name_r or name_r == name_jp:
                 continue
             trans.update(region, name_r, True)
-    dump_json(mappings, settings.output_mapping / "skill_names.json")
+    dump_json(skill_names, settings.output_mapping / "skill_names.json")
+    dump_json(sort_dict(skill_details), settings.output_mapping / "skill_detail.json")
 
 
 def _add_enemy_td_trans():
@@ -61,6 +74,17 @@ def _add_enemy_td_trans():
     td_rubies: dict[str, MappingStr] = _load_mapping(
         settings.output_mapping / "td_ruby.json"
     )
+    td_details: dict[str, MappingStr] = _load_mapping(
+        settings.output_mapping / "td_detail.json"
+    )
+    for td in tds_jp:
+        detail_jp: str | None = td.get("unmodifiedDetail")
+        if not detail_jp:
+            continue
+        detail_jp = str(detail_jp).replace("[g][o]▲[/o][/g]", "▲")
+        if detail_jp not in td_details:
+            td_details[detail_jp] = MappingStr()
+
     for region in Region.__members__.values():
         if region == Region.JP:
             continue
@@ -102,6 +126,7 @@ def _add_enemy_td_trans():
             trans.update(region, ruby_r, True)
     dump_json(td_names, settings.output_mapping / "td_names.json")
     dump_json(td_rubies, settings.output_mapping / "td_ruby.json")
+    dump_json(sort_dict(td_details), settings.output_mapping / "td_detail.json")
 
 
 #%%

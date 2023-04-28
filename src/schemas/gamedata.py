@@ -249,6 +249,9 @@ class MasterData(BaseModelORJson):
             skills.extend(cc.skills)
         for mc in self.nice_mystic_code:
             skills.extend(mc.skills)
+        for event in self.nice_event:
+            for assist in event.commandAssists:
+                skills.append(assist.skill)
         skills.extend(self.base_skills.values())
         return skills
 

@@ -895,7 +895,7 @@ class MainParser:
             "groupOverwrites",
             "functions",
         ],
-        NiceBaseTd: ["detail"],
+        NiceBaseTd: ["detail", "npSvts"],
         NiceTd: [
             # "card",
             "name",
@@ -980,16 +980,14 @@ class MainParser:
 
         if _type == NiceSkill and isinstance(obj, NiceSkill):
             if obj.id not in self.jp_data.base_skills:
-                self.jp_data.base_skills[obj.id] = NiceBaseSkill.parse_obj(
-                    obj.dict(exclude_none=True)
-                )
+                skill = NiceBaseSkill.parse_obj(obj.dict(exclude_none=True))
+                self.jp_data.base_skills[obj.id] = skill
             if obj.ruby in ("", "-"):
                 exclude.add("ruby")
         elif _type == NiceTd and isinstance(obj, NiceTd):
             if obj.id not in self.jp_data.base_tds:
-                self.jp_data.base_tds[obj.id] = NiceBaseTd.parse_obj(
-                    obj.dict(exclude_none=True)
-                )
+                td = NiceBaseTd.parse_obj(obj.dict(exclude_none=True))
+                self.jp_data.base_tds[obj.id] = td
             base_td = self.jp_data.base_tds[obj.id]
             for key in ["card", "icon", "npDistribution"]:
                 if getattr(obj, key, None) == getattr(base_td, key, None):

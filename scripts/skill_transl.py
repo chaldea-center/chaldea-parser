@@ -1,9 +1,9 @@
 """
 python -m scripts.skill_transl
 """
-#%%
 import re
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal, Pattern
 
 from src.utils import dump_json, load_json
@@ -138,7 +138,7 @@ def _update_skill_detail(
 ):
     if transl[region] is not None:
         return
-    if '期間限定' not in text_jp:
+    if "期間限定" not in text_jp:
         return
     for detail in _SKILL_DETAIL_REPLACES:
         repl = detail.mapping.get(region)
@@ -165,19 +165,20 @@ def _update_skill_detail(
 
 
 def main():
-    item_names = load_json("data/mappings/item_names.json")
-    skill_names = load_json("data/mappings/skill_names.json")
-    skill_details = load_json("data/mappings/skill_detail.json")
+    mapping_dir = Path(__file__).parents[1] / "data" / "mappings"
+    item_names = load_json(mapping_dir / "item_names.json")
+    skill_names = load_json(mapping_dir / "skill_names.json")
+    skill_details = load_json(mapping_dir / "skill_detail.json")
     assert item_names and skill_names and skill_details
     for text_jp, transl in skill_names.items():
         for region in ("JP", "CN", "TW", "NA", "KR"):
             _update_skill_name(text_jp, transl, region, item_names)
-    dump_json(skill_names, "data/mappings/skill_names.json")
+    dump_json(skill_names, mapping_dir / "skill_names.json")
 
     for text_jp, transl in skill_details.items():
         for region in ("JP", "CN", "TW", "NA", "KR"):
             _update_skill_detail(text_jp, transl, region, item_names, {})
-    dump_json(skill_details, "data/mappings/skill_detail.json")
+    dump_json(skill_details, mapping_dir / "skill_detail.json")
 
 
 if __name__ == "__main__":

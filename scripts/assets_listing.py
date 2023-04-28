@@ -3,6 +3,7 @@ import os
 import re
 from pathlib import Path
 
+
 if not os.getcwd().endswith("chaldea-parser"):
     raise KeyError(os.getcwd())
 
