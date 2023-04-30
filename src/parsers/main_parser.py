@@ -786,7 +786,6 @@ class MainParser:
 
         dump_json(cur_version, dist_folder / "version.json")
         # logger.info(dump_json(cur_version))
-        self.copy_static()
         msg = f"{cur_version.minimalApp}, {cur_version.utc}"
         if len(self.payload.regions) not in (0, len(Region.__members__)):
             msg = describe_regions(self.payload.regions) + msg
@@ -1844,15 +1843,6 @@ class MainParser:
                     MainParser._merge_json(dest[key], value)
             else:
                 dest[key] = value
-
-    @staticmethod
-    def copy_static():
-        logger.info("coping static files to dist folder")
-        shutil.copytree(
-            Path(__file__).resolve().parent.parent / "static",
-            settings.output_dist,
-            dirs_exist_ok=True,
-        )
 
     @staticmethod
     def gametop():
