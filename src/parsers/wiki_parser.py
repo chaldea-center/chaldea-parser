@@ -931,19 +931,14 @@ class WikiParser:
         )
         try:
             resp = requests.get(
-                "https://raw.githubusercontent.com/FGOSim/Material/main/js/fgos_material.min.js"
+                "https://raw.githubusercontent.com/FGOSim/Material/main/js/ServantDBData.min.js"
             )
-            content = resp.content.decode("utf8")
-        except Exception as e:
-            logger.exception("download failed")
+            db_str: str = resp.content.decode("utf8")
+        except Exception:
+            logger.exception("download webcrow data failed")
             return
-        match = re.search(
-            r"Servantdb\s*=\s*\[(.*?)var BronzeMaterialCount", content, re.DOTALL
-        )
-        assert match
         msg: list[str] = []
-        db_str: str = match.group(1)
-        for wid in re.findall(r"id:(\d+),", db_str):
+        for wid in re.findall(r"\{id:(\d+),", db_str):
             wid = int(wid)
             if wid not in webcrow_mappings:
                 msg.append(f"**ID: {wid}**")
