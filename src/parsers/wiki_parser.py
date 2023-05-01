@@ -524,9 +524,8 @@ class WikiParser:
             if profile:
                 ce_add.profile.NA = profile
 
-            effect_params = parse_template(wikitext, r"^{{ceeffect")
-            effect1 = effect_params.get2("effect1")
-            effect2 = effect_params.get2("effect2")
+            effect1 = info_params.get2("effect1")
+            effect2 = info_params.get2("effect2")
             if effect1 and effect1.upper() != "N/A":
                 self.fandom_transl.ce_skill_des[ce_add.collectionNo] = effect1
             if effect2 and effect2.upper() != "N/A":
@@ -579,8 +578,7 @@ class WikiParser:
             params = parse_template(wikitext, r"^{{Craftlore")
             cc_add.profile.NA = params.get2("na") or params.get2("en")
 
-            effect_params = parse_template(wikitext, r"^{{Infoboxcc")
-            effect1 = effect_params.get2("effect1")
+            effect1 = infoboxcc.get2("effect1")
             if effect1 and effect1 != "N/A":
                 self.fandom_transl.cc_skill_des[cc_add.collectionNo] = effect1
 

@@ -25,18 +25,35 @@ _SKILL_NAME_REPLACES: dict[Pattern, dict[Region, str]] = {
         "NA": "Increase amount of {0} per drop",
     },
 }
-# 犬士ポイントのドロップ獲得量を30%増やす【『南溟弓張八犬伝』イベント期間限定】
+
+
 @dataclass
 class _SkillDetail:
     pattern: Pattern
-    item_count_event: tuple[int, int, int]
+    item_counts_event: tuple[int | list[int], int | list[int], int]
     mapping: dict[Region, str]
+
+    def get_items(self) -> list[int]:
+        items = self.item_counts_event[0]
+        if isinstance(items, int):
+            items = [items]
+        return [x for x in items if x >= 0]
+
+    def get_counts(self) -> list[int]:
+        counts = self.item_counts_event[1]
+        if isinstance(counts, int):
+            counts = [counts]
+        return [x for x in counts if x >= 0]
+
+    def get_event(self) -> int | None:
+        event = self.item_counts_event[2]
+        return event if event >= 0 else None
 
 
 _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
     _SkillDetail(
         pattern=re.compile(r"^(.+)のドロップ獲得数を(\d+)個増やす【『(.+)』イベント期間限定】$"),
-        item_count_event=(0, 1, 2),
+        item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得数增加{count}个【活动限定】",
             "NA": "Increase {item} amount per drop by {count} [Event Only]",
@@ -44,7 +61,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
     ),
     _SkillDetail(
         pattern=re.compile(r"^(.+)のドロップ獲得数を(\d+)個増やす\[最大解放\]【『(.+)』イベント期間限定】$"),
-        item_count_event=(0, 1, 2),
+        item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得数增加{count}个[最大解放]【活动限定】",
             "NA": "Increase {item} amount per drop by {count} [MAX] [Event Only]",
@@ -52,7 +69,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
     ),
     _SkillDetail(
         pattern=re.compile(r"^(.+)のドロップ獲得量を(\d+)個増やす【『(.+)』イベント期間限定】$"),
-        item_count_event=(0, 1, 2),
+        item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得量增加{count}个【活动限定】",
             "NA": "Increase {item} amount per drop by {count} [Event Only]",
@@ -60,7 +77,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
     ),
     _SkillDetail(
         pattern=re.compile(r"^(.+)のドロップ獲得量を(\d+)個増やす\[最大解放\]【『(.+)』イベント期間限定】$"),
-        item_count_event=(0, 1, 2),
+        item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得量增加{count}个[最大解放]【活动限定】",
             "NA": "Increase {item} amount per drop by {count} [MAX] [Event Only]",
@@ -68,7 +85,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
     ),
     _SkillDetail(
         pattern=re.compile(r"^(.+)のドロップ獲得量を(\d+)%増やす【『(.+)』イベント期間限定】$"),
-        item_count_event=(0, 1, 2),
+        item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得量提升{count}%【活动限定】",
             "NA": "Increase {item} amount per drop by {count}% [Event Only]",
@@ -76,10 +93,80 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
     ),
     _SkillDetail(
         pattern=re.compile(r"^(.+)のドロップ獲得量を(\d+)%増やす\[最大解放\]【『(.+)』イベント期間限定】$"),
-        item_count_event=(0, 1, 2),
+        item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得量提升{count}%[最大解放]【活动限定】",
             "NA": "Increase {item} amount per drop by {count}% [MAX] [Event Only]",
+        },
+    ),
+    _SkillDetail(
+        pattern=re.compile(r"^『(.+?)』において、自身の攻撃の威力を(\d+)%アップ【『(.+)』イベント期間限定】$"),
+        item_counts_event=(-1, 1, 2),
+        mapping={
+            "CN": "自身的攻击威力提升{count}%【『{event}』活动限定】",
+            "NA": 'Increase ATK Strength by {count}% for yourself in "{event}" [Event Only]',
+        },
+    ),
+    _SkillDetail(
+        pattern=re.compile(r"^『(.+?)』において、自身の攻撃の威力を(\d+)%アップ\[最大解放\]【『(.+)』イベント期間限定】$"),
+        item_counts_event=(-1, 1, 2),
+        mapping={
+            "CN": "自身的攻击威力提升{count}%[最大解放]【『{event}』活动限定】",
+            "NA": 'Increase ATK Strength by {count}% for yourself in "{event}" [MAX] [Event Only]',
+        },
+    ),
+    _SkillDetail(
+        pattern=re.compile(r"^自身の『(.+?)』における攻撃の威力を(\d+)%アップ【『(.+)』イベント期間限定】$"),
+        item_counts_event=(-1, 1, 2),
+        mapping={
+            "CN": "自身的攻击威力提升{count}%[最大解放]【『{event}』活动限定】",
+            "NA": 'Increase ATK Strength by {count}% for yourself in "{event}" [MAX] [Event Only]',
+        },
+    ),
+    _SkillDetail(
+        pattern=re.compile(r"^自身の『(.+?)』における攻撃の威力を(\d+)%アップ\[最大解放\]【『(.+)』イベント期間限定】$"),
+        item_counts_event=(-1, 1, 2),
+        mapping={
+            "CN": "自身的攻击威力提升{count}%[最大解放]【『{event}』活动限定】",
+            "NA": 'Increase ATK Strength by {count}% for yourself in "{event}" [MAX] [Event Only]',
+        },
+    ),
+    _SkillDetail(
+        pattern=re.compile(r"^自身の『(.*?)』のクエストクリア時に得られる絆を(\d+)%増やす【『(.*?)』イベント期間限定】$"),
+        item_counts_event=(-1, 1, 2),
+        mapping={
+            "CN": "自身在关卡通关时获得的牵绊值提升{count}%【『{event}』活动限定】",
+            "NA": 'Increase Bond gained when completing quests in "{event}" by {count}% for yourself [Event Only]',
+        },
+    ),
+    _SkillDetail(
+        pattern=re.compile(
+            r"^自身の『(.*?)』における攻撃の威力を(\d+)%アップ＆クエストクリア時に得られる絆を(\d+)%増やす【『(.*?)』イベント期間限定】$"
+        ),
+        item_counts_event=(-1, [1, 2], 3),
+        mapping={
+            "CN": "自身的攻击威力提升{count1}%＆关卡通关时获得的牵绊值提升{count2}%【『{event}』活动限定】",
+            "NA": 'Increase ATK Strength by {count1}% for yourself in "{event}" & increase Bond gained when completing quests by {count2}% [Event Only]',
+        },
+    ),
+    _SkillDetail(
+        pattern=re.compile(
+            r"^自身の『(.*?)』において、攻撃の威力を(\d+)%アップ ＋ 味方全体＜控え含む＞の『(.*?)』のクエストクリア時に得られる絆を(\d+)%アップ\(サポート時は無効\)【『(.*?)』イベント期間限定】$"
+        ),
+        item_counts_event=(-1, [1, 3], 4),
+        mapping={
+            "CN": "自身的攻击威力提升{count1}%＋己方全体<包括替补>在关卡通关时获得的牵绊值提升{count2}%(作为助战时无效)【『{event}』活动限定】",
+            "NA": 'Increase your ATK Strength by {count1}% & increase Bond gained for all allies <including sub-members> when completing quests in "{event}" by {count2}% (No effect when equipped as Support) [Event Only]',
+        },
+    ),
+    _SkillDetail(
+        pattern=re.compile(
+            r"^自身の『(.*?)』における攻撃の威力を(\d+)%アップ ＋ 味方全体[＜<]控え含む[＞>]の『(.*?)』のクエストクリア時に得られる絆を(\d+)%(?:アップ|増やす)\(サポート時は無効\)【『(.*?)』イベント期間限定】$"
+        ),
+        item_counts_event=(-1, [1, 3], 4),
+        mapping={
+            "CN": "自身的攻击威力提升{count1}%＋己方全体<包括替补>在关卡通关时获得的牵绊值提升{count2}%(作为助战时无效)【『{event}』活动限定】",
+            "NA": 'Increase your ATK Strength by {count1}% & increase Bond gained for all allies <including sub-members> when completing quests in "{event}" by {count2}% (No effect when equipped as Support) [Event Only]',
         },
     ),
 ]
@@ -147,18 +234,36 @@ def _update_skill_detail(
         matches = detail.pattern.findall(text_jp)
         if not matches:
             continue
-        item_jp, count, event_jp = [matches[0][i] for i in detail.item_count_event]
-        item = _get_item_transl(item_jp, region, items)
-        if detail.item_count_event[0] >= 0 and not item:
-            continue
+        match = matches[0]
+        replaces: dict[str, str] = {}
+        for index, item_index in enumerate(detail.get_items()):
+            item_jp: str = match[item_index]
+            item = _get_item_transl(item_jp, region, items)
+            if item:
+                replaces[f"{{item{index+1}}}"] = item
+                if index == 0:
+                    replaces["{item}"] = item
+
+        for index, count_index in enumerate(detail.get_counts()):
+            count = match[count_index]
+            replaces[f"{{count{index+1}}}"] = count
+            if index == 0:
+                replaces["{count}"] = count
+
+        event_index = detail.get_event()
         event: str | None = None
-        if event_jp in events:
-            event = events[event_jp].get(region)
-        for k, v in {
-            "{item}": item,
-            "{count}": count,
-            "{event}": event or "{event_name}",
-        }.items():
+        if event_index:
+            event_jp: str = match[event_index]
+            if event_jp in events:
+                event = events[event_jp].get(region)
+            event = event or event_jp
+            if event:
+                replaces["{event}"] = event
+
+        if "{item}" in replaces and "{count}" not in replaces:
+            continue
+
+        for k, v in replaces.items():
             if v:
                 repl = repl.replace(k, v)
         transl[region] = repl
@@ -167,6 +272,8 @@ def _update_skill_detail(
 def main():
     mapping_dir = Path(__file__).parents[1] / "data" / "mappings"
     item_names = load_json(mapping_dir / "item_names.json")
+    event_names = load_json(mapping_dir / "event_names.json")
+    event_names |= load_json(mapping_dir / "war_names.json")
     skill_names = load_json(mapping_dir / "skill_names.json")
     skill_details = load_json(mapping_dir / "skill_detail.json")
     assert item_names and skill_names and skill_details
@@ -177,11 +284,9 @@ def main():
 
     for text_jp, transl in skill_details.items():
         for region in ("JP", "CN", "TW", "NA", "KR"):
-            _update_skill_detail(text_jp, transl, region, item_names, {})
+            _update_skill_detail(text_jp, transl, region, item_names, event_names)
     dump_json(skill_details, mapping_dir / "skill_detail.json")
 
 
 if __name__ == "__main__":
     main()
-
-# %%
