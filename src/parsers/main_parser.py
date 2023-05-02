@@ -1127,6 +1127,7 @@ class MainParser:
         enums.update_enums()
         for cls_info in self.jp_data.mstClass:
             enums.svt_class.setdefault(cls_info.id, MappingBase())
+        enums.svt_class = sort_dict(enums.svt_class)
 
     def _merge_official_mappings(self, region: Region):
         logger.info(f"merging official translations from {region}")

@@ -83,6 +83,7 @@ jobs:
         working-directory: ${{ env.output_dir }}
         run: |
           git add .
+          git --no-pager diff --stat --staged
           git commit -m "update wiki data" || echo "Nothing to commit"
 
       - name: Parse atlas
@@ -92,6 +93,7 @@ jobs:
         working-directory: ${{ env.output_dir }}
         run: |
           git add .
+          git --no-pager diff --stat --staged
           if [ -e commit-msg.txt ]
           then
               git commit -F commit-msg.txt || echo "Nothing to commit"
