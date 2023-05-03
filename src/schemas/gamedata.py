@@ -13,6 +13,7 @@ from app.schemas.nice import (
     NiceBuff,
     NiceCommandCode,
     NiceCostume,
+    NiceEnemyMaster,
     NiceEquip,
     NiceEvent,
     NiceFunction,
@@ -114,6 +115,7 @@ class MasterData(BaseModelORJson):
     nice_servant_lore: list[NiceServant] = []
     nice_war: list[NiceWar] = []
     nice_event: list[NiceEvent] = []
+    nice_enemy_master: list[NiceEnemyMaster] = []
     nice_trait: dict[int, Trait] = {}
     NiceAttributeRelation: dict[Attribute, dict[Attribute, int]] = {}
     NiceBuffList_ActionList: dict[NiceBuffAction, BuffActionDetail] = {}

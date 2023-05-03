@@ -192,6 +192,7 @@ class AtlasExportFile(StrEnum):
     nice_bgm = "nice_bgm"
     nice_war = "nice_war"
     nice_event = "nice_event"
+    nice_enemy_master = "nice_enemy_master"
     # shared constants
     nice_enums = "nice_enums"  # hard code
     nice_trait = "nice_trait"  # hard code, +unknown

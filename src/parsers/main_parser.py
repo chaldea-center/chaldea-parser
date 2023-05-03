@@ -700,6 +700,7 @@ class MainParser:
         _normal_dump(data.basic_svt, "entities")
         _normal_dump(data.exchangeTickets, "exchangeTickets")
         _normal_dump(data.nice_bgm, "bgms")
+        _normal_dump(data.nice_enemy_master, "enemyMasters")
 
         logger.info("Updating mappings")
         run_mapping_update(data.mappingData)  # before dump
