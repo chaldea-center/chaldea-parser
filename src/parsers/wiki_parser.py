@@ -347,6 +347,9 @@ class WikiParser:
 
         def _parse_one(ce_id: int):
             ce_add = self.wiki_data.get_ce(ce_id)
+            if ce_id in (102019, 102020, 102021):
+                ce_add.obtain = CEObtain.campaign
+
             record = index_data.get(ce_id)
             if record:
                 ce_add.mcLink = record["name_link"]
