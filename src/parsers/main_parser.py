@@ -923,7 +923,7 @@ class MainParser:
         NiceMapGimmick: ["actionAnimTime", "actionEffectId", "startedAt", "endedAt"],
         NiceQuestPhase: ["supportServants"],
         NiceQuest: [],
-        QuestEnemy: ["drops", "limit"],
+        QuestEnemy: ["userSvtId", "uniqueId", "drops", "limit"],
         EnemyDrop: ["dropExpected", "dropVariance"],
         EnemyTd: ["noblePhantasmLv2", "noblePhantasmLv3"],  # noblePhantasmLv1
         NiceEvent: ["voicePlays"],
