@@ -127,7 +127,10 @@ ADD_CES = {
         102020: ("STAR影法師", 1526.2),  # 4th
         102021: ("STAR影法師", 1526.3),  # 5th
         102022: ("STAR影法師", 1526.4),  # 6th anniversary
-    }
+    },
+    Region.TW: {
+        302023: ("リヨ", 1466.1),  # 6th anniversary
+    },
 }
 
 # svt_no, questIds
