@@ -508,6 +508,10 @@ class MainParser:
             for skills in (svt.script.SkillRankUp or {}).values():
                 for skill in skills:
                     worker.add_default(None, skill)
+        # trigger in trigger or some weird trigger
+        # 世界樹への生贄
+        for skill_id in [966447]:
+            worker.add_default(None, skill_id)
         worker.wait()
         logger.info(
             f"{region}: loaded {len(master_data.base_skills)} trigger skills, {len(master_data.base_tds)} trigger TD"
