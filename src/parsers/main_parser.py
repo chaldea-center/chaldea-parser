@@ -259,15 +259,12 @@ class MainParser:
         local_svts = load_data_dict("servants", "collectionNo")
         for svt in remote_svts:
             collection = svt["collectionNo"]
-            if (
-                collection == 0
-                or svt["type"] not in [SvtType.NORMAL, SvtType.ENEMY_COLLECTION_DETAIL]
-                or (
-                    collection in local_svts
-                    and sorted(svt["relateQuestIds"])
-                    == sorted(local_svts[collection].get("relateQuestIds", []))
-                )
-            ):
+            if collection == 0 or svt["type"] not in [
+                SvtType.NORMAL,
+                SvtType.ENEMY_COLLECTION_DETAIL,
+            ]:
+                continue
+            if collection in local_svts:
                 continue
             svt = AtlasApi.api_model(
                 f"/nice/JP/servant/{collection}?lore=true", NiceServant, 0
