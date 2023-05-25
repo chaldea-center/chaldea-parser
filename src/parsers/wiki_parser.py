@@ -105,8 +105,8 @@ class WikiParser:
         self.mc_summon()
         logger.info("[MC] parsing extra data")
         self.mc_extra()
-        logger.info("[Fandom] parsing servant data")
-        self.fandom_svt()
+        logger.info("[Fandom] skip servant data")
+        # self.fandom_svt()
         logger.info("[Fandom] parsing craft essence data")
         self.fandom_ce()
         logger.info("[Fandom] parsing command code data")
@@ -499,6 +499,7 @@ class WikiParser:
             svt_add.fandomSprites = sprites
 
         worker = Worker("fandom_svt")
+        # TODO: parse ?action=render html
         list_text = FANDOM.get_page_text("Servant List by ID")
         for sub in re.findall(
             r"{{:Sub:Servant[_ ]List[_ ]by[_ ]ID/([\d\-]+)}}", list_text
@@ -825,9 +826,7 @@ class WikiParser:
                 self.mc_transl.costume_details[collection] = detail_cn
 
         # event item names
-        item_pages = ["道具一览"]
-        for x in MOONCELL.resolve_all_wikilinks(MOONCELL.get_page_text("道具一览/活动道具")):
-            item_pages.append(str(x.title))
+        item_pages = ["道具一览"] + [f"道具一览/活动道具/{i}" for i in range(1,9)]
         for title in item_pages:
             text = MOONCELL.get_page_text(title)
             for params in parse_template_list(text, r"^{{活动道具表格"):

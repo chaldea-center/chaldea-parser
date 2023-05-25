@@ -266,6 +266,8 @@ def _update_skill_detail(
         for k, v in replaces.items():
             if v:
                 repl = repl.replace(k, v)
+        if "{item" in repl or "{count" in repl or "{event" in repl:
+            continue
         transl[region] = repl
 
 

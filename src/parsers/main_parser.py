@@ -393,7 +393,7 @@ class MainParser:
                     ce = AtlasApi.api_model(
                         f"/nice/{add_region}/equip/{collection}?lore=true",
                         NiceEquipSort,
-                        expire_after=7 * 24 * 3600,
+                        expire_after=(7 if region == Region.JP else 31) * 24 * 3600,
                     )
                     assert ce and ce.profile
                     ce.profile.illustrator = illustrator
