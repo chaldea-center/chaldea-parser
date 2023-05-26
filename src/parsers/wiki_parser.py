@@ -457,7 +457,12 @@ class WikiParser:
         return known, unknown
 
     def fandom_svt(self):
-        def _parse_one(collection_no: int, link: str):
+        def _parse_one(link: str):
+            text = mwparse(FANDOM.get_page_text(link))
+            info_param = parse_template(text, r"^{{CharactersNew")
+            collection_no = info_param.get_cast("id", int)
+            if not collection_no:
+                return
             svt_add: ServantW = self.wiki_data.get_svt(collection_no)
             svt_add.fandomLink = link
             text = mwparse(FANDOM.get_page_text(link))
