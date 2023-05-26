@@ -106,7 +106,7 @@ class WikiParser:
         logger.info("[MC] parsing extra data")
         self.mc_extra()
         logger.info("[Fandom] skip servant data")
-        # self.fandom_svt()
+        self.fandom_svt()
         logger.info("[Fandom] parsing craft essence data")
         self.fandom_ce()
         logger.info("[Fandom] parsing command code data")
@@ -499,18 +499,19 @@ class WikiParser:
             svt_add.fandomSprites = sprites
 
         worker = Worker("fandom_svt")
-        # TODO: parse ?action=render html
-        list_text = FANDOM.get_page_text("Servant List by ID")
-        for sub in re.findall(
-            r"{{:Sub:Servant[_ ]List[_ ]by[_ ]ID/([\d\-]+)}}", list_text
-        ):
-            # print(sub)
-            subpage_text = FANDOM.get_page_text(f"Sub:Servant List by ID/{sub}")
-            for row in wikitextparser.parse(subpage_text).tables[0].data()[1:]:
-                idx = parse_int(row[3])
-                if not idx:
-                    continue
-                worker.add(_parse_one, idx, FANDOM.resolve_wikilink(row[1]))
+        for page in (1, 2, 3, 4):
+            id_range = f"{(page-1)*100+1}-{page*100}"
+            html_text = FANDOM.request(
+                f"https://fategrandorder.fandom.com/wiki/Sub:Servant_List_by_ID/{id_range}?action=render"
+            )
+            links: list[str] = parse_html_xpath(
+                html_text,
+                '//div[@class="mw-parser-output"]/table[2]/tbody/tr/td[2]/a/@href',
+            )
+            prefix = "https://fategrandorder.fandom.com/wiki/"
+            for link in links:
+                assert link.startswith(prefix), link
+                worker.add(_parse_one, FANDOM.norm_key(link[len(prefix) :]))
         worker.wait()
 
     def fandom_ce(self):
@@ -826,7 +827,7 @@ class WikiParser:
                 self.mc_transl.costume_details[collection] = detail_cn
 
         # event item names
-        item_pages = ["道具一览"] + [f"道具一览/活动道具/{i}" for i in range(1,9)]
+        item_pages = ["道具一览"] + [f"道具一览/活动道具/{i}" for i in range(1, 9)]
         for title in item_pages:
             text = MOONCELL.get_page_text(title)
             for params in parse_template_list(text, r"^{{活动道具表格"):
