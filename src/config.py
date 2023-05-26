@@ -76,6 +76,7 @@ class PayloadSetting(BaseSettings):
     regions: list[Region] = []  # from aa/api
     event: str | None = None
     run_wiki_parser: bool | None = None
+    run_atlas_parser: bool | None = None
     force_update_export: bool = False
     clear_cache_http: bool = False
     clear_cache_wiki: bool = False

@@ -22,9 +22,11 @@ if __name__ == "__main__":
     payload = PayloadSetting()
 
     if task == "atlas":
-        main_parser = MainParser()
-        main_parser.start()
-        # run_main_parser()
+        if payload.run_atlas_parser == False:
+            print("skip atlas parser")
+        else:
+            main_parser = MainParser()
+            main_parser.start()
     elif task == "wiki":
         wiki_parser = WikiParser()
         wiki_parser.start()
