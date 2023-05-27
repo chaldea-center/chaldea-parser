@@ -30,9 +30,12 @@ class KnownTimeZone(StrEnum):
 
 
 class WikiTool:
-    def __init__(self, host: str, img_url_prefix: str, path="/", user=None, pwd=None):
+    def __init__(
+        self, host: str, img_url_prefix: str, path="/", user=None, pwd=None, webpath="w"
+    ):
         self.host: str = host
         self._path: str = path
+        self.webpath = webpath
         self.img_url_prefix: str = img_url_prefix
         self.user = user
         self.pwd = pwd
@@ -562,3 +565,6 @@ class WikiTool:
     @staticmethod
     def request(url: str, encoding="utf8") -> str:
         return requests.get(url).content.decode(encoding)
+
+    def render(self, title: str) -> str:
+        return self.request(f"https://{self.host}/{self.webpath}/{title}?action=render")

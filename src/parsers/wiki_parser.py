@@ -504,10 +504,13 @@ class WikiParser:
             svt_add.fandomSprites = sprites
 
         worker = Worker("fandom_svt")
-        for page in (1, 2, 3, 4):
-            id_range = f"{(page-1)*100+1}-{page*100}"
+        subpages = self._get_fandom_list_page_sub(
+            "Sub:Servant_List_by_ID/1-100", r"Sub\:Servant_List_by_ID/(\d+\-\d+)"
+        )
+        subpages.insert(0, "1-100")
+        for page in subpages:
             html_text = FANDOM.request(
-                f"https://fategrandorder.fandom.com/wiki/Sub:Servant_List_by_ID/{id_range}?action=render"
+                f"https://fategrandorder.fandom.com/wiki/Sub:Servant_List_by_ID/{page}?action=render"
             )
             links: list[str] = parse_html_xpath(
                 html_text,
@@ -542,14 +545,13 @@ class WikiParser:
                 self.fandom_transl.ce_skill_des_max[ce_add.collectionNo] = effect2
 
         worker = Worker("fandom_ce")
-        list_text = FANDOM.get_page_text("Craft Essence List/By ID")
-        # {{:Craft Essence List/By ID/1-100}}
-        for sub in re.findall(
-            r"{{:Craft[_ ]Essence[_ ]List/By[_ ]ID/([\d\-]+)}}", list_text
-        ):
-            html_text = FANDOM.request(
-                f"https://fategrandorder.fandom.com/wiki/Craft_Essence_List/By_ID/{sub}?action=render"
-            )
+
+        subpages = self._get_fandom_list_page_sub(
+            "Craft_Essence_List/By_ID/1-100", r"Craft_Essence_List/By_ID/(\d+\-\d+)"
+        )
+        subpages.insert(0, "1-100")
+        for page in subpages:
+            html_text = FANDOM.render(f"Craft_Essence_List/By_ID/{page}")
             links: list[str] = parse_html_xpath(
                 html_text,
                 '//div[@class="mw-parser-output"]/table/tbody/tr/td[2]/a/@href',
@@ -562,9 +564,7 @@ class WikiParser:
 
     def fandom_cc(self):
         # Category:Command Code Display Order
-        list_page_html = FANDOM.request(
-            "https://fategrandorder.fandom.com/wiki/Command_Code_List/By_ID?action=render"
-        )
+        list_page_html = FANDOM.render("Command_Code_List/By_ID")
         pages = parse_html_xpath(
             list_page_html,
             '//div[@class="mw-parser-output"]/table/tbody/tr/td[3]/a/@href',
@@ -591,6 +591,20 @@ class WikiParser:
             effect1 = infoboxcc.get2("effect1")
             if effect1 and effect1 != "N/A":
                 self.fandom_transl.cc_skill_des[cc_add.collectionNo] = effect1
+
+    @staticmethod
+    def _get_fandom_list_page_sub(page: str, pattern: str) -> list[str]:
+        html_text = FANDOM.render(page)
+        links: list[str] = parse_html_xpath(
+            html_text,
+            '//div[@class="mw-parser-output"]/table[1]/tbody//td/a/@href',
+        )
+        subpages: list[str] = []
+        for link in links:
+            matches = re.findall(pattern, link)
+            if matches:
+                subpages.append(matches[0])
+        return subpages
 
     def mc_events(self):
         def _parse_one(event: EventW):

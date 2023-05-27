@@ -8,6 +8,7 @@ MOONCELL = WikiTool(
     path="/",
     user=settings.mc_user,
     pwd=settings.mc_pwd,
+    webpath="w",
 )
 FANDOM = WikiTool(
     "fategrandorder.fandom.com",
@@ -15,4 +16,5 @@ FANDOM = WikiTool(
     path="/",
     user=settings.fandom_user,
     pwd=settings.fandom_pwd,
+    webpath="wiki",
 )
