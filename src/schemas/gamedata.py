@@ -312,8 +312,8 @@ class MasterData(BaseModelORJson):
         for war in self.nice_war:
             for spot in war.spots:
                 for quest in spot.quests:
-                    if war.id == 9999 and quest.id not in self.remainedQuestIds:
-                        continue
+                    # if war.id == 9999 and quest.id not in self.remainedQuestIds:
+                    #     continue
                     if war.id == 1002 and quest.closedAt < NEVER_CLOSED_TIMESTAMP:
                         continue
                     d[quest.id] = quest

@@ -386,7 +386,6 @@ class MainParser:
         data["region"] = f"{region}"
         master_data = MasterData.parse_obj(data)
 
-        master_data.nice_event = [event for event in master_data.nice_event]
         if region == Region.JP:
             for add_region, ces in ADD_CES.items():
                 for collection, (illustrator, sort_id) in ces.items():

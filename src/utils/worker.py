@@ -69,7 +69,7 @@ class Worker:
 
     def map_add(self, fn, *iterables):
         for args in zip(*iterables):
-            self.add(fn, *args)
+            self.add(fn, *args)  # type: ignore
 
     @staticmethod
     def from_map(fn, *iterables, name: str | None = None) -> "Worker":

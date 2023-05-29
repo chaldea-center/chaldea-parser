@@ -246,4 +246,4 @@ async def to_async(
             *args,
             **kwargs,
         ),
-    )
+    )  # type: ignore
