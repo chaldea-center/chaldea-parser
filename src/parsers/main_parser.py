@@ -881,7 +881,7 @@ class MainParser:
         return r
 
     _excludes: dict[type, list[str]] = {
-        NiceBaseSkill: ["detail", "groupOverwrites"],
+        NiceBaseSkill: ["detail", "groupOverwrites", "skillSvts"],
         NiceSkill: [
             "name",
             "originalName",
@@ -897,6 +897,7 @@ class MainParser:
             "aiIds",
             "groupOverwrites",
             "functions",
+            "skillSvts",
         ],
         NiceBaseTd: ["detail", "npSvts"],
         NiceTd: [
