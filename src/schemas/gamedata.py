@@ -11,6 +11,7 @@ from app.schemas.nice import (
     NiceBaseFunction,
     NiceBgmEntity,
     NiceBuff,
+    NiceClassBoard,
     NiceCommandCode,
     NiceCostume,
     NiceEnemyMaster,
@@ -25,6 +26,7 @@ from app.schemas.nice import (
     NiceServant,
     NiceSkill,
     NiceSpot,
+    NiceSvtSkillRelease,
     NiceTd,
     NiceWar,
 )
@@ -60,17 +62,21 @@ class FixedDrop(BaseModel):
 
 
 class NiceBaseTd(NiceTd):
+    svtId: int = Field(0, exclude=True)
     num: int = Field(0, exclude=True)
     strengthStatus: int = Field(0, exclude=True)
     priority: int = Field(0, exclude=True)
     condQuestId: int = Field(0, exclude=True)
     condQuestPhase: int = Field(0, exclude=True)
+    releaseConditions: list[NiceSvtSkillRelease] = Field([], exclude=True)
+    # damage
     # card: NiceCardType
     # icon: Optional[HttpUrl]
     # npDistribution: list[int]
 
 
 class NiceBaseSkill(NiceSkill):
+    svtId: int = Field(0, exclude=True)
     num: int = Field(0, exclude=True)
     strengthStatus: int = Field(0, exclude=True)
     priority: int = Field(0, exclude=True)
@@ -79,6 +85,7 @@ class NiceBaseSkill(NiceSkill):
     condLv: int = Field(0, exclude=True)
     condLimitCount: int = Field(0, exclude=True)
     extraPassive: list[ExtraPassive] = Field([], exclude=True)
+    releaseConditions: list[NiceSvtSkillRelease] = Field([], exclude=True)
 
 
 class NiceEquipSort(NiceEquip):
@@ -116,6 +123,7 @@ class MasterData(BaseModelORJson):
     nice_war: list[NiceWar] = []
     nice_event: list[NiceEvent] = []
     nice_enemy_master: list[NiceEnemyMaster] = []
+    nice_class_board: list[NiceClassBoard] = []
     nice_trait: dict[int, Trait] = {}
     NiceAttributeRelation: dict[Attribute, dict[Attribute, int]] = {}
     NiceBuffList_ActionList: dict[NiceBuffAction, BuffActionDetail] = {}

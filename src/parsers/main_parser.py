@@ -56,7 +56,9 @@ from app.schemas.nice import (
     NiceServant,
     NiceShop,
     NiceSkill,
+    NiceSkillSvt,
     NiceTd,
+    NiceTdSvt,
     NiceWar,
     QuestEnemy,
 )
@@ -704,6 +706,7 @@ class MainParser:
         _normal_dump(data.exchangeTickets, "exchangeTickets")
         _normal_dump(data.nice_bgm, "bgms")
         _normal_dump(data.nice_enemy_master, "enemyMasters")
+        _normal_dump(data.nice_class_board, "classBoards")
 
         logger.info("Updating mappings")
         run_mapping_update(data.mappingData)  # before dump
@@ -918,6 +921,7 @@ class MainParser:
             "functions",
             "npSvts",
         ],
+        NiceTdSvt: ["motion"],
         NiceBgm: ["name", "fileName", "notReleased", "audioAsset"],
         NiceTrait: ["name"],
         NiceGift: ["id", "priority"],
@@ -977,10 +981,30 @@ class MainParser:
         NiceMasterMission: ["quests"],
     }
 
+    def get_skill_exclude(self, skill: NiceSkill | NiceTd) -> set[str]:
+        keys = [
+            "svtId",
+            "num",
+            "priority",
+            "strengthStatus",
+            "condQuestId",
+            "condQuestPhase",
+            "condLv",
+            "condLimitCount",
+        ]
+        excludes = set(key for key in keys if getattr(skill, key, None) in (0, -1))
+        conds = getattr(skill, "releaseConditions", None)
+        if conds is not None and not conds:
+            excludes.add("releaseConditions")
+        return excludes
+
     def _encoder(self, obj):
         exclude = {"originalName"}
         _type = type(obj)
         exclude.update(self._excludes.get(_type, []))
+
+        # if _type in (NiceSkill, NiceBaseSkill, NiceTd, NiceBaseTd):
+        #     exclude.update(self.get_skill_exclude(obj))
 
         if _type == NiceSkill and isinstance(obj, NiceSkill):
             if obj.id not in self.jp_data.base_skills:
