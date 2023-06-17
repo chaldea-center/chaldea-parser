@@ -4,7 +4,7 @@ from typing import Optional
 from app.schemas.base import BaseModelORJson
 from app.schemas.basic import BasicServant
 from app.schemas.common import Region
-from app.schemas.enums import Attribute, Trait
+from app.schemas.enums import Attribute, NiceSkillType, Trait
 from app.schemas.gameenums import NiceBuffAction, NiceCardType
 from app.schemas.nice import (
     ExtraPassive,
@@ -262,6 +262,21 @@ class MasterData(BaseModelORJson):
         for event in self.nice_event:
             for assist in event.commandAssists:
                 skills.append(assist.skill)
+        for board in self.nice_class_board:
+            for square in board.squares:
+                if square.targetSkill:
+                    skills.append(square.targetSkill)
+                if square.targetCommandSpell:
+                    skills.append(
+                        NiceSkill(
+                            id=-10000 - square.targetCommandSpell.id,
+                            name=square.targetCommandSpell.name,
+                            originalName=square.targetCommandSpell.name,
+                            unmodifiedDetail=square.targetCommandSpell.detail,
+                            type=NiceSkillType.active,
+                            functions=square.targetCommandSpell.functions,
+                        )
+                    )
         skills.extend(self.base_skills.values())
         return skills
 
