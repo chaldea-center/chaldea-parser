@@ -1043,6 +1043,12 @@ class MainParser:
                         d.pop(k)
 
             _clean_dict(obj)
+        elif isinstance(obj, NiceQuestPhase):
+            if len(obj.availableEnemyHashes) > 100:
+                hashes = obj.availableEnemyHashes[-100:]
+                if obj.enemyHash and obj.enemyHash not in hashes:
+                    hashes.append(obj.enemyHash)
+                obj.availableEnemyHashes = hashes
 
         if isinstance(obj, BaseModel):
             if isinstance(obj, NiceFunction):

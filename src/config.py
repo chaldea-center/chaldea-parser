@@ -92,6 +92,7 @@ class PayloadSetting(BaseSettings):
     skip_prev_quest_drops: bool = False
     slow_mode: bool = False
     patch_mappings: bool = True
+    extra: dict = {}
 
     class Config:
         @classmethod
