@@ -119,7 +119,7 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
-MIN_APP = "2.3.0"
+MIN_APP = "2.4.2"
 
 
 # cn_ces: dict[int, tuple[str, float]] = {102022: ("STAR影法師", 1461.5)}
@@ -964,13 +964,14 @@ class MainParser:
         ],
         NiceServant: [
             "originalBattleName",
+            "className",
             "atkGrowth",
             "hpGrowth",
             "expGrowth",
             "expFeed",
             "hitsDistribution",
         ],
-        BasicServant: ["originalOverwriteName"],
+        BasicServant: ["originalOverwriteName", "className"],
         NiceEquip: ["expFeed", "expGrowth", "atkGrowth", "hpGrowth"],
         NiceEquipSort: ["expFeed", "expGrowth", "atkGrowth", "hpGrowth"],
         AscensionAdd: [
@@ -1003,8 +1004,8 @@ class MainParser:
         _type = type(obj)
         exclude.update(self._excludes.get(_type, []))
 
-        # if _type in (NiceSkill, NiceBaseSkill, NiceTd, NiceBaseTd):
-        #     exclude.update(self.get_skill_exclude(obj))
+        if _type in (NiceSkill, NiceBaseSkill, NiceTd, NiceBaseTd):
+            exclude.update(self.get_skill_exclude(obj))
 
         if _type == NiceSkill and isinstance(obj, NiceSkill):
             if obj.id not in self.jp_data.base_skills:
