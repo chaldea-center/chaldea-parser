@@ -3,8 +3,8 @@ import re
 from app.schemas.gameenums import NiceItemType
 from app.schemas.nice import NiceItem
 
-from src.schemas.common import MappingBase
-from src.schemas.gamedata import ExchangeTicket
+from ...schemas.common import MappingBase
+from ...schemas.gamedata import ExchangeTicket
 
 
 def parse_exchange_tickets(nice_item: list[NiceItem]) -> list[ExchangeTicket]:

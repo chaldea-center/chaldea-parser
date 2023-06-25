@@ -8,7 +8,6 @@ from .url import DownUrl
 from .worker import Worker
 
 
-NEVER_CLOSED_TIMESTAMP = 1800000000  # 1893423600
 SECS_PER_DAY = 24 * 3600
 
 

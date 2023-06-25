@@ -180,8 +180,7 @@ class WikiTool:
                         f" {len(self.cache.images)} images"
                     )
 
-                if name in self.active_requests:
-                    self.active_requests.remove(name)
+                self.active_requests.discard(name)
                 return page
             except Exception as e:
                 retry_n += 1
@@ -189,8 +188,7 @@ class WikiTool:
                     logger.warning(
                         f"Fail download {name_json} after {retry_n} retry: {e}"
                     )
-                    if name in self.active_requests:
-                        self.active_requests.remove(name)
+                    self.active_requests.discard(name)
                     raise
                 logger.error(f"api failed: {type(e)}: {e}")
                 time.sleep(min(5 * retry_n, 30))
@@ -233,8 +231,7 @@ class WikiTool:
                         f" {len(self.cache.images)} images"
                     )
 
-                if name in self.active_requests:
-                    self.active_requests.remove(name)
+                self.active_requests.discard(name)
                 return info
             except Exception as e:
                 retry_n += 1
@@ -242,8 +239,7 @@ class WikiTool:
                     logger.warning(
                         f"Fail download {name_json} after {retry_n} retry: {e}"
                     )
-                    if name in self.active_requests:
-                        self.active_requests.remove(name)
+                    self.active_requests.discard(name)
                     raise
                 logger.error(f"api failed: {type(e)}: {e}")
                 time.sleep(min(5 * retry_n, 30))

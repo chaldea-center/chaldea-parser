@@ -33,8 +33,14 @@ from app.schemas.nice import (
 from app.schemas.raw import MstCv, MstIllustrator
 from pydantic import BaseModel, Field
 
-from ..utils import NEVER_CLOSED_TIMESTAMP, sort_dict
-from .common import MappingBase, MstClass, MstClassRelation, MstViewEnemy
+from ..utils import sort_dict
+from .common import (
+    NEVER_CLOSED_TIMESTAMP,
+    MappingBase,
+    MstClass,
+    MstClassRelation,
+    MstViewEnemy,
+)
 from .const_data import (
     BuffActionDetail,
     CardInfo,
@@ -64,6 +70,7 @@ class FixedDrop(BaseModel):
 class NiceBaseTd(NiceTd):
     svtId: int = Field(0, exclude=True)
     num: int = Field(0, exclude=True)
+    npNum: int = Field(1, exclude=True)
     strengthStatus: int = Field(0, exclude=True)
     priority: int = Field(0, exclude=True)
     condQuestId: int = Field(0, exclude=True)
@@ -191,6 +198,10 @@ class MasterData(BaseModelORJson):
     @cached_property
     def svt_id_dict(self) -> dict[int, NiceServant]:
         return {x.id: x for x in self.nice_servant_lore}
+
+    @cached_property
+    def basic_svt_dict(self) -> dict[int, BasicServant]:
+        return {x.id: x for x in self.basic_svt}
 
     @cached_property
     def costume_dict(self) -> dict[int, NiceCostume]:

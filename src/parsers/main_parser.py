@@ -1,66 +1,26 @@
 import hashlib
-import itertools
 import re
 import shutil
 import time
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, AnyStr, Iterable, Match, TypeVar
+from typing import Any, AnyStr, Iterable, Match
 
 import orjson
 import pytz
 import requests
-from app.schemas.common import NiceTrait, Region
+from app.schemas.common import Region
 from app.schemas.enums import OLD_TRAIT_MAPPING, NiceSvtType
-from app.schemas.gameenums import (
-    NiceSpotOverwriteType,
-    NiceSvtFlag,
-    NiceWarOverwriteType,
-    SvtType,
-)
+from app.schemas.gameenums import SvtType
 from app.schemas.nice import (
-    AscensionAdd,
-    AscensionAddEntryStr,
-    BasicServant,
-    EnemyDrop,
-    EnemyTd,
-    ExtraAssets,
     NiceBaseFunction,
-    NiceBgm,
     NiceBuff,
     NiceBuffType,
     NiceCommandCode,
     NiceEquip,
-    NiceEvent,
-    NiceEventCooltimeReward,
-    NiceEventDiggingBlock,
-    NiceEventLotteryBox,
-    NiceEventMission,
-    NiceEventMissionCondition,
-    NiceEventPointBuff,
-    NiceEventReward,
-    NiceEventTowerReward,
-    NiceEventTreasureBox,
-    NiceFunction,
-    NiceGift,
     NiceItem,
-    NiceItemAmount,
-    NiceLore,
-    NiceLoreComment,
-    NiceMap,
-    NiceMapGimmick,
-    NiceMasterMission,
-    NiceQuest,
-    NiceQuestPhase,
     NiceServant,
-    NiceShop,
-    NiceSkill,
-    NiceSkillSvt,
-    NiceTd,
-    NiceTdSvt,
-    NiceWar,
-    QuestEnemy,
 )
 from app.schemas.raw import MstQuestPhase, MstSvtExp
 from pydantic import BaseModel, parse_file_as, parse_obj_as
@@ -89,9 +49,8 @@ from ..schemas.gamedata import (
     NiceEquipSort,
 )
 from ..schemas.mappings import CN_REPLACE, FieldTrait
-from ..schemas.wiki_data import AppNews, CommandCodeW, WikiData, WikiTranslation
+from ..schemas.wiki_data import AppNews, WikiData, WikiTranslation
 from ..utils import (
-    NEVER_CLOSED_TIMESTAMP,
     AtlasApi,
     DownUrl,
     McApi,
@@ -107,39 +66,18 @@ from ..utils.helper import LocalProxy, beautify_file, describe_regions
 from ..utils.stopwatch import Stopwatch
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.wiki_tool import KnownTimeZone
+from .core.dump import DataEncoder
+from .core.mapping.common import _KT, _T
+from .core.mapping.official import merge_official_mappings
+from .core.mapping.wiki import merge_atlas_na_mapping, merge_wiki_translation
 from .core.quest import parse_quest_drops
 from .core.ticket import parse_exchange_tickets
+from .data import ADD_CES, MIN_APP
 from .domus_aurea import run_drop_rate_update
 from .update_mapping import run_mapping_update
 
 
-_T = TypeVar("_T")
-_KT = TypeVar("_KT", str, int)
-_KV = TypeVar("_KV", str, int)
-
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
-
-MIN_APP = "2.4.3"
-
-
-# cn_ces: dict[int, tuple[str, float]] = {102022: ("STAR影法師", 1461.5)}
-ADD_CES = {
-    Region.CN: {
-        102019: ("STAR影法師", 1526.1),  # 3rd
-        102020: ("STAR影法師", 1526.2),  # 4th
-        102021: ("STAR影法師", 1526.3),  # 5th
-        102022: ("STAR影法師", 1526.4),  # 6th anniversary
-    },
-    Region.TW: {
-        302023: ("リヨ", 1466.1),  # 6th anniversary
-    },
-}
-
-# svt_no, questIds
-STORY_UPGRADE_QUESTS = {
-    1: [1000624, 3000124, 3000607, 3001301, 1000631],
-    38: [3000915],  # Cú Chulainn
-}
 
 
 class MainParser:
@@ -151,6 +89,7 @@ class MainParser:
         logger.info(f"Payload: {self.payload}")
         self.stopwatch = Stopwatch("MainParser")
         self.now = datetime.now()
+        self.encoder = DataEncoder(self.jp_data)
 
     @count_time
     def start(self):
@@ -194,7 +133,7 @@ class MainParser:
             q for event in self.wiki_data.events.values() for q in event.huntingQuestIds
         ]
         self.stopwatch.log(f"load wiki data")
-        self.jp_data = self.load_master_data(Region.JP)
+        self.encoder.jp_data = self.jp_data = self.load_master_data(Region.JP)
 
         self.merge_all_mappings()
         self.stopwatch.log(f"mappings finish")
@@ -556,7 +495,10 @@ class MainParser:
             _fn = f"{key}.json"
         if _bytes is None:
             _text = dump_json(
-                obj, default=encoder or self._encoder, indent2=False, new_line=False
+                obj,
+                default=encoder or self.encoder.default,
+                indent2=False,
+                new_line=False,
             )
             assert _text
             _bytes = _text.encode()
@@ -703,6 +645,7 @@ class MainParser:
         _normal_dump(data.nice_mystic_code, "mysticCodes")
         _normal_dump(data.nice_item, "items")
         _normal_dump(data.basic_svt, "entities")
+        # self.encoder.trim_basic_svt = True
         _normal_dump(data.exchangeTickets, "exchangeTickets")
         _normal_dump(data.nice_bgm, "bgms")
         _normal_dump(data.nice_enemy_master, "enemyMasters")
@@ -820,7 +763,7 @@ class MainParser:
     ) -> tuple[dict, dict]:
         encoded = dump_json(
             self._encode_mapping_data(mappings),
-            default=self._encoder,
+            default=self.encoder.default,
             indent2=False,
             new_line=False,
         )
@@ -883,245 +826,38 @@ class MainParser:
                 r[k] = v
         return r
 
-    _excludes: dict[type, list[str]] = {
-        NiceBaseSkill: ["detail", "groupOverwrites", "skillSvts"],
-        NiceSkill: [
-            "name",
-            "originalName",
-            "ruby",
-            "detail",
-            "unmodifiedDetail",
-            "type",
-            "icon",
-            "coolDown",
-            "actIndividuality",
-            "script",
-            "skillAdd",
-            "aiIds",
-            "groupOverwrites",
-            "functions",
-            "skillSvts",
-        ],
-        NiceBaseTd: ["detail", "npSvts"],
-        NiceTd: [
-            # "card",
-            "name",
-            "originalName",
-            "ruby",
-            # "icon",
-            "rank",
-            "type",
-            "effectFlags",
-            "detail",
-            "unmodifiedDetail",
-            "npGain",
-            # "npDistribution",
-            "individuality",
-            "script",
-            "functions",
-            "npSvts",
-        ],
-        NiceTdSvt: ["motion"],
-        NiceBgm: ["name", "fileName", "notReleased", "audioAsset"],
-        NiceTrait: ["name"],
-        NiceGift: ["id", "priority"],
-        NiceLore: ["comments", "voices"],
-        NiceWar: ["originalLongName", "emptyMessage"],
-        NiceMap: [],
-        NiceMapGimmick: ["actionAnimTime", "actionEffectId", "startedAt", "endedAt"],
-        NiceQuest: ["spotName","warLongName"],
-        NiceQuestPhase: ["spotName","warLongName", "supportServants"],
-        QuestEnemy: ["userSvtId", "uniqueId", "drops", "limit"],
-        EnemyDrop: ["dropExpected", "dropVariance"],
-        EnemyTd: ["noblePhantasmLv2", "noblePhantasmLv3"],  # noblePhantasmLv1
-        NiceEvent: ["voicePlays"],
-        NiceEventMissionCondition: ["missionTargetId", "detail"],
-        NiceEventMission: [
-            "flag",
-            "missionTargetId",
-            "detail",
-            "startedAt",
-            "endedAt",
-            "closedAt",
-            "rewardRarity",
-            "notfyPriority",
-            "presentMessageId",
-        ],
-        NiceEventTreasureBox: ["commonConsume"],
-        NiceEventDiggingBlock: ["commonConsume"],
-        NiceEventTowerReward: ["boardMessage", "rewardGet", "banner"],
-        NiceEventLotteryBox: ["id", "priority", "detail", "icon", "banner"],
-        NiceEventReward: ["bgImagePoint", "bgImageGet"],
-        NiceEventPointBuff: ["detail"],
-        NiceEventCooltimeReward: ["commonRelease"],
-        NiceShop: [
-            "baseShopId",
-            "eventId",
-            "detail",
-            "openedAt",
-            "closedAt",
-            "warningMessage",
-        ],
-        NiceServant: [
-            "originalBattleName",
-            "className",
-            "atkGrowth",
-            "hpGrowth",
-            "expGrowth",
-            "expFeed",
-            "hitsDistribution",
-        ],
-        BasicServant: ["originalOverwriteName", "className"],
-        NiceEquip: ["expFeed", "expGrowth", "atkGrowth", "hpGrowth"],
-        NiceEquipSort: ["expFeed", "expGrowth", "atkGrowth", "hpGrowth"],
-        AscensionAdd: [
-            "originalOverWriteServantName",
-            "originalOverWriteServantBattleName",
-            "originalOverWriteTDName",
-        ],
-        NiceMasterMission: ["quests"],
-    }
-
-    def get_skill_exclude(self, skill: NiceSkill | NiceTd) -> set[str]:
-        keys = [
-            "svtId",
-            "num",
-            "priority",
-            "strengthStatus",
-            "condQuestId",
-            "condQuestPhase",
-            "condLv",
-            "condLimitCount",
-        ]
-        excludes = set(key for key in keys if getattr(skill, key, None) in (0, -1))
-        conds = getattr(skill, "releaseConditions", None)
-        if conds is not None and not conds:
-            excludes.add("releaseConditions")
-        return excludes
-
-    def _encoder(self, obj):
-        exclude = {"originalName"}
-        _type = type(obj)
-        exclude.update(self._excludes.get(_type, []))
-
-        if _type in (NiceSkill, NiceBaseSkill, NiceTd, NiceBaseTd):
-            exclude.update(self.get_skill_exclude(obj))
-
-        if _type == NiceSkill and isinstance(obj, NiceSkill):
-            if obj.id not in self.jp_data.base_skills:
-                skill = NiceBaseSkill.parse_obj(obj.dict(exclude_none=True))
-                self.jp_data.base_skills[obj.id] = skill
-            if obj.ruby in ("", "-"):
-                exclude.add("ruby")
-        elif _type == NiceTd and isinstance(obj, NiceTd):
-            if obj.id not in self.jp_data.base_tds:
-                td = NiceBaseTd.parse_obj(obj.dict(exclude_none=True))
-                self.jp_data.base_tds[obj.id] = td
-            base_td = self.jp_data.base_tds[obj.id]
-            for key in ["card", "icon", "npDistribution"]:
-                if getattr(obj, key, None) == getattr(base_td, key, None):
-                    exclude.add(key)
-            if obj.ruby in ("", "-"):
-                exclude.add("ruby")
-        elif _type == NiceFunction and isinstance(obj, NiceFunction):
-            if obj.funcId not in self.jp_data.base_functions:
-                self.jp_data.base_functions[obj.funcId] = NiceBaseFunction.parse_obj(
-                    obj.dict()
-                )
-            exclude.update(NiceBaseFunction.__fields__.keys())
-            exclude.remove("funcId")
-        elif isinstance(obj, NiceItemAmount):
-            return {"itemId": obj.item.id, "amount": obj.amount}
-        elif isinstance(obj, (ExtraAssets, AscensionAdd)):
-            obj = obj.dict(exclude_none=True, exclude_defaults=True, exclude=exclude)
-
-            def _clean_dict(d: dict):
-                for k in list(d.keys()):
-                    v = d[k]
-                    if isinstance(v, dict):
-                        _clean_dict(v)
-                    if v is None or v == [] or v == {}:
-                        d.pop(k)
-
-            _clean_dict(obj)
-        elif isinstance(obj, NiceQuestPhase):
-            if len(obj.availableEnemyHashes) > 100:
-                hashes = obj.availableEnemyHashes[-100:]
-                if obj.enemyHash and obj.enemyHash not in hashes:
-                    hashes.append(obj.enemyHash)
-                obj.availableEnemyHashes = hashes
-
-        if isinstance(obj, BaseModel):
-            if isinstance(obj, NiceFunction):
-                map = dict(
-                    obj._iter(
-                        to_dict=True,
-                        exclude_none=True,
-                        exclude_defaults=True,
-                        exclude=exclude,
-                    )
-                )
-                # enable in 2.1.0
-                self._trim_func_vals(map)
-            else:
-                map = dict(
-                    obj._iter(
-                        to_dict=False,
-                        exclude_none=True,
-                        exclude_defaults=True,
-                        exclude=exclude,
-                    )
-                )
-            return map
-        elif isinstance(obj, (list, dict)):
-            return obj
-        return pydantic_encoder(obj)
-
-    @staticmethod
-    def _trim_func_vals(map: dict[str, Any]):
-        first: dict[str, Any] | None = map["svals"][0] if map.get("svals") else None
-        if not first:
-            return
-        for key1 in ["svals", "svals2", "svals3", "svals4", "svals5"]:
-            svals: list[dict] | None = map.get(key1)
-            if not svals:
-                continue
-            for index in range(len(svals)):
-                if key1 == "svals" and index == 0:
-                    continue
-                val = svals[index]
-                new_val = dict()
-                for key2 in first.keys():
-                    v = val.get(key2)
-                    if first[key2] != v:
-                        new_val[key2] = v
-                for key2 in val.keys():
-                    if key2 not in first:
-                        new_val[key2] = val[key2]
-                svals[index] = new_val
-
-        return map
-
     def merge_all_mappings(self):
         logger.info("merge all mappings")
         if not self.payload.skip_mapping:
-            self._merge_official_mappings(Region.CN)
-            self._merge_wiki_translation(
+            # CN
+            merge_official_mappings(
+                self.jp_data, self.load_master_data(Region.CN), self.wiki_data
+            )
+            merge_wiki_translation(
+                self.jp_data,
                 Region.CN,
                 parse_file_as(WikiTranslation, settings.output_wiki / "mcTransl.json"),
             )
-
-            self._merge_official_mappings(Region.NA)
-            self._add_atlas_na_mapping()
-            self._merge_wiki_translation(
+            # NA
+            merge_official_mappings(
+                self.jp_data, self.load_master_data(Region.NA), self.wiki_data
+            )
+            self.jp_data.mappingData = merge_atlas_na_mapping(self.jp_data.mappingData)
+            merge_wiki_translation(
+                self.jp_data,
                 Region.NA,
                 parse_file_as(
                     WikiTranslation, settings.output_wiki / "fandomTransl.json"
                 ),
             )
-
-            self._merge_official_mappings(Region.TW)
-            self._merge_official_mappings(Region.KR)
+            # TW
+            merge_official_mappings(
+                self.jp_data, self.load_master_data(Region.TW), self.wiki_data
+            )
+            # KR
+            merge_official_mappings(
+                self.jp_data, self.load_master_data(Region.KR), self.wiki_data
+            )
         self._add_enum_mappings()
         self._merge_repo_mapping()
         self._fix_cn_translation()
@@ -1164,513 +900,6 @@ class MainParser:
         for cls_info in self.jp_data.mstClass:
             enums.svt_class.setdefault(cls_info.id, MappingBase())
         enums.svt_class = sort_dict(enums.svt_class)
-
-    def _merge_official_mappings(self, region: Region):
-        logger.info(f"merging official translations from {region}")
-        mappings = self.jp_data.mappingData
-        jp_data = self.jp_data
-        data = self.load_master_data(region)
-        jp_chars = re.compile(r"[\u3040-\u309f\u30a0-\u30ff]")
-
-        if region != Region.JP:
-            mappings.ce_release.update(
-                region,
-                sorted(set(data.ce_dict.keys()) | set(ADD_CES.get(region, {}).keys())),
-            )
-            mappings.svt_release.update(region, sorted(data.svt_dict.keys()))
-            mappings.entity_release.update(
-                region, sorted([svt.id for svt in data.basic_svt])
-            )
-            mappings.cc_release.update(region, sorted(data.cc_dict.keys()))
-            mappings.mc_release.update(region, sorted(data.mc_dict.keys()))
-
-        def _update_mapping(
-            m: dict[_KT, MappingBase[_KV]],
-            _key: _KT,
-            value: _KV | None,
-            skip_exists=True,
-            skip_unknown_key=False,
-        ):
-            if _key is None:
-                return
-            m.setdefault(_key, MappingBase())
-            if value == _key:
-                return
-            if region in (Region.CN, Region.TW) and isinstance(value, str):
-                if jp_chars.search(value):
-                    return
-            return self._update_key_mapping(
-                region,
-                key_mapping=m,
-                _key=_key,
-                value=value,
-                skip_exists=skip_exists,
-                skip_unknown_key=skip_unknown_key,
-            )
-
-        # str key
-        for item_jp in jp_data.nice_item:
-            item = data.item_dict.get(item_jp.id)
-            _update_mapping(
-                mappings.item_names, item_jp.name, item.name if item else None
-            )
-        for cv_jp in jp_data.nice_cv:
-            cv = data.cv_dict.get(cv_jp.id)
-            _update_mapping(mappings.cv_names, cv_jp.name, cv.name if cv else None)
-            cv_names = [str(s).strip() for s in re.split(r"[&＆]+", cv_jp.name) if s]
-            if len(cv_names) > 1:
-                for one_name in cv_names:
-                    mappings.cv_names.setdefault(one_name, MappingBase())
-        for illustrator_jp in jp_data.nice_illustrator:
-            illustrator = data.illustrator_dict.get(illustrator_jp.id)
-            _update_mapping(
-                mappings.illustrator_names,
-                illustrator_jp.name,
-                illustrator.name if illustrator else None,
-            )
-            illustrator_names = [
-                str(s).strip() for s in re.split(r"[&＆]+", illustrator_jp.name) if s
-            ]
-            if len(illustrator_names) > 1:
-                for one_name in illustrator_names:
-                    mappings.illustrator_names.setdefault(one_name, MappingBase())
-        for bgm_jp in jp_data.nice_bgm:
-            bgm = data.bgm_dict.get(bgm_jp.id)
-            _update_mapping(mappings.bgm_names, bgm_jp.name, bgm.name if bgm else None)
-
-        for event_jp in jp_data.nice_event:
-            event_extra = self.wiki_data.get_event(event_jp.id, event_jp.name)
-            event_extra.startTime.JP = event_jp.startedAt
-            event_extra.endTime.JP = event_jp.endedAt
-            mappings.event_names.setdefault(event_jp.name, MappingBase())
-            mappings.event_names.setdefault(event_jp.shortName, MappingBase())
-            event = data.event_dict.get(event_jp.id)
-            if event is None:
-                continue
-            if event.startedAt < NEVER_CLOSED_TIMESTAMP:
-                event_extra.startTime.update(region, event.startedAt)
-                event_extra.endTime.update(region, event.endedAt)
-            if event.startedAt > time.time():
-                continue
-            _update_mapping(mappings.event_names, event_jp.name, event.name)
-            _update_mapping(mappings.event_names, event_jp.shortName, event.shortName)
-        war_release = mappings.war_release.of(region) or []
-        for war_jp in jp_data.nice_war:
-            if war_jp.id < 1000:
-                self.wiki_data.get_war(war_jp.id)
-            mappings.war_names.setdefault(war_jp.name, MappingBase())
-            mappings.war_names.setdefault(war_jp.longName, MappingBase())
-            for war_add in war_jp.warAdds:
-                if war_add.type in [
-                    NiceWarOverwriteType.longName,
-                    NiceWarOverwriteType.name_,
-                ]:
-                    mappings.war_names.setdefault(war_add.overwriteStr, MappingBase())
-            war = data.war_dict.get(war_jp.id)
-            if war is None:
-                continue
-            if war.id == 8098 and region == Region.NA:
-                # for NA: 8098 is Da Vinci and the 7 Counterfeit Heroic Spirits
-                continue
-            if data.mstConstant["LAST_WAR_ID"] < war.id < 1000:
-                continue
-            event = data.event_dict.get(war.eventId)
-            if event and event.startedAt > time.time():
-                continue
-            war_release.append(war.id)
-            # if war.id < 11000 and war.lastQuestId == 0:  # not released wars
-            #     continue
-            _update_mapping(mappings.war_names, war_jp.longName, war.longName)
-            _update_mapping(mappings.war_names, war_jp.name, war.name)
-        mappings.war_release.update(region, sorted(war_release))
-        for spot_jp in jp_data.spot_dict.values():
-            spot = data.spot_dict.get(spot_jp.id)
-            _update_mapping(
-                mappings.spot_names, spot_jp.name, spot.name if spot else None
-            )
-            for spotAdd in spot_jp.spotAdds:
-                if spotAdd.overrideType == NiceSpotOverwriteType.name_:
-                    _update_mapping(mappings.spot_names, spotAdd.targetText, None)
-
-        def __update_ascension_add(
-            m: dict[str, MappingStr],
-            jp_entry: AscensionAddEntryStr,
-            entry: AscensionAddEntryStr | None,
-        ):
-            for ascension, name in jp_entry.ascension.items():
-                _update_mapping(
-                    m,
-                    name,
-                    entry.ascension.get(ascension) if entry else None,
-                    skip_exists=True,
-                )
-            for ascension, name in jp_entry.costume.items():
-                _update_mapping(
-                    m,
-                    name,
-                    entry.costume.get(ascension) if entry else None,
-                    skip_exists=True,
-                )
-
-        for svt_jp in jp_data.nice_servant_lore:
-            svt = data.svt_id_dict.get(svt_jp.id)
-            self.wiki_data.get_svt(svt_jp.collectionNo)
-            _update_mapping(
-                mappings.svt_names,
-                svt_jp.name,
-                svt.name if svt else None,
-                skip_exists=True,
-            )
-            _update_mapping(
-                mappings.svt_names,
-                svt_jp.battleName,
-                svt.battleName if svt else None,
-                skip_exists=True,
-            )
-            __update_ascension_add(
-                mappings.svt_names,
-                svt_jp.ascensionAdd.overWriteServantName,
-                svt.ascensionAdd.overWriteServantName if svt else None,
-            )
-            __update_ascension_add(
-                mappings.svt_names,
-                svt_jp.ascensionAdd.overWriteServantBattleName,
-                svt.ascensionAdd.overWriteServantBattleName if svt else None,
-            )
-            __update_ascension_add(
-                mappings.td_names,
-                svt_jp.ascensionAdd.overWriteTDName,
-                svt.ascensionAdd.overWriteTDName if svt else None,
-            )
-            if region != Region.NA:
-                __update_ascension_add(
-                    mappings.td_ruby,
-                    svt_jp.ascensionAdd.overWriteTDRuby,
-                    svt.ascensionAdd.overWriteTDRuby if svt else None,
-                )
-            __update_ascension_add(
-                mappings.td_types,
-                svt_jp.ascensionAdd.overWriteTDTypeText,
-                svt.ascensionAdd.overWriteTDTypeText if svt else None,
-            )
-
-            def _svt_change_dict(_svt: NiceServant | None):
-                return {
-                    str(
-                        (
-                            change.priority,
-                            change.condType,
-                            change.condTargetId,
-                            change.condValue,
-                            change.limitCount,
-                        )
-                    ): change.name
-                    for change in (_svt.svtChange if _svt else [])
-                }
-
-            changes_jp, changes = _svt_change_dict(svt_jp), _svt_change_dict(svt)
-            for k, v in changes_jp.items():
-                _update_mapping(mappings.svt_names, v, changes.get(k, None))
-            assert svt_jp.profile is not None
-            for group in svt_jp.profile.voices:
-                for line in group.voiceLines:
-                    if not line.name:
-                        continue
-                    name = line.name.replace("\u3000（ひとつの施策でふたつあるとき）", "")
-                    name = name.replace("（57は欠番）", "")
-                    name = re.sub(r"\d+$", "", name).strip()
-                    mappings.voice_line_names.setdefault(name, MappingStr())
-
-            if not svt:
-                continue
-            skill_priority = mappings.skill_priority.setdefault(
-                svt_jp.id, MappingBase()
-            )
-            skill_priority.update(
-                region, {skill.id: skill.priority for skill in svt.skills}
-            )
-            td_priority = mappings.td_priority.setdefault(svt_jp.id, MappingBase())
-            td_priority.update(
-                region, {td.id: td.priority for td in svt.noblePhantasms}
-            )
-            # if region != Region.JP and svt.profile.comments:
-            #     svt_w = self.wiki_data.servants.setdefault(svt_jp.collectionNo,
-            #       ServantW(collectionNo=svt.collectionNo))
-            #     svt_w.profileComment.update(region, svt.profile.comments)
-        for costume_id, costume_jp in jp_data.costume_dict.items():
-            costume = data.costume_dict.get(costume_id)
-            _update_mapping(
-                mappings.costume_names,
-                costume_jp.name,
-                costume.name if costume else None,
-            )
-            _update_mapping(
-                mappings.costume_names,
-                costume_jp.shortName,
-                costume.shortName if costume else None,
-            )
-            cos_w = mappings.costume_detail.setdefault(
-                costume_jp.costumeCollectionNo, MappingStr()
-            )
-            cos_w.JP = costume_jp.detail
-            if costume and costume.detail and costume.detail != costume_jp.detail:
-                cos_w.update(region, costume.detail)
-
-        def _get_comment(comments: list[NiceLoreComment]) -> NiceLoreComment:
-            comment = comments[0]
-            for c in comments:
-                if c.priority > comment.priority:
-                    comment = c
-            return comment
-
-        for ce_jp in jp_data.nice_equip_lore:
-            ce = data.ce_id_dict.get(ce_jp.id)
-            _update_mapping(mappings.ce_names, ce_jp.name, ce.name if ce else None)
-            ce_w = self.wiki_data.get_ce(ce_jp.collectionNo)
-            if ce_jp.profile and ce_jp.profile.comments:
-                if len(ce_jp.profile.comments) > 1:
-                    logger.debug(
-                        f"{ce_jp.collectionNo}-{ce_jp.name} has {len(ce_jp.profile.comments)} lores"
-                    )
-                ce_w.profile.JP = _get_comment(ce_jp.profile.comments).comment
-            if not ce:
-                continue
-            if region != Region.JP and ce.profile and ce.profile.comments:
-                comment = _get_comment(ce.profile.comments).comment
-                if comment and comment != ce_w.profile.JP:
-                    ce_w.profile.update(region, comment)
-
-        for cc_jp in jp_data.nice_command_code:
-            cc = data.cc_id_dict.get(cc_jp.id)
-            _update_mapping(mappings.cc_names, cc_jp.name, cc.name if cc else None)
-            cc_w = self.wiki_data.commandCodes.setdefault(
-                cc_jp.collectionNo, CommandCodeW(collectionNo=cc_jp.collectionNo)
-            )
-            cc_w.profile.update(Region.JP, cc_jp.comment)
-            if not cc:
-                continue
-            if cc.comment and cc.comment != cc_jp.comment:
-                cc_w.profile.update(region, cc.comment)
-        for mc_jp in jp_data.nice_mystic_code:
-            mc = data.mc_dict.get(mc_jp.id)
-            _update_mapping(mappings.mc_names, mc_jp.name, mc.name if mc else None)
-            mc_w = mappings.mc_detail.setdefault(mc_jp.id, MappingStr())
-            mc_w.JP = mc_jp.detail
-            if mc and mc.detail and mc.detail != mc_jp.detail:
-                mc_w.update(region, mc.detail)
-
-        for skill_jp in itertools.chain(
-            jp_data.skill_dict.values(), jp_data.base_skills.values()
-        ):
-            for skill_add in skill_jp.skillAdd:
-                # manually add
-                _update_mapping(mappings.skill_names, skill_add.name, None)
-            skill = data.skill_dict.get(skill_jp.id) or data.base_skills.get(
-                skill_jp.id
-            )
-            if (
-                skill_jp.name not in mappings.ce_names
-                and skill_jp.name not in mappings.cc_names
-            ):
-                _update_mapping(
-                    mappings.skill_names, skill_jp.name, skill.name if skill else None
-                )
-            detail_jp = self._process_effect_detail(skill_jp.unmodifiedDetail)
-            if not detail_jp:
-                continue
-            _update_mapping(
-                mappings.skill_detail,
-                detail_jp,
-                self._process_effect_detail(skill.unmodifiedDetail if skill else None),
-            )
-        for td_jp in itertools.chain(
-            jp_data.td_dict.values(), jp_data.base_tds.values()
-        ):
-            td = data.td_dict.get(td_jp.id) or data.base_tds.get(td_jp.id)
-            _update_mapping(mappings.td_names, td_jp.name, td.name if td else None)
-            if region != Region.NA:  # always empty for NA
-                _update_mapping(mappings.td_ruby, td_jp.ruby, td.ruby if td else None)
-            _update_mapping(mappings.td_types, td_jp.type, td.type if td else None)
-            detail_jp = self._process_effect_detail(td_jp.unmodifiedDetail)
-            if not detail_jp:
-                continue
-            _update_mapping(
-                mappings.td_detail,
-                detail_jp,
-                self._process_effect_detail(td.unmodifiedDetail if td else None),
-            )
-        for buff_jp in jp_data.buff_dict.values():
-            buff = data.buff_dict.get(buff_jp.id)
-            _update_mapping(
-                mappings.buff_names, buff_jp.name, buff.name if buff else None
-            )
-            _update_mapping(
-                mappings.buff_detail, buff_jp.detail, buff.detail if buff else None
-            )
-        for func_jp in jp_data.func_dict.values():
-            if func_jp.funcPopupText in ["", "-", "なし"]:
-                _update_mapping(mappings.func_popuptext, func_jp.funcType.value, None)
-            if func_jp.funcPopupText in mappings.buff_names:
-                continue
-            func = data.func_dict.get(func_jp.funcId)
-            _update_mapping(
-                mappings.func_popuptext,
-                func_jp.funcPopupText,
-                func.funcPopupText if func else None,
-            )
-        for quest_jp in jp_data.quest_dict.values():
-            quest = data.quest_dict.get(quest_jp.id)
-            _update_mapping(
-                mappings.quest_names, quest_jp.name, quest.name if quest else None
-            )
-        for entity_jp in jp_data.basic_svt:
-            entity = data.entity_dict.get(entity_jp.id)
-            if entity_jp.name in mappings.svt_names:
-                _update_mapping(
-                    mappings.svt_names,
-                    entity_jp.name,
-                    entity.name if entity else None,
-                )
-            else:
-                _update_mapping(
-                    mappings.entity_names,
-                    entity_jp.name,
-                    entity.name if entity else None,
-                )
-        # svt related quest release
-        for svt in jp_data.nice_servant_lore:
-            quest_ids = list(svt.relateQuestIds)
-            if svt.collectionNo in STORY_UPGRADE_QUESTS:
-                quest_ids += STORY_UPGRADE_QUESTS[svt.collectionNo]
-            for quest_id in quest_ids:
-                quest_jp = jp_data.quest_dict[quest_id]
-                release = mappings.quest_release.setdefault(quest_id, MappingBase())
-                release.update(Region.JP, quest_jp.openedAt)
-                quest = data.quest_dict.get(quest_id)
-                if not quest:
-                    continue
-                release.update(region, quest.openedAt)
-
-        # view enemy name
-        for quest_id, enemies in jp_data.view_enemy_names.items():
-            quest = jp_data.quest_dict.get(quest_id)
-            if not quest:
-                continue
-            for svt_id, name_jp in enemies.items():
-                if name_jp not in mappings.entity_names:
-                    continue
-                name = data.view_enemy_names.get(quest_id, {}).get(svt_id)
-                _update_mapping(mappings.entity_names, name_jp, name)
-
-        for master_id, name_jp in jp_data.enemy_master_names.items():
-            if not name_jp.strip():
-                name_jp = f"Master {master_id}"
-            name = data.enemy_master_names.get(master_id)
-            if not name:
-                name = mappings.svt_names.get(name_jp, MappingStr()).of(region)
-            _update_mapping(mappings.misc.setdefault("master_name", {}), name_jp, name)
-
-        self.jp_data.mappingData = mappings
-        del data
-
-    @staticmethod
-    def _process_effect_detail(detail: str | None):
-        if not detail:
-            return detail
-        return detail.replace("[g][o]▲[/o][/g]", "▲")
-
-    def _merge_wiki_translation(self, region: Region, transl: WikiTranslation):
-        logger.info(f"merging Wiki translations for {region}")
-
-        def _update_mapping(
-            m: dict[_KT, MappingBase[_KV]],
-            _key: _KT,
-            value: _KV | None,
-        ):
-            if value is None:
-                return
-            if _key == value:
-                return
-            if (
-                re.findall(r"20[1-2][0-9]", str(value))
-                and m.get(_key, MappingBase()).CN
-            ):
-                return
-            return self._update_key_mapping(
-                region,
-                key_mapping=m,
-                _key=_key,
-                value=value,
-                skip_exists=True,
-                skip_unknown_key=True,
-            )
-
-        mappings = self.jp_data.mappingData
-
-        for name_jp, name_cn in transl.svt_names.items():
-            _update_mapping(mappings.svt_names, name_jp, name_cn)
-        for skill_jp, skill_cn in transl.skill_names.items():
-            _update_mapping(mappings.skill_names, skill_jp, skill_cn)
-        for td_name_jp, td_name_cn in transl.td_names.items():
-            _update_mapping(mappings.td_names, td_name_jp, td_name_cn)
-        for td_ruby_jp, td_ruby_cn in transl.td_ruby.items():
-            _update_mapping(mappings.td_ruby, td_ruby_jp, td_ruby_cn)
-        for name_jp, name_cn in transl.ce_names.items():
-            _update_mapping(mappings.ce_names, name_jp, name_cn)
-        for name_jp, name_cn in transl.cc_names.items():
-            _update_mapping(mappings.cc_names, name_jp, name_cn)
-        for name_jp, name_cn in transl.item_names.items():
-            _update_mapping(mappings.item_names, name_jp, name_cn)
-        for name_jp, name_cn in transl.event_names.items():
-            _update_mapping(mappings.event_names, name_jp, name_cn)
-            name_jp = name_jp.replace("･", "・")
-            _update_mapping(mappings.event_names, name_jp, name_cn)
-        for name_jp, name_cn in transl.quest_names.items():
-            _update_mapping(mappings.quest_names, name_jp, name_cn)
-        for name_jp, name_cn in transl.spot_names.items():
-            _update_mapping(mappings.spot_names, name_jp, name_cn)
-        for name_jp, name_cn in transl.costume_names.items():
-            _update_mapping(mappings.costume_names, name_jp, name_cn)
-        for collection, name_cn in transl.costume_details.items():
-            _update_mapping(mappings.costume_detail, collection, name_cn)
-
-        # ce/cc skill des
-        for ce in self.jp_data.nice_equip_lore:
-            if (
-                ce.collectionNo <= 0
-                or ce.valentineEquipOwner is not None
-                or ce.flag == NiceSvtFlag.svtEquipExp
-            ):
-                continue
-            skills = [s for s in ce.skills if s.num == 1]
-            assert len(skills) in (1, 2)
-            for skill in skills:
-                assert skill.condLimitCount in (0, 4)
-                is_max = skill.condLimitCount != 0
-                detail = self._process_effect_detail(skill.unmodifiedDetail)
-                des = (transl.ce_skill_des_max if is_max else transl.ce_skill_des).get(
-                    ce.collectionNo
-                )
-                if not detail or des == detail:
-                    continue
-                _update_mapping(
-                    mappings.skill_detail,
-                    detail,
-                    des,
-                )
-        for cc in self.jp_data.nice_command_code:
-            if cc.collectionNo <= 0:
-                continue
-            assert len(cc.skills) == 1
-            detail = self._process_effect_detail(cc.skills[0].unmodifiedDetail)
-            des = transl.cc_skill_des.get(cc.collectionNo)
-            if not detail or des == detail:
-                continue
-            _update_mapping(
-                mappings.skill_detail,
-                detail,
-                des,
-            )
 
     def _fix_cn_translation(self):
         logger.info("fix Chinese translations")
@@ -1760,58 +989,6 @@ class MainParser:
             _iter(mappings_dict[key], ["的{0}"])
         self.jp_data.mappingData = MappingData.parse_obj(mappings_dict)
 
-    def _add_atlas_na_mapping(self):
-        logger.info("merging Atlas translations for NA")
-
-        mappings = self.jp_data.mappingData
-        for _m in mappings.func_popuptext.values():
-            if _m.NA:
-                _m.NA = _m.NA.replace("\n", " ")
-
-        import app as app_lib
-
-        na_folder = Path(app_lib.__file__).resolve().parent.joinpath("data/mappings/")
-        logger.debug(f"AA mappings path: {na_folder}")
-        src_mapping: dict[str, dict[str, MappingStr]] = {
-            "bgm_names.json": mappings.bgm_names,
-            "cc_names.json": mappings.cc_names,
-            "cv_names.json": mappings.cv_names,
-            "entity_names.json": mappings.entity_names,
-            "equip_names.json": mappings.ce_names,
-            "event_names.json": mappings.event_names,
-            "illustrator_names.json": mappings.illustrator_names,
-            "item_names.json": mappings.item_names,
-            "mc_names.json": mappings.mc_names,
-            "np_names.json": mappings.td_names,
-            "quest_names.json": mappings.quest_names,
-            "servant_names.json": mappings.svt_names,
-            "skill_names.json": mappings.skill_names,
-            "spot_names.json": mappings.spot_names,
-            "war_names.json": mappings.war_names,
-        }
-
-        def _read_json(fn: str) -> dict:
-            if settings.is_debug:
-                return load_json(na_folder / fn) or {}
-            else:
-                url = f"https://raw.githubusercontent.com/atlasacademy/fgo-game-data-api/master/app/data/mappings/{fn}"
-                return requests.get(url).json()
-
-        for src_fn, dest in src_mapping.items():
-            source: dict[str, str] = _read_json(src_fn)
-            if not source:
-                continue
-            for key, trans in dest.items():
-                value = source.get(key)
-                if value and value.strip() == key.strip():
-                    continue
-                if value and "\n" in value and "\n" not in key:
-                    continue
-                if re.findall(r"20[1-2][0-9]", str(value)) and trans.NA:
-                    continue
-                trans.update(Region.NA, value, skip_exists=True)
-        self.jp_data.mappingData = mappings
-
     def _merge_repo_mapping(self):
         logger.info("merging repo translations")
 
@@ -1841,26 +1018,6 @@ class MainParser:
         )
         self._merge_json(mappings_repo, override_data)
         self.jp_data.mappingData = MappingData.parse_obj(mappings_repo)
-
-    @staticmethod
-    def _update_key_mapping(
-        region: Region,
-        key_mapping: dict[_KT, MappingBase[_KV]],
-        _key: _KT,
-        value: _KV | None,
-        skip_exists=False,
-        skip_unknown_key=False,
-    ):
-        if _key is None or (isinstance(_key, str) and _key.strip("-") == ""):
-            return
-        if value is None or (isinstance(value, str) and value.strip("-") == ""):
-            return
-        if skip_unknown_key and _key not in key_mapping:
-            return
-        one = key_mapping.setdefault(_key, MappingBase())
-        if region == Region.JP and _key == value:
-            value = None
-        one.update(region, value, skip_exists)
 
     @staticmethod
     def _merge_json(dest: dict, src: dict):

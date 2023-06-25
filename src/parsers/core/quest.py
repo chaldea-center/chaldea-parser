@@ -12,9 +12,10 @@ from app.schemas.gameenums import (
 from app.schemas.nice import NiceQuest, NiceQuestPhase
 
 from ...config import PayloadSetting, settings
+from ...schemas.common import NEVER_CLOSED_TIMESTAMP
 from ...schemas.drop_data import DropData, QuestDropData
 from ...schemas.gamedata import MasterData
-from ...utils import NEVER_CLOSED_TIMESTAMP, SECS_PER_DAY, AtlasApi
+from ...utils import SECS_PER_DAY, AtlasApi
 from ...utils.helper import NumDict, load_json, sort_dict
 from ...utils.log import logger
 from ...utils.worker import Worker

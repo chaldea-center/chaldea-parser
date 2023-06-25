@@ -9,6 +9,8 @@ from pydantic.generics import GenericModel
 _KT = TypeVar("_KT")
 _KV = TypeVar("_KV")
 
+NEVER_CLOSED_TIMESTAMP = 1800000000  # 1893423600
+
 
 class MappingBase(GenericModel, Generic[_KV]):
     JP: Optional[_KV] = None
