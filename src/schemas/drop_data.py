@@ -26,8 +26,8 @@ class DomusAureaData(BaseModel):
 
 
 class QuestDropData(BaseModel):
-    runs: int
-    items: dict[int, int]
+    runs: int = 0
+    items: dict[int, int] = {}
     groups: dict[int, int] = {}
 
 

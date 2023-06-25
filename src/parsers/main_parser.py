@@ -119,7 +119,7 @@ _KV = TypeVar("_KV", str, int)
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
-MIN_APP = "2.4.2"
+MIN_APP = "2.4.3"
 
 
 # cn_ces: dict[int, tuple[str, float]] = {102022: ("STAR影法師", 1461.5)}
@@ -929,8 +929,8 @@ class MainParser:
         NiceWar: ["originalLongName", "emptyMessage"],
         NiceMap: [],
         NiceMapGimmick: ["actionAnimTime", "actionEffectId", "startedAt", "endedAt"],
-        NiceQuestPhase: ["supportServants"],
-        NiceQuest: [],
+        NiceQuest: ["spotName","warLongName"],
+        NiceQuestPhase: ["spotName","warLongName", "supportServants"],
         QuestEnemy: ["userSvtId", "uniqueId", "drops", "limit"],
         EnemyDrop: ["dropExpected", "dropVariance"],
         EnemyTd: ["noblePhantasmLv2", "noblePhantasmLv3"],  # noblePhantasmLv1
