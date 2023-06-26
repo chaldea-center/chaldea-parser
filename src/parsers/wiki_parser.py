@@ -10,7 +10,8 @@ from urllib.parse import urlparse
 
 import requests
 import wikitextparser
-from app.schemas.nice import NiceServant
+from app.schemas.gameenums import NiceEventType
+from app.schemas.nice import NiceEvent, NiceServant
 from pydantic import parse_file_as
 
 from ..config import PayloadSetting, settings
@@ -44,15 +45,26 @@ class _WikiTemp:
         self.region = region
         self.invalid_links: list[str] = []
         self.released_svts: dict[int, NiceServant] = {}
+        self.events: dict[int, NiceEvent] = {}
 
-    def _get_svts(self):
-        servants = load_json(
-            f"{settings.atlas_export_dir}/{self.region}/nice_servant_lore.json"
+    def init(self):
+        self._load_svts()
+        if self.region == Region.JP:
+            self._load_events()
+
+    def _load_svts(self):
+        servants = parse_file_as(
+            list[NiceServant],
+            f"{settings.atlas_export_dir}/{self.region}/nice_servant_lore.json",
         )
-        assert servants
-        for svt in servants:
-            self.released_svts[svt["collectionNo"]] = NiceServant.parse_obj(svt)
-        assert self.released_svts, len(self.released_svts)
+        self.released_svts = {e.collectionNo: e for e in servants}
+
+    def _load_events(self):
+        events = parse_file_as(
+            list[NiceEvent],
+            f"{settings.atlas_export_dir}/{self.region}/nice_event.json",
+        )
+        self.events = {e.id: e for e in events}
 
 
 class WikiParser:
@@ -79,9 +91,9 @@ class WikiParser:
             logger.info("run_wiki_parser=False, skip")
             return
         Worker.fake_mode = True
-        self._jp._get_svts()
-        self._mc._get_svts()
-        self._fandom._get_svts()
+        self._jp.init()
+        self._mc.init()
+        self._fandom.init()
         MOONCELL.load(self.payload.clear_wiki_empty)
         FANDOM.load(self.payload.clear_wiki_empty)
         if not self.payload.clear_wiki_changed or self.payload.clear_wiki_changed > 0:
@@ -723,8 +735,20 @@ class WikiParser:
         worker = Worker("mc_quests")
         titles: set[str] = {"迦勒底之门/进阶关卡"}
         for event in self.wiki_data.events.values():
-            if event.mcLink and event.huntingId > 0:
+            if not event.mcLink:
+                continue
+            if event.huntingId > 0:
                 titles.add(event.mcLink)
+                continue
+            db_event = self._jp.events.get(event.id)
+            if not db_event:
+                continue
+            if db_event.type == NiceEventType.eventQuest and db_event.warIds:
+                titles.add(f"{event.mcLink}/关卡配置")
+        for war in self.wiki_data.wars.values():
+            if war.id < 1000 and war.mcLink:
+                titles.add(f"{war.mcLink}/关卡配置")
+        titles = {x.replace("/关卡配置/关卡配置", "/关卡配置") for x in titles}
         for answer in MOONCELL.ask_query("[[分类:主线关卡 || 活动关卡]]"):
             titles.add(answer["fulltext"])
         for svt in self._jp.released_svts.values():
