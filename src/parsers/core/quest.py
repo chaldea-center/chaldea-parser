@@ -36,14 +36,14 @@ class _QuestParser:
         worker = Worker("quest")
 
         for war in self.jp_data.nice_war:
-            if war.id == 9999:  # Chaldea Gate
-                for spot in war.spots:
-                    spot.quests = [
-                        q
-                        for q in spot.quests
-                        if q.id in self.jp_data.remainedQuestIds
-                        or q.closedAt > self._now
-                    ]
+            # if war.id == 9999:  # Chaldea Gate
+            #     for spot in war.spots:
+            #         spot.quests = [
+            #             q
+            #             for q in spot.quests
+            #             if q.id in self.jp_data.remainedQuestIds
+            #             or q.closedAt > self._now
+            #         ]
             if war.id == 1002:  # 曜日クエスト
                 # remove closed quests
                 for spot in war.spots:
