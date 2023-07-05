@@ -22,6 +22,7 @@ from app.schemas.nice import (
     NiceEventTreasureBox,
     NiceFunction,
     NiceGift,
+    NiceHeelPortrait,
     NiceItemAmount,
     NiceLore,
     NiceMap,
@@ -31,6 +32,7 @@ from app.schemas.nice import (
     NiceQuestPhase,
     NiceServant,
     NiceShop,
+    NiceShopRelease,
     NiceSkill,
     NiceTd,
     NiceTdSvt,
@@ -114,6 +116,7 @@ _excluded_fields: dict[type, list[str]] = {
     NiceEventReward: ["bgImagePoint", "bgImageGet"],
     NiceEventPointBuff: ["detail"],
     NiceEventCooltimeReward: ["commonRelease"],
+    NiceHeelPortrait: ["dispCondType", "dispCondId", "dispCondNum", "script"],
     NiceShop: [
         "baseShopId",
         "eventId",
@@ -121,6 +124,12 @@ _excluded_fields: dict[type, list[str]] = {
         "openedAt",
         "closedAt",
         "warningMessage",
+        "materialOpenedAt",
+    ],
+    NiceShopRelease: [
+        "isClosedDisp",
+        "closedMessage",
+        "closedItemName",
     ],
     NiceServant: [
         "originalBattleName",

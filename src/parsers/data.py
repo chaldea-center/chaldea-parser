@@ -1,16 +1,14 @@
 from app.schemas.common import Region
 
 
-MIN_APP = "2.4.3"
+MIN_APP = "2.4.4"
 
 
 # cn_ces: dict[int, tuple[str, float]] = {102022: ("STAR影法師", 1461.5)}
 ADD_CES = {
     Region.TW: {
-        302023: (
-            "リヨ",
-            1466.1,
-        ),  # 6th anniversary, same id with CN 102022, put if before CN
+        # 6th anniversary, same id with CN 102022, put if before CN
+        302023: ("リヨ", 1466.1),
     },
     Region.CN: {
         102019: ("STAR影法師", 1526.1),  # 3rd

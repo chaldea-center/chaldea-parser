@@ -29,11 +29,11 @@ pyperclip = "^1.8.2"
 packaging = "^21.3"
 gspread = "^5.7.2"
 
-[[tool.poetry.source]]
-name = "tsinghua"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-default = false
-secondary = false
+# [[tool.poetry.source]]
+# name = "tsinghua"
+# url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+# default = true
+# secondary = false
 
 [tool.isort]
 line_length = 88

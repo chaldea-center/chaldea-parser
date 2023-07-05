@@ -99,6 +99,24 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
             continue
         _update_mapping(mappings.event_names, event_jp.name, event.name)
         _update_mapping(mappings.event_names, event_jp.shortName, event.shortName)
+
+        # TowerName
+        for tower_jp in event_jp.towers:
+            tower_id = event.id * 100 + tower_jp.towerId
+            tower = data.event_towers.get(tower_id)
+            if tower is None:
+                continue
+            _update_mapping(
+                mappings.misc.setdefault("TowerName", {}), tower_jp.name, tower.name
+            )
+        # RecipeName
+        for recipe_jp in event_jp.recipes:
+            recipe = data.event_recipes.get(recipe_jp.id)
+            if recipe is None:
+                continue
+            _update_mapping(
+                mappings.misc.setdefault("RecipeName", {}), recipe_jp.name, recipe.name
+            )
     war_release = mappings.war_release.of(region) or []
     for war_jp in jp_data.nice_war:
         if war_jp.id < 1000:

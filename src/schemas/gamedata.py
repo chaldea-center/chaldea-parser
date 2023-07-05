@@ -17,6 +17,7 @@ from app.schemas.nice import (
     NiceEnemyMaster,
     NiceEquip,
     NiceEvent,
+    NiceEventTower,
     NiceFunction,
     NiceItem,
     NiceMasterMission,
@@ -367,3 +368,17 @@ class MasterData(BaseModelORJson):
     @cached_property
     def enemy_master_names(self) -> dict[int, str]:
         return {master["id"]: master["name"] for master in self.mstEnemyMaster}
+
+    @cached_property
+    def event_towers(self) -> dict[int, NiceEventTower]:
+        return {
+            event.id * 100 + tower.towerId: tower
+            for event in self.nice_event
+            for tower in event.towers
+        }
+
+    @cached_property
+    def event_recipes(self):
+        return {
+            recipe.id: recipe for event in self.nice_event for recipe in event.recipes
+        }
