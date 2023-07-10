@@ -59,8 +59,11 @@ class Params(dict[Any, str]):
         assert nullable or v is not None
         return v
 
-    def get2(self, k, default=None, nullable=True):
-        return self.get(k, default, True, nullable)
+    def get2(self, k, default=None, nullable=True, strip=False):
+        v = self.get(k, default, True, nullable)
+        if v and strip:
+            v = v.strip()
+        return v
 
     def get_cast(
         self, k, cast: Callable[[str], _T], default=None, tags=None, nullable=True

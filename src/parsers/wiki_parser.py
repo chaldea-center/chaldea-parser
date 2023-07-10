@@ -369,11 +369,11 @@ class WikiParser:
 
                 des = record.get("des")
                 if des and des != "无效果":
-                    des = remove_tag(des).replace("\n", "")
+                    des = remove_tag(des).replace("\n", "").strip()
                     self.mc_transl.ce_skill_des[ce_add.collectionNo] = des
                 des_max = record.get("des_max")
                 if des_max and des_max != "无效果":
-                    des_max = remove_tag(des_max).replace("\n", "")
+                    des_max = remove_tag(des_max).replace("\n", "").strip()
                     self.mc_transl.ce_skill_des_max[ce_add.collectionNo] = des_max
 
             if not ce_add.mcLink:
@@ -425,7 +425,7 @@ class WikiParser:
             if name_cn and name_jp and cc_add.collectionNo != 113:
                 # 113-小犭贪
                 self.mc_transl.cc_names[name_jp] = name_cn
-            skill_des = params.get2("持有技能")
+            skill_des = params.get2("持有技能", strip=True)
             if skill_des:
                 self.mc_transl.cc_skill_des[cc_add.collectionNo] = skill_des
             profile_cn = params.get2("解说")
@@ -549,8 +549,8 @@ class WikiParser:
             if profile:
                 ce_add.profile.NA = profile
 
-            effect1 = info_params.get2("effect1")
-            effect2 = info_params.get2("effect2")
+            effect1 = info_params.get2("effect1", strip=True)
+            effect2 = info_params.get2("effect2", strip=True)
             if effect1 and effect1.upper() != "N/A":
                 self.fandom_transl.ce_skill_des[ce_add.collectionNo] = effect1
             if effect2 and effect2.upper() != "N/A":
@@ -600,7 +600,7 @@ class WikiParser:
             params = parse_template(wikitext, r"^{{Craftlore")
             cc_add.profile.NA = params.get2("na") or params.get2("en")
 
-            effect1 = infoboxcc.get2("effect1")
+            effect1 = infoboxcc.get2("effect1", strip=True)
             if effect1 and effect1 != "N/A":
                 self.fandom_transl.cc_skill_des[cc_add.collectionNo] = effect1
 
