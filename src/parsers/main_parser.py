@@ -645,7 +645,7 @@ class MainParser:
         _normal_dump(data.nice_mystic_code, "mysticCodes")
         _normal_dump(data.nice_item, "items")
         _normal_dump(data.basic_svt, "entities")
-        # self.encoder.trim_basic_svt = True
+        self.encoder.basic_svt = True
         _normal_dump(data.exchangeTickets, "exchangeTickets")
         _normal_dump(data.nice_bgm, "bgms")
         _normal_dump(data.nice_enemy_master, "enemyMasters")

@@ -9,6 +9,7 @@ from app.schemas.nice import (
     ExtraAssets,
     NiceBaseFunction,
     NiceBgm,
+    NiceBgmEntity,
     NiceEquip,
     NiceEvent,
     NiceEventCooltimeReward,
@@ -23,6 +24,7 @@ from app.schemas.nice import (
     NiceFunction,
     NiceGift,
     NiceHeelPortrait,
+    NiceItem,
     NiceItemAmount,
     NiceLore,
     NiceMap,
@@ -204,13 +206,23 @@ def _clean_dict_empty(d: dict):
 
 class DataEncoder:
     def __init__(self, jp_data: MasterData) -> None:
-        self.trim_basic_svt = False
+        self.item = False
+        self.bgm = False
+        self.basic_svt = False
+
         self.jp_data = jp_data
 
     def default(self, obj):
         excludes = {"originalName"}
         _type = type(obj)
-        excludes.update(_excluded_fields.get(_type, []))
+        type_excludes = _excluded_fields.get(_type, [])
+        excludes.update(type_excludes)
+        if _type in (NiceBgm, NiceBgmEntity) and self.bgm:
+            excludes.update(NiceBgmEntity.__fields__.keys())
+            excludes.discard("id")
+        elif _type == NiceItem and self.item:
+            excludes.update(NiceItem.__fields__.keys())
+            excludes.discard("id")
 
         if isinstance(obj, (NiceSkill, NiceTd)):
             excludes.update(_exclude_skill(obj))
@@ -287,7 +299,7 @@ class DataEncoder:
         excludes.remove("funcId")
 
     def _save_basic_svt(self, excludes: set[str], svt: BasicServant):
-        if not self.trim_basic_svt:
+        if not self.basic_svt:
             return
         db_svt = self.jp_data.basic_svt_dict.get(svt.id)
         if not db_svt:
