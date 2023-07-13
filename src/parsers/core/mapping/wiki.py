@@ -119,23 +119,24 @@ def merge_atlas_na_mapping(mappings: MappingData):
 
     na_folder = Path(app_lib.__file__).resolve().parent.joinpath("data/mappings/")
     logger.debug(f"AA mappings path: {na_folder}")
-    src_mapping: dict[str, dict[str, MappingStr]] = {
-        "bgm_names.json": mappings.bgm_names,
-        "cc_names.json": mappings.cc_names,
-        "cv_names.json": mappings.cv_names,
-        "entity_names.json": mappings.entity_names,
-        "equip_names.json": mappings.ce_names,
-        "event_names.json": mappings.event_names,
-        "illustrator_names.json": mappings.illustrator_names,
-        "item_names.json": mappings.item_names,
-        "mc_names.json": mappings.mc_names,
-        "np_names.json": mappings.td_names,
-        "quest_names.json": mappings.quest_names,
-        "servant_names.json": mappings.svt_names,
-        "skill_names.json": mappings.skill_names,
-        "spot_names.json": mappings.spot_names,
-        "war_names.json": mappings.war_names,
-    }
+    src_mapping: list[tuple[str, dict[str, MappingStr]]] = [
+        ("bgm_names.json", mappings.bgm_names),
+        ("cc_names.json", mappings.cc_names),
+        ("cv_names.json", mappings.cv_names),
+        ("entity_names.json", mappings.entity_names),
+        ("equip_names.json", mappings.ce_names),
+        ("event_names.json", mappings.event_names),
+        ("illustrator_names.json", mappings.illustrator_names),
+        ("item_names.json", mappings.item_names),
+        ("mc_names.json", mappings.mc_names),
+        ("np_names.json", mappings.td_names),
+        ("np_names.json", mappings.td_ruby),
+        ("quest_names.json", mappings.quest_names),
+        ("servant_names.json", mappings.svt_names),
+        ("skill_names.json", mappings.skill_names),
+        ("spot_names.json", mappings.spot_names),
+        ("war_names.json", mappings.war_names),
+    ]
 
     def _read_json(fn: str) -> dict:
         if settings.is_debug:
@@ -144,7 +145,7 @@ def merge_atlas_na_mapping(mappings: MappingData):
             url = f"https://raw.githubusercontent.com/atlasacademy/fgo-game-data-api/master/app/data/mappings/{fn}"
             return requests.get(url).json()
 
-    for src_fn, dest in src_mapping.items():
+    for src_fn, dest in src_mapping:
         source: dict[str, str] = _read_json(src_fn)
         if not source:
             continue
