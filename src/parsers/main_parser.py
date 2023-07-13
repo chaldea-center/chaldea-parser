@@ -22,7 +22,7 @@ from app.schemas.nice import (
     NiceItem,
     NiceServant,
 )
-from app.schemas.raw import MstQuestPhase, MstSvtExp
+from app.schemas.raw import MstQuestPhase
 from pydantic import BaseModel, parse_file_as, parse_obj_as
 from pydantic.json import pydantic_encoder
 
@@ -38,7 +38,6 @@ from ..schemas.common import (
     MstViewEnemy,
     OpenApiInfo,
 )
-from ..schemas.const_data import ConstGameData, SvtExpCurve
 from ..schemas.drop_data import DomusAureaData
 from ..schemas.gamedata import (
     MappingData,
@@ -66,6 +65,7 @@ from ..utils.helper import LocalProxy, beautify_file, describe_regions
 from ..utils.stopwatch import Stopwatch
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.wiki_tool import KnownTimeZone
+from .core.const_data import get_const_data
 from .core.dump import DataEncoder
 from .core.mapping.common import _KT, _T
 from .core.mapping.official import merge_official_mappings
@@ -141,46 +141,9 @@ class MainParser:
         self.stopwatch.log(f"quests")
 
         self.jp_data.exchangeTickets = parse_exchange_tickets(self.jp_data.nice_item)
-        self.get_const_data()
+        self.jp_data.constData = get_const_data(self.jp_data)
         self.save_data()
         print(self.stopwatch.output())
-
-    def get_const_data(self):
-        data = self.jp_data
-        class_relations: dict[int, dict[int, int]] = defaultdict(dict)
-        for relation in data.mstClassRelation:
-            class_relations[relation.atkClass][relation.defClass] = relation.attackRate
-        for cls_info in data.mstClass:
-            if not isinstance(cls_info.individuality, int):
-                cls_info.individuality = 0
-
-        mst_exps = parse_obj_as(list[MstSvtExp], DownUrl.gitaa("mstSvtExp"))
-        exp_dict: dict[int, list[MstSvtExp]] = defaultdict(list)
-        for exp in mst_exps:
-            exp_dict[exp.type].append(exp)
-        for exp_list in exp_dict.values():
-            exp_list.sort(key=lambda x: x.lv)
-        exp_dict = sort_dict(exp_dict)
-        svt_exps: dict[int, SvtExpCurve] = {}
-        for key, exps in exp_dict.items():
-            svt_exps[key] = SvtExpCurve(
-                type=key,
-                lv=[x.lv for x in exps],
-                exp=[x.exp for x in exps],
-                curve=[x.curve for x in exps],
-            )
-
-        self.jp_data.constData = ConstGameData(
-            attributeRelation=data.NiceAttributeRelation,
-            buffActions=data.NiceBuffList_ActionList,
-            cardInfo=data.NiceCard,
-            classInfo={x.id: x for x in data.mstClass},
-            classRelation=class_relations,
-            constants=data.NiceConstant,
-            svtGrailCost=data.NiceSvtGrailCost,
-            userLevel=data.NiceUserLevel,
-            svtExp=svt_exps,
-        )
 
     def add_changes_only(self):
         added = NewAddedData(

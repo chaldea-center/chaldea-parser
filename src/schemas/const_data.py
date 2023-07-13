@@ -9,7 +9,7 @@ from app.schemas.gameenums import (
     NiceCardType,
     NiceSvtFrameType,
 )
-from app.schemas.nice import NiceGift
+from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail, NiceGift
 from app.schemas.raw import MstSvtExp
 from pydantic import BaseModel
 
@@ -84,3 +84,5 @@ class ConstGameData(BaseModel):
     svtGrailCost: dict[int, dict[int, GrailCostDetail]]
     userLevel: dict[int, MasterUserLvDetail]
     svtExp: dict[int, SvtExpCurve]
+    funcTypeDetail: dict[int, NiceFuncTypeDetail]
+    buffTypeDetail: dict[int, NiceBuffTypeDetail]
