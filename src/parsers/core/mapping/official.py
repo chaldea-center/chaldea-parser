@@ -136,6 +136,7 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
             # for NA: 8098 is Da Vinci and the 7 Counterfeit Heroic Spirits
             continue
         if not war.spots and data.mstConstant["LAST_WAR_ID"] < war.id < 1000:
+            # or check war.lastQuestId
             continue
         event = data.event_dict.get(war.eventId)
         if war.id > 1000 and event and event.startedAt > time.time():

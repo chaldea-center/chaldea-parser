@@ -122,7 +122,10 @@ def merge_atlas_na_mapping(mappings: MappingData):
     src_mapping: list[tuple[str, dict[str, MappingStr]]] = [
         ("bgm_names.json", mappings.bgm_names),
         ("cc_names.json", mappings.cc_names),
+        # class_names.json
+        ("costume_names.json", mappings.costume_names),
         ("cv_names.json", mappings.cv_names),
+        # enemy_names.json
         ("entity_names.json", mappings.entity_names),
         ("equip_names.json", mappings.ce_names),
         ("event_names.json", mappings.event_names),
@@ -136,6 +139,7 @@ def merge_atlas_na_mapping(mappings: MappingData):
         ("skill_names.json", mappings.skill_names),
         ("spot_names.json", mappings.spot_names),
         ("war_names.json", mappings.war_names),
+        ("war_short_names.json", mappings.war_names),
     ]
 
     def _read_json(fn: str) -> dict:
