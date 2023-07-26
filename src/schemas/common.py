@@ -99,6 +99,17 @@ class SvtObtain(StrEnum):
             "未知": SvtObtain.unknown,
         }[s]
 
+    @staticmethod
+    def from_cn2(s: str) -> "SvtObtain":
+        s = s.strip()
+        return {
+            "常驻": SvtObtain.permanent,
+            "限定": SvtObtain.limited,
+            "活动": SvtObtain.eventReward,
+            "剧情": SvtObtain.story,
+            "友情": SvtObtain.friendPoint,
+        }[s]
+
 
 class CEObtain(StrEnum):
     exp = "exp"
@@ -131,6 +142,20 @@ class CEObtain(StrEnum):
             "掉落加成": CEObtain.drop,
             "未知": CEObtain.unknown,
         }[s]
+
+    @staticmethod
+    def from_cn2(s: str) -> "CEObtain":
+        s = s.strip()
+        if not s:
+            return CEObtain.unknown
+        return {
+            # "普通概念礼装": CEObtain.bond,
+            "牵绊概念礼装": CEObtain.bond,
+            "情人节概念礼装": CEObtain.valentine,
+            "魔力棱镜兑换概念礼装": CEObtain.shop,
+            "纪念概念礼装": CEObtain.campaign,
+            "概念礼装EXP卡": CEObtain.exp,
+        }[s] or CEObtain.unknown
 
 
 class CCObtain(StrEnum):

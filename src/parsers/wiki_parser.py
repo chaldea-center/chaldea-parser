@@ -187,6 +187,9 @@ class WikiParser:
                 return True
         return False
 
+    def get_svt_obtains(self, methods: str, detail_method: str) -> list[SvtObtain]:
+        ...
+
     def mc_svt(self):
         index_data = _mc_index_data("英灵图鉴/数据")
 
@@ -198,16 +201,13 @@ class WikiParser:
             if record:
                 svt_add.mcLink = record["name_link"]
                 nicknames.update([s.strip() for s in record["name_other"].split("&")])
-                obtains = [
-                    SvtObtain.from_cn(m)
-                    for m in re.split(r"<br>|&", record["method"])
-                    if m not in ("活动通关奖励", "事前登录赠送")
-                ]
+                obtains: list[SvtObtain] = []
+                for m in re.split(r"<br>|&", record["method"]):
+                    if m not in ("活动通关奖励", "事前登录赠送"):
+                        obtain = SvtObtain.from_cn(m)
+                        if obtain != SvtObtain.unknown:
+                            obtains.append(obtain)
                 obtains = list(set(obtains))
-                if len(obtains) > 1 and SvtObtain.unknown in obtains:
-                    obtains.remove(SvtObtain.unknown)
-                if not obtains:
-                    obtains.append(SvtObtain.unknown)
                 svt_add.obtains = sorted(obtains)
 
             if not svt_add.mcLink:
@@ -232,6 +232,12 @@ class WikiParser:
                 svt_add.nicknames.CN = sorted(nicknames)
             else:
                 svt_add.nicknames.CN = None
+
+            if not svt_add.obtains:
+                detail_obtain = params.get2("获取途径")
+                if detail_obtain:
+                    obtain = SvtObtain.from_cn2(detail_obtain)
+                    svt_add.obtains.append(obtain)
 
             # FGL - aa
             if 1 <= col_no <= 375 and col_no not in (83, 149, 151, 152, 168, 240, 333):
@@ -398,6 +404,9 @@ class WikiParser:
                 known_, unknown_ = self._parse_chara(chara)
                 ce_add.characters.extend(known_)
                 ce_add.unknownCharacters.extend(unknown_)
+            detail_obtain = params.get2("礼装分类")
+            if ce_add.obtain == CEObtain.unknown and detail_obtain:
+                ce_add.obtain = CEObtain.from_cn2(detail_obtain)
 
         worker = Worker.from_map(
             _parse_one,
