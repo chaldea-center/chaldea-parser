@@ -35,6 +35,7 @@ from ..schemas.common import (
     MappingStr,
     MstClass,
     MstClassRelation,
+    MstQuestGroup,
     MstViewEnemy,
     OpenApiInfo,
 )
@@ -141,6 +142,9 @@ class MainParser:
         self.stopwatch.log(f"quests")
 
         self.jp_data.exchangeTickets = parse_exchange_tickets(self.jp_data.nice_item)
+        self.jp_data.questGroups = parse_obj_as(
+            list[MstQuestGroup], DownUrl.gitaa("mstQuestGroup")
+        )
         self.jp_data.constData = get_const_data(self.jp_data)
         self.save_data()
         print(self.stopwatch.output())
@@ -660,6 +664,7 @@ class MainParser:
         if data.cachedQuestPhases:
             _dump_by_count(list(data.cachedQuestPhases.values()), 100, "questPhases")
         _normal_dump(data.extraMasterMission, "extraMasterMission")
+        _normal_dump(data.questGroups, "questGroups")
 
         assert data.constData
         _normal_dump(data.constData, "constData")

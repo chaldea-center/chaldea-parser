@@ -40,6 +40,7 @@ from .common import (
     MappingBase,
     MstClass,
     MstClassRelation,
+    MstQuestGroup,
     MstViewEnemy,
 )
 from .const_data import (
@@ -161,6 +162,7 @@ class MasterData(BaseModelORJson):
     exchangeTickets: list[ExchangeTicket] = []
     remainedQuestIds: set[int] = set()
     extraMasterMission: list[NiceMasterMission] = []
+    questGroups: list[MstQuestGroup] = []
     constData: ConstGameData | None = None
 
     # base

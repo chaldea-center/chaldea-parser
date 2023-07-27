@@ -303,3 +303,9 @@ class MstClassRelation(BaseModel):
     attackRate: int
     # advIconId: int
     # disadvIconId: int
+
+
+class MstQuestGroup(BaseModel):
+    groupId: int
+    type: int
+    questId: int
