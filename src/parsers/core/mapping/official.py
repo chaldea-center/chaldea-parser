@@ -83,40 +83,38 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
         bgm = data.bgm_dict.get(bgm_jp.id)
         _update_mapping(mappings.bgm_names, bgm_jp.name, bgm.name if bgm else None)
 
+    tower_names = mappings.misc.setdefault("TowerName", {})
+    recipe_names = mappings.misc.setdefault("RecipeName", {})
     for event_jp in jp_data.nice_event:
         event_extra = wiki_data.get_event(event_jp.id, event_jp.name)
         event_extra.startTime.JP = event_jp.startedAt
         event_extra.endTime.JP = event_jp.endedAt
         mappings.event_names.setdefault(event_jp.name, MappingBase())
-        mappings.event_names.setdefault(event_jp.shortName, MappingBase())
+
+        # TowerName
+        for tower_jp in event_jp.towers:
+            tower_id = event_jp.id * 100 + tower_jp.towerId
+            tower = data.event_towers.get(tower_id)
+            _update_mapping(tower_names, tower_jp.name, tower.name if tower else None)
+        # RecipeName
+        for recipe_jp in event_jp.recipes:
+            recipe = data.event_recipes.get(recipe_jp.id)
+            _update_mapping(
+                recipe_names, recipe_jp.name, recipe.name if recipe else None
+            )
+
         event = data.event_dict.get(event_jp.id)
         if event is None:
             continue
         if event.startedAt < NEVER_CLOSED_TIMESTAMP:
             event_extra.startTime.update(region, event.startedAt)
             event_extra.endTime.update(region, event.endedAt)
+        # don't include unreleased events' name
         if event.startedAt > time.time():
             continue
         _update_mapping(mappings.event_names, event_jp.name, event.name)
         _update_mapping(mappings.event_names, event_jp.shortName, event.shortName)
 
-        # TowerName
-        for tower_jp in event_jp.towers:
-            tower_id = event.id * 100 + tower_jp.towerId
-            tower = data.event_towers.get(tower_id)
-            if tower is None:
-                continue
-            _update_mapping(
-                mappings.misc.setdefault("TowerName", {}), tower_jp.name, tower.name
-            )
-        # RecipeName
-        for recipe_jp in event_jp.recipes:
-            recipe = data.event_recipes.get(recipe_jp.id)
-            if recipe is None:
-                continue
-            _update_mapping(
-                mappings.misc.setdefault("RecipeName", {}), recipe_jp.name, recipe.name
-            )
     war_release = mappings.war_release.of(region) or []
     for war_jp in jp_data.nice_war:
         if war_jp.id < 1000:
