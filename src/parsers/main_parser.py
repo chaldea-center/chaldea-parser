@@ -198,6 +198,9 @@ class MainParser:
             if not ce or ce.collectionNo == 0:
                 continue
             added.ce.append(ce)
+        # valentine/anniversary CE
+        if len(added.ce) > 15:
+            added.ce = []
 
         remote_ccs = DownUrl.export("basic_command_code")
         local_ccs = load_data_dict("commandCodes", "collectionNo")

@@ -1002,7 +1002,7 @@ class WikiParser:
             em = discord.DiscordEmbed(title="Webcrow ID Updated")
             em.set_description("\n".join(msg))
             webhook.add_embed(em)
-            discord._execute(webhook)
+            # discord._execute(webhook)
 
     def sort(self):
         self.wiki_data.sort()
