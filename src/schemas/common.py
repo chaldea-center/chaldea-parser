@@ -149,13 +149,15 @@ class CEObtain(StrEnum):
         if not s:
             return CEObtain.unknown
         return {
-            # "普通概念礼装": CEObtain.bond,
             "牵绊概念礼装": CEObtain.bond,
             "情人节概念礼装": CEObtain.valentine,
             "魔力棱镜兑换概念礼装": CEObtain.shop,
             "纪念概念礼装": CEObtain.campaign,
             "概念礼装EXP卡": CEObtain.exp,
-        }[s] or CEObtain.unknown
+            # unknown
+            "普通概念礼装": CEObtain.unknown,
+            "未分类概念礼装": CEObtain.unknown,
+        }[s]
 
 
 class CCObtain(StrEnum):
