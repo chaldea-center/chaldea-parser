@@ -609,15 +609,17 @@ class MainParser:
         # assert hyde is not None
         # servants.append(hyde)
 
+        _normal_dump(data.nice_item, "items")
+        self.encoder.item = True
+        _normal_dump(data.basic_svt, "entities")
+        self.encoder.basic_svt = True
+        _normal_dump(data.nice_bgm, "bgms")
+        self.encoder.bgm = True
         _dump_by_count(servants, 100, "servants")
         _dump_by_count(data.nice_equip_lore, 500, "craftEssences")
         _normal_dump(data.nice_command_code, "commandCodes")
         _normal_dump(data.nice_mystic_code, "mysticCodes")
-        _normal_dump(data.nice_item, "items")
-        _normal_dump(data.basic_svt, "entities")
-        self.encoder.basic_svt = True
         _normal_dump(data.exchangeTickets, "exchangeTickets")
-        _normal_dump(data.nice_bgm, "bgms")
         _normal_dump(data.nice_enemy_master, "enemyMasters")
         _normal_dump(data.nice_class_board, "classBoards")
 

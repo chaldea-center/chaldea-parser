@@ -98,7 +98,7 @@ _excluded_fields: dict[type, list[str]] = {
     QuestEnemy: ["userSvtId", "uniqueId", "drops", "limit"],
     EnemyDrop: ["dropExpected", "dropVariance"],
     EnemyTd: ["noblePhantasmLv2", "noblePhantasmLv3"],  # noblePhantasmLv1
-    NiceEvent: ["voicePlays"],
+    NiceEvent: ["voicePlays", "materialOpenedAt"],
     NiceEventMissionCondition: ["missionTargetId", "detail"],
     NiceEventMission: [
         "flag",
