@@ -212,6 +212,7 @@ class WikiParser:
 
             if not svt_add.mcLink:
                 return
+            svt_add.mcLink = MOONCELL.moved_pages.get(svt_add.mcLink) or svt_add.mcLink
 
             # profile
             wikitext = mwparse(MOONCELL.get_page_text(svt_add.mcLink))
@@ -384,6 +385,7 @@ class WikiParser:
 
             if not ce_add.mcLink:
                 return
+            ce_add.mcLink = MOONCELL.moved_pages.get(ce_add.mcLink) or ce_add.mcLink
 
             wikitext = mwparse(MOONCELL.get_page_text(ce_add.mcLink))
             params = parse_template(wikitext, r"^{{概念礼装")
@@ -426,6 +428,7 @@ class WikiParser:
 
             if not cc_add.mcLink:
                 return
+            cc_add.mcLink = MOONCELL.moved_pages.get(cc_add.mcLink) or cc_add.mcLink
 
             wikitext = mwparse(MOONCELL.get_page_text(cc_add.mcLink))
             params = parse_template(wikitext, r"^{{指令纹章")
