@@ -90,7 +90,7 @@ class WikiParser:
         if self.payload.run_wiki_parser is False:
             logger.info("run_wiki_parser=False, skip")
             return
-        Worker.fake_mode = True
+        Worker.fake_mode = not self.payload.enable_wiki_threading
         self._jp.init()
         self._mc.init()
         self._fandom.init()

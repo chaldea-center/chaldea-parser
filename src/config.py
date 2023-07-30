@@ -78,6 +78,7 @@ class PayloadSetting(BaseSettings):
     run_wiki_parser: bool | None = None
     run_atlas_parser: bool | None = None
     force_update_export: bool = False
+    enable_wiki_threading: bool = False
     clear_cache_http: bool = False
     clear_cache_wiki: bool = False
     clear_wiki_changed: int | None = None
