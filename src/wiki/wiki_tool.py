@@ -33,6 +33,7 @@ class WikiTool:
     def __init__(
         self, host: str, img_url_prefix: str, path="/", user=None, pwd=None, webpath="w"
     ):
+        norm_host = "fgo.wiki" if host.endswith(".fgo.wiki") else host
         self.host: str = host
         self._path: str = path
         self.webpath = webpath
@@ -41,9 +42,9 @@ class WikiTool:
         self.pwd = pwd
         # self.site: mwclient.Site = mwclient.Site(host=host, path=path)
         self.site2 = pywikibot.Site(url=f"https://{host}/api.php")
-        self._fp = Path(settings.cache_wiki) / f"{host}.json"
+        self._fp = Path(settings.cache_wiki) / f"{norm_host}.json"
         _now = int(time.time())
-        self.cache = WikiCache(host=self.host, created=_now, updated=_now)
+        self.cache = WikiCache(host=norm_host, created=_now, updated=_now)
         self._temp_disabled = False
         self._count = 0
 
