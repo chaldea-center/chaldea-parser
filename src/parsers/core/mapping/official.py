@@ -128,7 +128,7 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
             ]:
                 mappings.war_names.setdefault(war_add.overwriteStr, MappingBase())
         war = data.war_dict.get(war_jp.id)
-        if war is None:
+        if war is None or (war.id < 1000 and war.lastQuestId == 0):
             continue
         if war.id == 8098 and region == Region.NA:
             # for NA: 8098 is Da Vinci and the 7 Counterfeit Heroic Spirits
