@@ -11,12 +11,13 @@ import orjson
 import pytz
 import requests
 from app.schemas.common import Region
-from app.schemas.enums import OLD_TRAIT_MAPPING, NiceSvtType
-from app.schemas.gameenums import SvtType
+from app.schemas.enums import CLASS_NAME, OLD_TRAIT_MAPPING, NiceSvtType, SvtClass
+from app.schemas.gameenums import NiceCondType, SvtType
 from app.schemas.nice import (
     NiceBaseFunction,
     NiceBuff,
     NiceBuffType,
+    NiceClassBoardClass,
     NiceCommandCode,
     NiceEquip,
     NiceItem,
@@ -146,6 +147,18 @@ class MainParser:
             list[MstQuestGroup], DownUrl.gitaa("mstQuestGroup")
         )
         self.jp_data.constData = get_const_data(self.jp_data)
+        class_board_extra1 = next(
+            board for board in self.jp_data.nice_class_board if board.id == 8
+        )
+        if not class_board_extra1.classes:
+            class_board_extra1.classes = [
+                NiceClassBoardClass(
+                    classId=svt_class,
+                    className=CLASS_NAME.get(svt_class, SvtClass.atlasUnmappedClass),
+                    condType=NiceCondType.forceFalse,
+                )
+                for svt_class in [9, 11, 23, 8]
+            ]
         self.save_data()
         print(self.stopwatch.output())
 
