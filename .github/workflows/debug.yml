@@ -1,0 +1,75 @@
+name: Debug
+on:
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    env:
+      output_dir: "data/"
+      cache_dir: "cache/"
+      mc_user: ${{ secrets.MC_USER }}
+      mc_pwd: ${{ secrets.MC_PWD }}
+      fandom_user: ${{ secrets.FANDOM_USER }}
+      fandom_pwd: ${{ secrets.FANDOM_PWD }}
+      discord_webhook: ${{ secrets.DISCORD_WEBHOOK }}
+
+    steps:
+      - name: Get Date
+        id: get-date
+        run: |
+          /bin/date
+          echo "date=$(/bin/date -u "+%Y%m%d%H%M")" >> $GITHUB_OUTPUT
+          curl -s https://ipinfo.io/ip
+        shell: bash
+
+      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+        with:
+          repository: chaldea-center/fgo-game-data-api
+          path: fgo-game-data-api
+
+      - name: Configure git author
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Save payload
+        if: ${{ github.event.client_payload }}
+        run: |
+          echo '${{ toJson(github.event.client_payload) }}' >> payload.json
+          cat payload.json
+
+      - name: Cache Atlas and wiki api response
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.cache_dir }}
+          fail-on-cache-miss: true
+          key: api-cache-${{ runner.os }}-${{ steps.get-date.outputs.date }}
+          restore-keys: |
+            api-cache-${{ runner.os }}-
+            api-cache-
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+
+      - name: Install dependencies
+        run: |
+          mv fgo-game-data-api/app app
+          rm -rf fgo-game-data-api
+          pip install -r requirements.txt
+          npm --location=global install js-beautify
+
+      - name: Checkout data repo
+        uses: actions/checkout@v3
+        with:
+          repository: chaldea-center/chaldea-data
+          token: ${{ secrets.GH_PAGES_TOKEN }}
+          path: ${{ env.output_dir }}
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
