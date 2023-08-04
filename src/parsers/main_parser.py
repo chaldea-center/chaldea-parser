@@ -70,7 +70,11 @@ from ..wiki.wiki_tool import KnownTimeZone
 from .core.const_data import get_const_data
 from .core.dump import DataEncoder
 from .core.mapping.common import _KT, _T
-from .core.mapping.official import merge_official_mappings
+from .core.mapping.official import (
+    fix_cn_transl_qab,
+    fix_cn_transl_svt_class,
+    merge_official_mappings,
+)
 from .core.mapping.wiki import merge_atlas_na_mapping, merge_wiki_translation
 from .core.quest import parse_quest_drops
 from .core.ticket import parse_exchange_tickets
@@ -891,12 +895,7 @@ class MainParser:
         logger.info("fix Chinese translations")
         mappings = self.jp_data.mappingData
         mappings_dict: dict[str, dict] = mappings.dict()
-        color_regexes = [
-            re.compile(r"(?<![击御威])([力技迅])(?=提升|攻击|指令卡|下降|性能|耐性|威力)"),
-            re.compile(r"(?<=[:：])([力技迅])$"),
-            re.compile(r"(?<=[〔（(])[力技迅](?=[)）〕])"),
-        ]
-        extra_regexes = [re.compile(r"额外(?=攻击|职阶)")]
+
         for key in (
             "buff_detail",
             "buff_names",
@@ -905,74 +904,12 @@ class MainParser:
             "td_detail",
             "skill_names",
         ):
-            assert (
-                key in mappings.__fields__
-            ), f"{key} not in {list(mappings.__fields__.keys())}"
-
-            def _repl(match: Match[AnyStr]) -> str:
-                return {"力": "Buster", "技": "Arts", "迅": "Quick", "额外": "Extra"}[
-                    str(match.group(0))
-                ]
-
-            for jp_name, regions in mappings_dict[key].items():
-                cn_name2 = cn_name = regions["CN"]
-                if not cn_name:
-                    continue
-                if re.findall(r"Buster|Art|Quick|アーツ|クイック|バスター", jp_name):
-                    for regex in color_regexes:
-                        cn_name2 = regex.sub(_repl, cn_name2)
-                if re.findall(r"Extra|エクストラ", jp_name):
-                    for regex in extra_regexes:
-                        cn_name2 = regex.sub(_repl, cn_name2)
-                cn_name2 = cn_name2.replace("<过量充能时", "<Over Charge时")
-                cn_name2 = cn_name2.replace("宝具值", "NP")
-                if cn_name2 != cn_name:
-                    # print(f"Convert CN: {cn_name} -> {cn_name2}")
-                    regions["CN"] = cn_name2
-        # Svt Class
-        cls_replace = {
-            "剑士": "Saber",
-            "弓兵": "Archer",
-            "枪兵": "Lancer",
-            "骑兵": "Rider",
-            "魔术师": "Caster",
-            "暗匿者": "Assassin",
-            "狂战士": "Berserker",
-            "裁定者": "Ruler",
-            "复仇者": "Avenger",
-            "月之癌": "MoonCancer",
-            "他人格": "Alterego",
-            "降临者": "Foreigner",
-            "身披角色者": "Pretender",
-            "盾兵": "Shielder",
-        }
-
-        def replace_cls(s: str, cls_cn: str, patterns: list[str]):
-            if cls_cn not in s:
-                return s
-            for pattern in patterns:
-                s = s.replace(
-                    pattern.format(cls_cn), pattern.format(cls_replace[cls_cn])
-                )
-            return s
-
-        def _iter(obj, patterns: list[str]):
-            if not isinstance(obj, dict):
-                return
-            v = obj.get("CN")
-            if isinstance(v, str):
-                for a, b in CN_REPLACE.items():
-                    v = v.replace(a, b)
-                for cls_cn in cls_replace.keys():
-                    v = replace_cls(v, cls_cn, patterns)
-                obj["CN"] = v
-            for k, v in obj.items():
-                if k != "cn_replace":
-                    _iter(v, patterns)
-
-        _iter(mappings_dict, ["对{0}", "({0})", "（{0}）", "〔{0}〕", "{0}职阶"])
+            fix_cn_transl_qab(mappings_dict[key])
+        fix_cn_transl_svt_class(
+            mappings_dict, ["对{0}", "({0})", "（{0}）", "〔{0}〕", "{0}职阶"]
+        )
         for key in ["svt_names", "entity_names"]:
-            _iter(mappings_dict[key], ["的{0}"])
+            fix_cn_transl_svt_class(mappings_dict[key], ["的{0}"])
         self.jp_data.mappingData = MappingData.parse_obj(mappings_dict)
 
     def _merge_repo_mapping(self):

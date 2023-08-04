@@ -473,12 +473,7 @@ class WikiTool:
     def clear_moved_or_deleted(self, days: float | None = None):
         last_timestamp = self._get_expire_time(0.5, days)
 
-        for letype, ns in (
-            ("move", "0"),
-            ("move", "10"),
-            ("delete", "0"),
-            ("delete", "10"),
-        ):
+        for letype in ("move", "delete"):
             params = {
                 "action": "query",
                 "format": "json",
@@ -487,18 +482,18 @@ class WikiTool:
                 "lestart": datetime.fromtimestamp(last_timestamp).isoformat(),
                 "letype": letype,
                 "ledir": "newer",
-                "lenamespace": ns,
+                "lenamespace": "0",
                 "lelimit": "max",
             }
             log_events = self._api_call_continue(
                 params, lambda x: x["query"]["logevents"]
             )
-            logger.debug(f"page {letype} ns{ns}: {log_events}")
+            logger.debug(f"page {letype}: {log_events}")
             for event in log_events:
                 title: str = event["title"]
                 if self.get_page_cache(title):
                     self.remove_page_cache(title)
-                    logger.debug(f'{self.host} ns{ns}: drop {letype}d page: "{title}"')
+                    logger.debug(f'{self.host}: drop {letype}d page: "{title}"')
                 if (
                     letype == "move"
                     and event["ns"] == event["params"]["target_ns"] == 0

@@ -2,12 +2,14 @@
 python -m scripts.enemy_skill_td
 """
 #%%
+import re
+
 import httpx
 from app.schemas.common import Region
 from app.schemas.raw import MstSkill, MstTreasureDevice
-from pydantic import parse_file_as, parse_obj_as
 
 from src.config import settings
+from src.parsers.core.mapping.official import fix_cn_transl_qab, fix_cn_transl_svt_class
 from src.schemas.common import MappingStr
 from src.utils.helper import dump_json, load_json, sort_dict
 
@@ -16,12 +18,26 @@ def _mstFile(region: Region, name: str):
     url = f"https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}/master/{name}"
     print(f"reading: {url}")
     return httpx.get(url).json()
+    # return parse_file_as(
+    #     list[dict],
+    #     f"FOLDER/fgo-game-data-{region.value.lower()}/master/{name}",
+    # )
 
 
 def add_enemy_skill_td_trans():
     _add_enemy_skill_trans()
     _add_enemy_td_trans()
     print("done")
+
+
+jp_chars = re.compile(r"[\u3040-\u309f\u30a0-\u30ff]")
+
+
+def _fix_cn(data: dict[str, MappingStr]) -> dict[str, dict]:
+    data2 = {k: v.dict() for k, v in data.items()}
+    fix_cn_transl_qab(data2)
+    fix_cn_transl_svt_class(data2, ["对{0}", "({0})", "（{0}）", "〔{0}〕", "{0}职阶"])
+    return data2
 
 
 def _load_mapping(fp) -> dict[str, MappingStr]:
@@ -56,17 +72,17 @@ def _add_enemy_skill_trans():
             if not name_jp or name_jp in ("-",) or name_jp in cc_ce_names:
                 continue
             trans = skill_names.setdefault(name_jp, MappingStr())
-            if trans.of(region) is not None:
-                continue
+            # if trans.of(region) is not None:
+            #     continue
             skill_r = skills_r.get(skill_jp["id"])
             if not skill_r:
                 continue
             name_r = skill_r.name
-            if not name_r or name_r == name_jp:
+            if not name_r or name_r == name_jp or jp_chars.search(name_r):
                 continue
             trans.update(region, name_r, False)
-    dump_json(sort_dict(skill_names), folder / "skill_names.json")
-    dump_json(sort_dict(skill_details), folder / "skill_detail.json")
+    dump_json(sort_dict(_fix_cn(skill_names)), folder / "skill_names.json")
+    dump_json(sort_dict(_fix_cn(skill_details)), folder / "skill_detail.json")
 
 
 def _add_enemy_td_trans():
@@ -102,7 +118,7 @@ def _add_enemy_td_trans():
             if not td_r:
                 continue
             name_r = td_r.name
-            if not name_r or name_r == name_jp:
+            if not name_r or name_r == name_jp or jp_chars.search(name_r):
                 continue
             trans.update(region, name_r, False)
         for td_jp in tds_jp:
@@ -113,18 +129,23 @@ def _add_enemy_td_trans():
             if not ruby_jp or ruby_jp in ("-",):
                 continue
             trans = td_rubies.setdefault(ruby_jp, MappingStr())
-            if trans.of(region) is not None:
-                continue
+            # if trans.of(region) is not None:
+            #     continue
             td_r = tds_r.get(td_jp["id"])
             if not td_r:
                 continue
             ruby_r = td_r.ruby
-            if not ruby_r or ruby_r == ruby_jp or ruby_r == "-":
+            if (
+                not ruby_r
+                or ruby_r == ruby_jp
+                or ruby_r == "-"
+                or jp_chars.search(ruby_r)
+            ):
                 continue
             trans.update(region, ruby_r, False)
-    dump_json(sort_dict(td_names), folder / "td_names.json")
-    dump_json(sort_dict(td_rubies), folder / "td_ruby.json")
-    dump_json(sort_dict(td_details), folder / "td_detail.json")
+    dump_json(sort_dict(_fix_cn(td_names)), folder / "td_names.json")
+    dump_json(sort_dict(_fix_cn(td_rubies)), folder / "td_ruby.json")
+    dump_json(sort_dict(_fix_cn(td_details)), folder / "td_detail.json")
 
 
 #%%

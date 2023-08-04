@@ -117,7 +117,7 @@ class WikiParser:
         self.mc_summon()
         logger.info("[MC] parsing extra data")
         self.mc_extra()
-        logger.info("[Fandom] skip servant data")
+        logger.info("[Fandom] parsing servant data")
         self.fandom_svt()
         logger.info("[Fandom] parsing craft essence data")
         self.fandom_ce()

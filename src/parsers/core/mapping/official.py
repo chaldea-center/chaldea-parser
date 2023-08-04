@@ -1,7 +1,8 @@
 import itertools
 import re
 import time
-from typing import TypeVar
+from re import Match
+from typing import Any, AnyStr, TypeVar
 
 from app.schemas.common import Region
 from app.schemas.gameenums import NiceSpotOverwriteType, NiceWarOverwriteType
@@ -9,6 +10,7 @@ from app.schemas.nice import AscensionAddEntryStr, NiceLoreComment, NiceServant
 
 from ....schemas.common import NEVER_CLOSED_TIMESTAMP, MappingBase, MappingStr
 from ....schemas.gamedata import MasterData
+from ....schemas.mappings import CN_REPLACE
 from ....schemas.wiki_data import CommandCodeW, WikiData
 from ....utils import logger
 from ...data import ADD_CES, STORY_UPGRADE_QUESTS
@@ -422,3 +424,77 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
 
     jp_data.mappingData = mappings
     del data
+
+
+def fix_cn_transl_qab(data: dict[str, dict[str, str | None]]):
+    # QAB
+    color_regexes = [
+        re.compile(r"(?<![击御威])([力技迅])(?=提升|攻击|指令卡|下降|性能|耐性|威力)"),
+        re.compile(r"(?<=[:：])([力技迅])$"),
+        re.compile(r"(?<=[〔（(])[力技迅](?=[)）〕])"),
+    ]
+    extra_regexes = [re.compile(r"额外(?=攻击|职阶)")]
+
+    def _repl(match: Match[AnyStr]) -> str:
+        return {"力": "Buster", "技": "Arts", "迅": "Quick", "额外": "Extra"}[
+            str(match.group(0))
+        ]
+
+    for jp_name, regions in data.items():
+        cn_name2 = cn_name = regions["CN"]
+        if not cn_name or not cn_name2:
+            continue
+        if re.findall(r"Buster|Art|Quick|アーツ|クイック|バスター", jp_name):
+            for regex in color_regexes:
+                cn_name2 = regex.sub(_repl, cn_name2)
+        if re.findall(r"Extra|エクストラ", jp_name):
+            for regex in extra_regexes:
+                cn_name2 = regex.sub(_repl, cn_name2)
+        cn_name2 = cn_name2.replace("<过量充能时", "<Over Charge时")
+        cn_name2 = cn_name2.replace("宝具值", "NP")
+        if cn_name2 != cn_name:
+            # print(f"Convert CN: {cn_name} -> {cn_name2}")
+            regions["CN"] = cn_name2
+
+
+def fix_cn_transl_svt_class(data: dict, patterns: list[str]):
+    # Svt Class
+    cls_replace = {
+        "剑士": "Saber",
+        "弓兵": "Archer",
+        "枪兵": "Lancer",
+        "骑兵": "Rider",
+        "魔术师": "Caster",
+        "暗匿者": "Assassin",
+        "狂战士": "Berserker",
+        "裁定者": "Ruler",
+        "复仇者": "Avenger",
+        "月之癌": "MoonCancer",
+        "他人格": "Alterego",
+        "降临者": "Foreigner",
+        "身披角色者": "Pretender",
+        "盾兵": "Shielder",
+    }
+
+    def replace_cls(s: str, cls_cn: str):
+        if cls_cn not in s:
+            return s
+        for pattern in patterns:
+            s = s.replace(pattern.format(cls_cn), pattern.format(cls_replace[cls_cn]))
+        return s
+
+    def _iter(obj):
+        if not isinstance(obj, dict):
+            return
+        v = obj.get("CN")
+        if isinstance(v, str):
+            for a, b in CN_REPLACE.items():
+                v = v.replace(a, b)
+            for cls_cn in cls_replace.keys():
+                v = replace_cls(v, cls_cn)
+            obj["CN"] = v
+        for k, v in obj.items():
+            if k != "cn_replace":
+                _iter(v)
+
+    _iter(data)
