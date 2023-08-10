@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import urljoin
 
+import requests
 from lxml import etree
 
 from ...config import settings
@@ -62,9 +63,13 @@ def main(
 
     for event in events:
         if event.titleBanner.JP:
-            event.officialBanner.JP = _check_parse(
-                event.officialBanner.JP, event.noticeLink.JP, parse_jp_top_banner
+            before_banner = event.officialBanner.JP
+            after_banner = _check_parse(
+                before_banner, event.noticeLink.JP, parse_jp_top_banner
             )
+            if before_banner is None and after_banner:
+                after_banner = try_get_jp_02(after_banner)
+            event.officialBanner.JP = after_banner
         if event.titleBanner.CN:
             event.officialBanner.CN = _check_parse(
                 event.officialBanner.CN, event.noticeLink.CN, parse_cn_top_banner
@@ -143,6 +148,20 @@ def parse_tw_top_banner(notice_id: str):
     source = response["content"]
     img = _get_xpath(source, "//img/@src")
     return _join("https://www.fate-go.com.tw/news.html", img)
+
+
+def try_get_jp_02(url: str) -> str:
+    assert url.startswith("https://news.fate-go.jp/wp-content/uploads/"), url
+    if not url.endswith("top_banner.png"):
+        return url
+    for suffix in ("_02.png", "02.png"):
+        url2 = url.replace("top_banner.png", "top_banner" + suffix)
+        resp = requests.head(url2)
+        if resp.status_code == 200 and resp.headers.get("content-type") == "image/png":
+            length = resp.headers.get("content-length")
+            if length and int(length) > 0:
+                return url2
+    return url
 
 
 #%%
