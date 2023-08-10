@@ -80,6 +80,7 @@ from .core.quest import parse_quest_drops
 from .core.ticket import parse_exchange_tickets
 from .data import ADD_CES, MIN_APP
 from .domus_aurea import run_drop_rate_update
+from .helper import get_all_func_val
 from .update_mapping import run_mapping_update
 
 
@@ -359,35 +360,14 @@ class MainParser:
             return master_data
 
         def _add_trigger_skill(
-            buff: NiceBuff | None, skill_id: int | None, is_td=False
+            buff: NiceBuff | None, skill_ids: Iterable[int], is_td=False
         ):
             if buff:
                 master_data.mappingData.func_popuptext.setdefault(
                     buff.type.value, MappingStr()
                 )
-            if not skill_id:
-                return
-            if is_td:
-                if skill_id in master_data.base_tds:
-                    return
-                td = AtlasApi.api_model(
-                    f"/nice/{region}/NP/{skill_id}",
-                    NiceBaseTd,
-                    expire_after=3600 * 24 * 7,
-                )
-                if td:
-                    master_data.base_tds[skill_id] = td
-
-            else:
-                if skill_id in master_data.base_skills:
-                    return
-                skill = AtlasApi.api_model(
-                    f"/nice/{region}/skill/{skill_id}",
-                    NiceBaseSkill,
-                    expire_after=3600 * 24 * 7,
-                )
-                if skill:
-                    master_data.base_skills[skill_id] = skill
+            for skill_id in set(skill_ids):
+                self._add_trigger(master_data, skill_id, is_td)
 
         worker = Worker(f"base_skill_{region}", _add_trigger_skill)
         for func in master_data.func_list_no_cache():
@@ -406,10 +386,10 @@ class MainParser:
                 continue
             buff = func.buffs[0]
             if buff.type == NiceBuffType.npattackPrevBuff:
-                worker.add_default(buff, func.svals[0].SkillID)
+                worker.add_default(buff, get_all_func_val(func, "SkillID"))
             elif buff.type == NiceBuffType.counterFunction:
                 # this is TD
-                worker.add_default(buff, func.svals[0].CounterId, True)
+                worker.add_default(buff, get_all_func_val(func, "CounterId"), True)
             elif buff.type in [
                 NiceBuffType.reflectionFunction,
                 NiceBuffType.attackFunction,
@@ -427,21 +407,48 @@ class MainParser:
                 NiceBuffType.attackBeforeFunction,
                 NiceBuffType.entryFunction,
             ]:
-                worker.add_default(buff, func.svals[0].Value)
+                worker.add_default(buff, get_all_func_val(func, "Value"))
         for svt in master_data.nice_servant_lore:
             for skills in (svt.script.SkillRankUp or {}).values():
-                for skill in skills:
-                    worker.add_default(None, skill)
+                worker.add_default(None, skills)
         # trigger in trigger or some weird trigger
-        # 世界樹への生贄
-        for skill_id in [966447]:
-            worker.add_default(None, skill_id)
+        # 世界樹への生贄, マンドリカルド-間際の一撃
+        worker.add_default(None, [966447, 970405])
         worker.wait()
         logger.info(
             f"{region}: loaded {len(master_data.base_skills)} trigger skills, {len(master_data.base_tds)} trigger TD"
         )
         self.stopwatch.log(f"master data [{region}]")
         return master_data
+
+    @classmethod
+    def _add_trigger(
+        cls, master_data: MasterData, skill_id: int | None, is_td: bool = False
+    ):
+        region = master_data.region
+        if not skill_id:
+            return
+        if is_td:
+            if skill_id in master_data.base_tds:
+                return
+            td = AtlasApi.api_model(
+                f"/nice/{region}/NP/{skill_id}",
+                NiceBaseTd,
+                expire_after=3600 * 24 * 7,
+            )
+            if td:
+                master_data.base_tds[skill_id] = td
+
+        else:
+            if skill_id in master_data.base_skills:
+                return
+            skill = AtlasApi.api_model(
+                f"/nice/{region}/skill/{skill_id}",
+                NiceBaseSkill,
+                expire_after=3600 * 24 * 7,
+            )
+            if skill:
+                master_data.base_skills[skill_id] = skill
 
     def event_field_trait(self):
         # field_indiv: warId[]

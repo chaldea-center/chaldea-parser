@@ -306,6 +306,7 @@ class DataEncoder:
             return
         excludes.update(BasicServant.__fields__.keys())
         excludes.remove("id")
-        for key in ("classId", "face"):
+        # atkMax, hpMax
+        for key in ("classId", "attribute", "face", "rarity"):
             if getattr(db_svt, key) != getattr(svt, key):
                 excludes.discard(key)
