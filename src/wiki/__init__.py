@@ -3,7 +3,7 @@ from .wiki_tool import WikiTool
 
 
 MOONCELL = WikiTool(
-    "temp.fgo.wiki",
+    "fgo.wiki",
     img_url_prefix="https://fgo.wiki/images",
     path="/",
     user=settings.mc_user,
