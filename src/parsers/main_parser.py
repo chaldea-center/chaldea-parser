@@ -662,7 +662,12 @@ class MainParser:
         if mapping_patch:
             _normal_dump(mapping_patch, "mappingPatch")
         else:
-            logger.info("no mapping patch generated")
+            # *_release's value is too looooong, always keep it there
+            logger.info("reset mappingPatch")
+            mapping_patch = {
+                k: v for k, v in mappings_new.items() if k.endswith("release")
+            }
+            _normal_dump(mapping_patch, "mappingPatch")
 
         _dump_by_ranges(
             data.event_dict,
@@ -757,7 +762,7 @@ class MainParser:
 
     def _patch_mappings(
         self, mappings: MappingData, last_ver: DataVersion
-    ) -> tuple[dict, dict]:
+    ) -> tuple[dict[str, dict], dict[str, dict]]:
         encoded = dump_json(
             self._encode_mapping_data(mappings),
             default=self.encoder.default,
