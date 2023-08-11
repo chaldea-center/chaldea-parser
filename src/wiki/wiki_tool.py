@@ -446,8 +446,23 @@ class WikiTool:
             last_timestamp = min(last_timestamp, _now - days * 24 * 3600)
         return int(last_timestamp)
 
-    def remove_recent_changed(self, days: float | None = None):
+    def remove_all_changes(
+        self, edit_days: float | None = None, move_days: float | None = None
+    ):
+        all_updated = True
         _now = int(time.time())
+        if not edit_days or edit_days > 0:
+            self.remove_recent_changed(edit_days)
+        else:
+            all_updated = False
+        if not move_days or move_days > 0:
+            self.clear_moved_or_deleted(move_days)
+        else:
+            all_updated = False
+        if all_updated:
+            self.cache.updated = _now
+
+    def remove_recent_changed(self, days: float | None = None):
         last_timestamp = self._get_expire_time(2 / 24, days)
         changes = self.recent_changes(
             start=datetime.fromtimestamp(last_timestamp).isoformat(),
@@ -468,10 +483,9 @@ class WikiTool:
             if page:
                 dropped += 1
                 logger.debug(f'{self.host}: drop outdated: {dropped} - "{title}"')
-        self.cache.updated = _now
 
     def clear_moved_or_deleted(self, days: float | None = None):
-        last_timestamp = self._get_expire_time(0.5, days)
+        last_timestamp = self._get_expire_time(2, days)
 
         for letype in ("move", "delete"):
             params = {

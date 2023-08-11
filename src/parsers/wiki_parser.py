@@ -96,12 +96,13 @@ class WikiParser:
         self._fandom.init()
         MOONCELL.load(self.payload.clear_wiki_empty)
         FANDOM.load(self.payload.clear_wiki_empty)
-        if not self.payload.clear_wiki_changed or self.payload.clear_wiki_changed > 0:
-            MOONCELL.remove_recent_changed(self.payload.clear_wiki_changed)
-            FANDOM.remove_recent_changed(self.payload.clear_wiki_changed)
-        if not self.payload.clear_wiki_moved or self.payload.clear_wiki_moved > 0:
-            MOONCELL.clear_moved_or_deleted(self.payload.clear_wiki_moved)
-            FANDOM.clear_moved_or_deleted(self.payload.clear_wiki_moved)
+        MOONCELL.remove_all_changes(
+            self.payload.clear_wiki_changed, self.payload.clear_wiki_moved
+        )
+        FANDOM.remove_all_changes(
+            self.payload.clear_wiki_changed, self.payload.clear_wiki_moved
+        )
+
         self.init_wiki_data()
         logger.info("[MC] parsing servant data")
         self.mc_svt()
