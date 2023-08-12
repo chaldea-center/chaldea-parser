@@ -37,6 +37,7 @@ from ..wiki.template import (
     remove_tag,
 )
 from ..wiki.wiki_tool import KnownTimeZone
+from .core.aa_export import update_exported_files
 from .wiki import replace_banner_url
 
 
@@ -91,6 +92,8 @@ class WikiParser:
             logger.info("run_wiki_parser=False, skip")
             return
         Worker.fake_mode = not self.payload.enable_wiki_threading
+        update_exported_files(self.payload.regions, self.payload.force_update_export)
+
         self._jp.init()
         self._mc.init()
         self._fandom.init()

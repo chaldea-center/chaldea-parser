@@ -5,7 +5,7 @@ import time
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, AnyStr, Iterable, Match
+from typing import Any, Iterable
 
 import orjson
 import pytz
@@ -29,7 +29,6 @@ from pydantic.json import pydantic_encoder
 
 from ..config import PayloadSetting, settings
 from ..schemas.common import (
-    AtlasExportFile,
     DataVersion,
     FileVersion,
     MappingBase,
@@ -38,7 +37,6 @@ from ..schemas.common import (
     MstClassRelation,
     MstQuestGroup,
     MstViewEnemy,
-    OpenApiInfo,
 )
 from ..schemas.drop_data import DomusAureaData
 from ..schemas.gamedata import (
@@ -67,6 +65,7 @@ from ..utils.helper import LocalProxy, beautify_file, describe_regions
 from ..utils.stopwatch import Stopwatch
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.wiki_tool import KnownTimeZone
+from .core.aa_export import update_exported_files
 from .core.const_data import get_const_data
 from .core.dump import DataEncoder
 from .core.mapping.common import _KT, _T
@@ -133,7 +132,7 @@ class MainParser:
             FANDOM.clear()
 
         logger.info("update_exported_files")
-        self.update_exported_files()
+        update_exported_files(self.payload.regions, self.payload.force_update_export)
         self.stopwatch.log("update_export")
         self.wiki_data = WikiData.parse_dir(full_version=True)
         self.huntingQuests = [
@@ -259,49 +258,6 @@ class MainParser:
             ]
         )
         settings.commit_msg.write_text(msg)
-
-    def update_exported_files(self):
-        def _add_download_task(_url, _fp):
-            Path(_fp).write_bytes(
-                requests.get(_url, headers={"cache-control": "no-cache"}).content
-            )
-            logger.info(f"{_fp}: update exported file from {_url}")
-
-        fp_openapi = settings.atlas_export_dir / "openapi.json"
-
-        openapi_remote = requests.get(AtlasApi.full_url("openapi.json")).json()
-        openapi_local = load_json(fp_openapi)
-
-        api_changed = not openapi_local or OpenApiInfo.parse_obj(
-            openapi_remote["info"]
-        ) != OpenApiInfo.parse_obj(openapi_local["info"])
-        if api_changed:
-            logger.info(f'API changed:\n{dict(openapi_remote["info"], description="")}')
-
-        for region in Region.__members__.values():
-            worker = Worker(f"exported_file_{region}")
-            fp_info = settings.atlas_export_dir / region.value / "info.json"
-            info_local = load_json(fp_info) or {}
-            info_remote = DownUrl.export("info.json", region)
-            region_changed = (
-                region in self.payload.regions and self.payload.force_update_export
-            ) or info_local != info_remote
-
-            for f in AtlasExportFile.__members__.values():
-                fp_export = f.cache_path(region)
-                fp_export.parent.mkdir(parents=True, exist_ok=True)
-                if api_changed or region_changed or not fp_export.exists():
-                    if region not in self.payload.regions:
-                        self.payload.regions.append(region)
-                    url = f.resolve_link(region)
-                    worker.add(_add_download_task, url, fp_export)
-                else:
-                    # logger.info(f'{fp_export}: already updated')
-                    pass
-            worker.wait()
-            dump_json(info_remote, fp_info)
-            logger.debug(f"Exported files updated:\n{info_remote}")
-        dump_json(openapi_remote, fp_openapi)
 
     def load_master_data(self, region: Region, add_trigger: bool = True) -> MasterData:
         logger.info(f"loading {region} master data")
