@@ -1,3 +1,5 @@
+import re
+
 from app.schemas.common import Region
 
 
@@ -23,3 +25,34 @@ STORY_UPGRADE_QUESTS = {
     1: [1000624, 3000124, 3000607, 3001301, 1000631],
     38: [3000915],  # Cú Chulainn
 }
+
+
+EXTRA_CAMPAIGN_CE_MC_DATA = {
+    102022: {
+        "id": "102022",
+        "name": "简中版6周年纪念",
+        "name_link": "简中版6周年纪念",
+        "des": "支援中获得的友情点＋10(可以重复)",
+        "type": "纪念",
+    },
+    102023: {
+        "id": "102023",
+        "name": "简中版3周年纪念",
+        "name_link": "简中版3周年纪念",
+        "type": "纪念",
+    },
+    102024: {
+        "id": "102024",
+        "name": "简中版4周年纪念",
+        "name_link": "简中版4周年纪念",
+        "type": "纪念",
+    },
+    102025: {
+        "id": "102025",
+        "name": "简中版5周年纪念",
+        "name_link": "简中版5周年纪念",
+        "type": "纪念",
+    },
+}
+
+jp_chars = re.compile(r"[\u3040-\u309f\u30a0-\u30ff]")

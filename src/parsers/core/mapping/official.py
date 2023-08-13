@@ -2,7 +2,7 @@ import itertools
 import re
 import time
 from re import Match
-from typing import Any, AnyStr, TypeVar
+from typing import AnyStr
 
 from app.schemas.common import Region
 from app.schemas.gameenums import NiceSpotOverwriteType, NiceWarOverwriteType
@@ -13,7 +13,7 @@ from ....schemas.gamedata import MasterData
 from ....schemas.mappings import CN_REPLACE
 from ....schemas.wiki_data import CommandCodeW, WikiData
 from ....utils import logger
-from ...data import ADD_CES, STORY_UPGRADE_QUESTS
+from ...data import ADD_CES, STORY_UPGRADE_QUESTS, jp_chars
 from .common import _KT, _KV, process_skill_detail, update_key_mapping
 
 
@@ -22,7 +22,6 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
     assert region != Region.JP
     logger.info(f"merging official translations from {region}")
     mappings = jp_data.mappingData
-    jp_chars = re.compile(r"[\u3040-\u309f\u30a0-\u30ff]")
 
     mappings.ce_release.update(
         region,

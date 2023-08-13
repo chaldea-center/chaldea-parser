@@ -38,6 +38,7 @@ from ..wiki.template import (
 )
 from ..wiki.wiki_tool import KnownTimeZone
 from .core.aa_export import update_exported_files
+from .data import EXTRA_CAMPAIGN_CE_MC_DATA, jp_chars
 from .wiki import replace_banner_url
 
 
@@ -338,39 +339,11 @@ class WikiParser:
 
     def mc_ce(self):
         index_data = _mc_index_data("礼装图鉴/数据")
-        index_data.update(
-            {
-                102022: {
-                    "id": "102022",
-                    "name": "简中版6周年纪念",
-                    "name_link": "简中版6周年纪念",
-                    "des": "支援中获得的友情点＋10(可以重复)",
-                    "type": "纪念",
-                },
-                102023: {
-                    "id": "102023",
-                    "name": "简中版3周年纪念",
-                    "name_link": "简中版3周年纪念",
-                    "type": "纪念",
-                },
-                102024: {
-                    "id": "102024",
-                    "name": "简中版4周年纪念",
-                    "name_link": "简中版4周年纪念",
-                    "type": "纪念",
-                },
-                102025: {
-                    "id": "102025",
-                    "name": "简中版5周年纪念",
-                    "name_link": "简中版5周年纪念",
-                    "type": "纪念",
-                },
-            }
-        )
+        index_data.update(EXTRA_CAMPAIGN_CE_MC_DATA)
 
         def _parse_one(ce_id: int):
             ce_add = self.wiki_data.get_ce(ce_id)
-            if ce_id in (102019, 102020, 102021):
+            if ce_id in EXTRA_CAMPAIGN_CE_MC_DATA:
                 ce_add.obtain = CEObtain.campaign
 
             record = index_data.get(ce_id)
@@ -379,11 +352,11 @@ class WikiParser:
                 ce_add.obtain = CEObtain.from_cn(record["type"])
 
                 des = record.get("des")
-                if des and des != "无效果":
+                if des and des != "无效果" and not jp_chars.search(des):
                     des = remove_tag(des).replace("\n", "").strip()
                     self.mc_transl.ce_skill_des[ce_add.collectionNo] = des
                 des_max = record.get("des_max")
-                if des_max and des_max != "无效果":
+                if des_max and des_max != "无效果" and not jp_chars.search(des_max):
                     des_max = remove_tag(des_max).replace("\n", "").strip()
                     self.mc_transl.ce_skill_des_max[ce_add.collectionNo] = des_max
 
@@ -414,6 +387,21 @@ class WikiParser:
             if ce_add.obtain == CEObtain.unknown and detail_obtain:
                 ce_add.obtain = CEObtain.from_cn2(detail_obtain)
 
+            skill_des = params.get2("持有技能")
+            if skill_des and skill_des != "无效果":
+                lines = skill_des.splitlines()
+                if len(lines) == 2 and "最大解放" in skill_des:
+                    self.mc_transl.ce_skill_des.setdefault(
+                        ce_add.collectionNo, lines[0].strip()
+                    )
+                    self.mc_transl.ce_skill_des_max.setdefault(
+                        ce_add.collectionNo, lines[1].strip()
+                    )
+                elif len(lines) == 1:
+                    self.mc_transl.ce_skill_des.setdefault(
+                        ce_add.collectionNo, lines[0].strip()
+                    )
+
         worker = Worker.from_map(
             _parse_one,
             set(self.wiki_data.craftEssences.keys()) | set(index_data.keys()),
@@ -442,7 +430,7 @@ class WikiParser:
                 # 113-小犭贪
                 self.mc_transl.cc_names[name_jp] = name_cn
             skill_des = params.get2("持有技能", strip=True)
-            if skill_des:
+            if skill_des and not jp_chars.search(skill_des):
                 self.mc_transl.cc_skill_des[cc_add.collectionNo] = skill_des
             profile_cn = params.get2("解说")
             if profile_cn:
