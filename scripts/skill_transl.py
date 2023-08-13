@@ -11,6 +11,11 @@ from src.utils import dump_json, load_json
 
 Region = Literal["JP", "CN", "TW", "NA", "KR"]
 
+Mapping = dict[str, dict[Region, str | None]]
+
+jp_chars = re.compile(r"[\u3040-\u309f\u30a0-\u30ff]")
+
+
 _SKILL_NAME_REPLACES: dict[Pattern, dict[Region, str]] = {
     re.compile(r"^(.+)のドロップ獲得数アップ$"): {
         "CN": "{0}的掉落获得数提升",
@@ -55,7 +60,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         pattern=re.compile(r"^(.+)のドロップ獲得数を(\d+)個増やす【『(.+)』イベント期間限定】$"),
         item_counts_event=(0, 1, 2),
         mapping={
-            "CN": "{item}的掉落获得数增加{count}个【活动限定】",
+            "CN": "{item}的掉落获得数增加{count}个【『{event}』活动限定】",
             "NA": "Increase {item} amount per drop by {count} [Event Only]",
         },
     ),
@@ -63,7 +68,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         pattern=re.compile(r"^(.+)のドロップ獲得数を(\d+)個増やす\[最大解放\]【『(.+)』イベント期間限定】$"),
         item_counts_event=(0, 1, 2),
         mapping={
-            "CN": "{item}的掉落获得数增加{count}个[最大解放]【活动限定】",
+            "CN": "{item}的掉落获得数增加{count}个[最大解放]【『{event}』活动限定】",
             "NA": "Increase {item} amount per drop by {count} [MAX] [Event Only]",
         },
     ),
@@ -71,7 +76,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         pattern=re.compile(r"^(.+)のドロップ獲得量を(\d+)個増やす【『(.+)』イベント期間限定】$"),
         item_counts_event=(0, 1, 2),
         mapping={
-            "CN": "{item}的掉落获得量增加{count}个【活动限定】",
+            "CN": "{item}的掉落获得量增加{count}个【『{event}』活动限定】",
             "NA": "Increase {item} amount per drop by {count} [Event Only]",
         },
     ),
@@ -79,7 +84,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         pattern=re.compile(r"^(.+)のドロップ獲得量を(\d+)個増やす\[最大解放\]【『(.+)』イベント期間限定】$"),
         item_counts_event=(0, 1, 2),
         mapping={
-            "CN": "{item}的掉落获得量增加{count}个[最大解放]【活动限定】",
+            "CN": "{item}的掉落获得量增加{count}个[最大解放]【『{event}』活动限定】",
             "NA": "Increase {item} amount per drop by {count} [MAX] [Event Only]",
         },
     ),
@@ -87,7 +92,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         pattern=re.compile(r"^(.+)のドロップ獲得量を(\d+)%増やす【『(.+)』イベント期間限定】$"),
         item_counts_event=(0, 1, 2),
         mapping={
-            "CN": "{item}的掉落获得量提升{count}%【活动限定】",
+            "CN": "{item}的掉落获得量提升{count}%【『{event}』活动限定】",
             "NA": "Increase {item} amount per drop by {count}% [Event Only]",
         },
     ),
@@ -95,7 +100,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         pattern=re.compile(r"^(.+)のドロップ獲得量を(\d+)%増やす\[最大解放\]【『(.+)』イベント期間限定】$"),
         item_counts_event=(0, 1, 2),
         mapping={
-            "CN": "{item}的掉落获得量提升{count}%[最大解放]【活动限定】",
+            "CN": "{item}的掉落获得量提升{count}%[最大解放]【『{event}』活动限定】",
             "NA": "Increase {item} amount per drop by {count}% [MAX] [Event Only]",
         },
     ),
@@ -273,12 +278,21 @@ def _update_skill_detail(
 
 def main():
     mapping_dir = Path(__file__).parents[1] / "data" / "mappings"
-    item_names = load_json(mapping_dir / "item_names.json")
-    event_names = load_json(mapping_dir / "event_names.json")
+    item_names: Mapping = load_json(mapping_dir / "item_names.json")
+    event_names: Mapping = load_json(mapping_dir / "event_names.json")
     event_names |= load_json(mapping_dir / "war_names.json")
-    skill_names = load_json(mapping_dir / "skill_names.json")
-    skill_details = load_json(mapping_dir / "skill_detail.json")
-    assert item_names and skill_names and skill_details
+    skill_names: Mapping = load_json(mapping_dir / "skill_names.json")
+    skill_details: Mapping = load_json(mapping_dir / "skill_detail.json")
+    assert item_names and skill_names and skill_details and event_names
+
+    # short name for some events
+    for event_jp in list(event_names.keys()):
+        for region in list(event_names[event_jp].keys()):
+            value = event_names[event_jp][region]
+            if value and event_jp.count("\n") == value.count("\n") == 1:
+                jp2, v2 = event_jp.split("\n")[0], value.split("\n")[0]
+                event_names.setdefault(jp2, {}).setdefault(region, v2)
+
     for text_jp, transl in skill_names.items():
         for region in ("JP", "CN", "TW", "NA", "KR"):
             _update_skill_name(text_jp, transl, region, item_names)
