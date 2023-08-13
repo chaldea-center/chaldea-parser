@@ -19,14 +19,17 @@ jp_chars = re.compile(r"[\u3040-\u309f\u30a0-\u30ff]")
 _SKILL_NAME_REPLACES: dict[Pattern, dict[Region, str]] = {
     re.compile(r"^(.+)のドロップ獲得数アップ$"): {
         "CN": "{0}的掉落获得数提升",
+        "TW": "{0}的掉落獲得數提升",
         "NA": "Increase amount of {0} per drop",
     },
     re.compile(r"^(.+)のドロップ獲得量アップ$"): {
         "CN": "{0}的掉落获得量提升",
+        "TW": "{0}的掉落獲得量提升",
         "NA": "Increase amount of {0} per drop",
     },
     re.compile(r"^(.+)獲得量アップ$"): {
         "CN": "{0}获得量提升",
+        "TW": "{0}獲得量提升",
         "NA": "Increase amount of {0} per drop",
     },
 }
@@ -61,6 +64,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得数增加{count}个【『{event}』活动限定】",
+            "TW": "{item}的掉落獲得數增加{count}個【『{event}』活動限定】",
             "NA": "Increase {item} amount per drop by {count} [Event Only]",
         },
     ),
@@ -69,6 +73,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得数增加{count}个[最大解放]【『{event}』活动限定】",
+            "TW": "{item}的掉落獲得數增加{count}個[最大解放]【『{event}』活動限定】",
             "NA": "Increase {item} amount per drop by {count} [MAX] [Event Only]",
         },
     ),
@@ -77,6 +82,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得量增加{count}个【『{event}』活动限定】",
+            "TW": "{item}的掉落獲得量增加{count}個【『{event}』活動限定】",
             "NA": "Increase {item} amount per drop by {count} [Event Only]",
         },
     ),
@@ -85,6 +91,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得量增加{count}个[最大解放]【『{event}』活动限定】",
+            "TW": "{item}的掉落獲得量增加{count}個[最大解放]【『{event}』活動限定】",
             "NA": "Increase {item} amount per drop by {count} [MAX] [Event Only]",
         },
     ),
@@ -93,6 +100,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得量提升{count}%【『{event}』活动限定】",
+            "TW": "{item}的掉落獲得量提升{count}%【『{event}』活動限定】",
             "NA": "Increase {item} amount per drop by {count}% [Event Only]",
         },
     ),
@@ -101,6 +109,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得量提升{count}%[最大解放]【『{event}』活动限定】",
+            "TW": "{item}的掉落獲得量提升{count}%[最大解放]【『{event}』活動限定】",
             "NA": "Increase {item} amount per drop by {count}% [MAX] [Event Only]",
         },
     ),
@@ -109,6 +118,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         item_counts_event=(-1, 1, 2),
         mapping={
             "CN": "自身的攻击威力提升{count}%【『{event}』活动限定】",
+            "TW": "自身的攻擊威力提升{count}%【『{event}』活動限定】",
             "NA": 'Increase ATK Strength by {count}% for yourself in "{event}" [Event Only]',
         },
     ),
@@ -117,6 +127,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         item_counts_event=(-1, 1, 2),
         mapping={
             "CN": "自身的攻击威力提升{count}%[最大解放]【『{event}』活动限定】",
+            "TW": "自身的攻擊威力提升{count}%[最大解放]【『{event}』活動限定】",
             "NA": 'Increase ATK Strength by {count}% for yourself in "{event}" [MAX] [Event Only]',
         },
     ),
@@ -125,6 +136,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         item_counts_event=(-1, 1, 2),
         mapping={
             "CN": "自身的攻击威力提升{count}%[最大解放]【『{event}』活动限定】",
+            "TW": "自身的攻擊威力提升{count}%[最大解放]【『{event}』活動限定】",
             "NA": 'Increase ATK Strength by {count}% for yourself in "{event}" [MAX] [Event Only]',
         },
     ),
@@ -133,6 +145,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         item_counts_event=(-1, 1, 2),
         mapping={
             "CN": "自身的攻击威力提升{count}%[最大解放]【『{event}』活动限定】",
+            "TW": "自身的攻擊威力提升{count}%[最大解放]【『{event}』活動限定】",
             "NA": 'Increase ATK Strength by {count}% for yourself in "{event}" [MAX] [Event Only]',
         },
     ),
@@ -141,6 +154,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         item_counts_event=(-1, 1, 2),
         mapping={
             "CN": "自身在关卡通关时获得的牵绊值提升{count}%【『{event}』活动限定】",
+            "TW": "自身在關卡通關時獲得的羈絆值提升{count}%【『{event}』活動限定】",
             "NA": 'Increase Bond gained when completing quests in "{event}" by {count}% for yourself [Event Only]',
         },
     ),
@@ -151,6 +165,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         item_counts_event=(-1, [1, 2], 3),
         mapping={
             "CN": "自身的攻击威力提升{count1}%＆关卡通关时获得的牵绊值提升{count2}%【『{event}』活动限定】",
+            "TW": "自身的攻擊威力提升{count1}%＆關卡通關時獲得的羈絆值提升{count2}%【『{event}』活動限定】",
             "NA": 'Increase ATK Strength by {count1}% for yourself in "{event}" & increase Bond gained when completing quests by {count2}% [Event Only]',
         },
     ),
@@ -161,6 +176,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         item_counts_event=(-1, [1, 3], 4),
         mapping={
             "CN": "自身的攻击威力提升{count1}%＋己方全体<包括替补>在关卡通关时获得的牵绊值提升{count2}%(作为助战时无效)【『{event}』活动限定】",
+            "TW": "自身的攻擊威力提升{count1}%＋我方全體<包括替補>在關卡通關時獲得的羈絆值提升{count2}%(作為助戰時無效)【『{event}』活動限定】",
             "NA": 'Increase your ATK Strength by {count1}% & increase Bond gained for all allies <including sub-members> when completing quests in "{event}" by {count2}% (No effect when equipped as Support) [Event Only]',
         },
     ),
@@ -171,6 +187,7 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         item_counts_event=(-1, [1, 3], 4),
         mapping={
             "CN": "自身的攻击威力提升{count1}%＋己方全体<包括替补>在关卡通关时获得的牵绊值提升{count2}%(作为助战时无效)【『{event}』活动限定】",
+            "TW": "自身的攻擊威力提升{count1}%＋我方全體<包括替補>在關卡通關時獲得的羈絆值提升{count2}%(作為助戰時無效)【『{event}』活動限定】",
             "NA": 'Increase your ATK Strength by {count1}% & increase Bond gained for all allies <including sub-members> when completing quests in "{event}" by {count2}% (No effect when equipped as Support) [Event Only]',
         },
     ),
@@ -191,7 +208,7 @@ def _get_item_transl(
         if not v:
             return None
         names.append(v)
-    if region == "CN":
+    if region == "CN" or region == "TW":
         return "、".join(names)
     elif region == "NA":
         return ", ".join(names)
