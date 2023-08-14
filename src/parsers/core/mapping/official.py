@@ -5,7 +5,11 @@ from re import Match
 from typing import AnyStr
 
 from app.schemas.common import Region
-from app.schemas.gameenums import NiceSpotOverwriteType, NiceWarOverwriteType
+from app.schemas.gameenums import (
+    NiceEventOverwriteType,
+    NiceSpotOverwriteType,
+    NiceWarOverwriteType,
+)
 from app.schemas.nice import AscensionAddEntryStr, NiceLoreComment, NiceServant
 
 from ....schemas.common import NEVER_CLOSED_TIMESTAMP, MappingBase, MappingStr
@@ -91,6 +95,9 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
         event_extra.startTime.JP = event_jp.startedAt
         event_extra.endTime.JP = event_jp.endedAt
         mappings.event_names.setdefault(event_jp.name, MappingBase())
+        for event_add in event_jp.eventAdds:
+            if event_add.overwriteType == NiceEventOverwriteType.name_:
+                mappings.event_names.setdefault(event_add.overwriteText, MappingBase())
 
         # TowerName
         for tower_jp in event_jp.towers:
