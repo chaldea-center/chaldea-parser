@@ -388,7 +388,7 @@ class WikiParser:
                 ce_add.obtain = CEObtain.from_cn2(detail_obtain)
 
             skill_des = params.get2("持有技能")
-            if skill_des and skill_des != "无效果":
+            if skill_des and skill_des != "无效果" and jp_chars.search(skill_des):
                 lines = skill_des.splitlines()
                 if len(lines) == 2 and "最大解放" in skill_des:
                     self.mc_transl.ce_skill_des.setdefault(
