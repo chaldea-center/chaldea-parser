@@ -75,6 +75,7 @@ jobs:
           repository: chaldea-center/chaldea-data
           token: ${{ secrets.GH_PAGES_TOKEN }}
           path: ${{ env.output_dir }}
+          fetch-depth: 3
 
       - name: Parse wiki
         run: python main.py wiki
