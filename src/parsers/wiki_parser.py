@@ -457,6 +457,12 @@ class WikiParser:
         known: list[int] = []
         unknown: list[str] = []
         for chara in charas.split(";;"):
+            if "{{{" in chara:
+                match = re.search(r"\{\{\{([^|{}]+)(?:\|([^|{}]*))?\}\}\}", chara)
+                if match:
+                    chara = match.group(2) or match.group(1)
+                else:
+                    raise Exception(f"chara not match template format: '{chara}'")
             chara = chara.strip()
             if chara in self._chara_cache:
                 known.append(self._chara_cache[chara])
