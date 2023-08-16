@@ -137,6 +137,7 @@ class CEObtain(StrEnum):
             "情人节": CEObtain.valentine,
             "期间限定": CEObtain.limited,
             "活动奖励": CEObtain.eventReward,
+            "活动赠送": CEObtain.eventReward,
             "纪念": CEObtain.campaign,
             "牵绊": CEObtain.bond,
             "掉落加成": CEObtain.drop,
