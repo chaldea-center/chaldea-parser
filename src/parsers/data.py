@@ -56,3 +56,17 @@ EXTRA_CAMPAIGN_CE_MC_DATA = {
 }
 
 jp_chars = re.compile(r"[\u3040-\u309f\u30a0-\u30ff]")
+
+
+# <eventId, <buffGroupId, skillNum>>
+EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP = {
+    # summer 2023
+    80442: {
+        8044203: 2,
+        8044202: 3,
+        8044204: 4,
+        8044205: 5,
+        8044201: 6,
+        8044206: 7,
+    },
+}

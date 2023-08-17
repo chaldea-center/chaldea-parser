@@ -86,3 +86,4 @@ class ConstGameData(BaseModel):
     svtExp: dict[int, SvtExpCurve]
     funcTypeDetail: dict[int, NiceFuncTypeDetail]
     buffTypeDetail: dict[int, NiceBuffTypeDetail]
+    eventPointBuffGroupSkillNumMap: dict[int, dict[int, int]]

@@ -1,7 +1,6 @@
 from typing import Any
 
 from app.schemas.common import NiceTrait
-from app.schemas.enums import NiceItemBGType
 from app.schemas.nice import (
     AscensionAdd,
     BasicServant,
@@ -218,10 +217,6 @@ class DataEncoder:
         _type = type(obj)
         type_excludes = _excluded_fields.get(_type, [])
         excludes.update(type_excludes)
-
-        if isinstance(obj, NiceEventPointBuff):
-            if obj.background == NiceItemBGType.aquaBlue:
-                obj.background = NiceItemBGType.zero
 
         if _type in (NiceBgm, NiceBgmEntity) and self.bgm:
             excludes.update(NiceBgmEntity.__fields__.keys())
