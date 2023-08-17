@@ -272,6 +272,7 @@ class MainParser:
         master_data = MasterData.parse_obj(data)
 
         if region == Region.JP:
+            master_data.nice_servant_lore = [svt for svt in master_data.nice_servant_lore if svt.id != 9945170]
             for add_region, ces in ADD_CES.items():
                 for collection, (illustrator, sort_id) in ces.items():
                     ce = AtlasApi.api_model(
