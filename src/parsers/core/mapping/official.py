@@ -99,6 +99,11 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
             if event_add.overwriteType == NiceEventOverwriteType.name_:
                 mappings.event_names.setdefault(event_add.overwriteText, MappingBase())
 
+        for point_jp in event_jp.pointGroups:
+            point = data.event_point_groups.get(point_jp.groupId)
+            _update_mapping(
+                mappings.item_names, point_jp.name, point.name if point else None
+            )
         # TowerName
         for tower_jp in event_jp.towers:
             tower_id = event_jp.id * 100 + tower_jp.towerId

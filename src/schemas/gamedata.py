@@ -372,6 +372,14 @@ class MasterData(BaseModelORJson):
         return {master["id"]: master["name"] for master in self.mstEnemyMaster}
 
     @cached_property
+    def event_point_groups(self):
+        return {
+            point.groupId: point
+            for event in self.nice_event
+            for point in event.pointGroups
+        }
+
+    @cached_property
     def event_towers(self) -> dict[int, NiceEventTower]:
         return {
             event.id * 100 + tower.towerId: tower
