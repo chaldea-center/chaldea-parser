@@ -87,3 +87,4 @@ class ConstGameData(BaseModel):
     funcTypeDetail: dict[int, NiceFuncTypeDetail]
     buffTypeDetail: dict[int, NiceBuffTypeDetail]
     eventPointBuffGroupSkillNumMap: dict[int, dict[int, int]]
+    laplaceUploadAllowAiQuests: list[int]

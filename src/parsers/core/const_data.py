@@ -9,7 +9,7 @@ from ...schemas.const_data import ConstGameData, SvtExpCurve
 from ...schemas.gamedata import MasterData
 from ...utils.helper import sort_dict
 from ...utils.url import DownUrl
-from ..data import EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP
+from ..data import EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP, LAPLACE_UPLOAD_ALLOW_AI_QUESTS
 
 
 def get_const_data(data: MasterData):
@@ -62,6 +62,7 @@ def get_const_data(data: MasterData):
             for detail in mst_buff_type_details
         },
         eventPointBuffGroupSkillNumMap=EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP,
+        laplaceUploadAllowAiQuests=LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
     )
 
 
