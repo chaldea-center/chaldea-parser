@@ -732,8 +732,9 @@ class MainParser:
         encoded = self._replace_dw_chars(encoded)
 
         data1: dict = orjson.loads(encoded)
+        releases = {k: v for k, v in data1.items() if str(k).endswith("_release")}
         if not self.payload.patch_mappings:
-            return data1, {}
+            return data1, releases
         data0 = {}
         for file in last_ver.files.values():
             if file.key == "mappingData":
@@ -741,13 +742,13 @@ class MainParser:
                     orjson.loads((settings.output_dist / file.filename).read_text())
                 )
         if not data0:
-            return data1, {}
+            return data1, releases
 
         def _create_patch(new_: dict, old_: dict) -> dict:
             # only addition and changes, no deletion
             patch = {}
             for k, v in new_.items():
-                if k not in old_:
+                if k not in old_ or str(k).endswith("_release"):
                     patch[k] = v
                 else:
                     v_old = old_[k]
