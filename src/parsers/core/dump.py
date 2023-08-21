@@ -149,6 +149,7 @@ _excluded_fields: dict[type, list[str]] = {
         "originalOverWriteServantName",
         "originalOverWriteServantBattleName",
         "originalOverWriteTDName",
+        "rarity",  # playable servants always the same except mash
     ],
     NiceMasterMission: ["quests"],
 }
@@ -308,6 +309,6 @@ class DataEncoder:
         excludes.update(BasicServant.__fields__.keys())
         excludes.remove("id")
         # atkMax, hpMax
-        for key in ("classId", "attribute", "face"):
+        for key in ("classId", "attribute", "face", "rarity"):
             if getattr(db_svt, key) != getattr(svt, key):
                 excludes.discard(key)
