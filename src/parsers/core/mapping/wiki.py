@@ -157,8 +157,9 @@ def merge_atlas_na_mapping(mappings: MappingData):
             value = source.get(key)
             if value and value.strip() == key.strip():
                 continue
-            if value and "\n" in value and "\n" not in key:
-                continue
+            # if value and "\n" in value and "\n" not in key:
+            #     if src_fn != 'quest_names.json':
+            #         continue
             if re.findall(r"20[1-2][0-9]", str(value)) and trans.NA:
                 continue
             trans.update(Region.NA, value, skip_exists=True)
