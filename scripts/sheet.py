@@ -1,7 +1,11 @@
+"""
+python -m scripts.sheet -um
+"""
 #%%
 import argparse
 from collections import defaultdict
 from copy import deepcopy
+from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, Callable, TypeVar
@@ -9,6 +13,8 @@ from typing import Any, Callable, TypeVar
 import gspread
 import orjson
 from pydantic import parse_file_as, parse_obj_as
+
+from src.utils.helper import dump_json, dump_json_beautify
 
 
 #%%
@@ -21,6 +27,7 @@ print(ROOT)
 
 ARB_DIR = PROJECT_ROOT / "chaldea/lib/l10n"
 MAPPINGS_DIR = PROJECT_ROOT / "chaldea-parser/data/mappings"
+WIKI_DIR = PROJECT_ROOT / "chaldea-parser/data/wiki"
 
 assert ARB_DIR.exists() and MAPPINGS_DIR.exists()
 
@@ -243,24 +250,51 @@ def download_mapping(name: str):
     local_data = parse_file_as(Mapping[str], fp)
 
     merged = merge_dict(local_data, remote_data, force=True)
+    dump_json(merged, fp)
 
-    fp.write_bytes(
-        orjson.dumps(merged, option=orjson.OPT_INDENT_2 | orjson.OPT_APPEND_NEWLINE)
-    )
+
+def extra_summon_names():
+    summons = parse_file_as(list[dict], WIKI_DIR / "summonsBase.json")
+    summon_names = {}
+    for summon in summons:
+        if summon["name"]:
+            summon_names[summon["id"]] = summon["name"]
+    dump_json(summon_names, MAPPINGS_DIR / "summon_names.json")
+
+
+def restore_summon_names():
+    summons = parse_file_as(list[dict], WIKI_DIR / "summonsBase.json")
+    summon_names = parse_file_as(Mapping[str], MAPPINGS_DIR / "summon_names.json")
+    for summon in summons:
+        transl = summon_names.get(summon["id"])
+        if not transl:
+            continue
+        summon["name"] = {k: v for k, v in transl.items() if v}
+    dump_json_beautify(summons, WIKI_DIR / "summonsBase.json")
 
 
 def upload_all_mappings():
+    extra_summon_names()
+    upload_mapping("summon_names")
+    (MAPPINGS_DIR / "summon_names.json").unlink()
     for name in MAPPING_FILES:
+        if name == "costume_detail":
+            continue
         upload_mapping(name)
 
 
 def download_all_mappings():
+    extra_summon_names()
+    download_mapping("summon_names")
+    restore_summon_names()
+    (MAPPINGS_DIR / "summon_names.json").unlink()
     for name in MAPPING_FILES:
         download_mapping(name)
 
 
 #%%
 if __name__ == "__main__":
+    print(datetime.now().isoformat())
     parser = argparse.ArgumentParser()
     parser.add_argument("-dl", help="download l10n", action="store_true")
     parser.add_argument("-ul", help="upload l10n", action="store_true")
