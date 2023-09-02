@@ -54,6 +54,8 @@ def merge_wiki_translation(
         _update_mapping(mappings.ce_names, name_jp, name_cn)
     for name_jp, name_cn in transl.cc_names.items():
         _update_mapping(mappings.cc_names, name_jp, name_cn)
+    for name_jp, name_cn in transl.illustrator_names.items():
+        _update_mapping(mappings.illustrator_names, name_jp, name_cn)
     for name_jp, name_cn in transl.item_names.items():
         _update_mapping(mappings.item_names, name_jp, name_cn)
     for name_jp, name_cn in transl.event_names.items():

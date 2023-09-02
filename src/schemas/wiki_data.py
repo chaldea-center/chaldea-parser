@@ -28,6 +28,7 @@ class WikiTranslation(BaseModelORJson):
     td_ruby: dict[str, str] = {}
     ce_names: dict[str, str] = {}
     cc_names: dict[str, str] = {}
+    illustrator_names: dict[str, str] = {}
     item_names: dict[str, str] = {}
     event_names: dict[str, str] = {}
     quest_names: dict[str, str] = {}
@@ -45,6 +46,7 @@ class WikiTranslation(BaseModelORJson):
         self.td_ruby = sort_dict(self.td_ruby)
         self.ce_names = sort_dict(self.ce_names)
         self.cc_names = sort_dict(self.cc_names)
+        self.illustrator_names = sort_dict(self.illustrator_names)
         self.item_names = sort_dict(self.item_names)
         self.event_names = sort_dict(self.event_names)
         self.quest_names = sort_dict(self.quest_names)

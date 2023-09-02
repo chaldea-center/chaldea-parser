@@ -888,6 +888,18 @@ class WikiParser:
                 if name_cn and name_jp:
                     self.mc_transl.item_names[name_jp] = name_cn
 
+        # illustrator
+        illust_text = MOONCELL.get_page_text("模块:GetIllustKey/data", allow_cache=False)
+        illustrators: list[tuple[str, str]] = re.findall(
+            r"\['(.+)'\]\s*=\s*'(.+)'", illust_text
+        )
+        assert illustrators, f"Illust data empty: {illust_text}"
+        for name_cn, name_jp in illustrators:
+            name_cn, name_jp = name_cn.strip(), name_jp.strip()
+            if name_cn == name_jp:
+                continue
+            self.mc_transl.illustrator_names[name_jp] = name_cn
+
     def fandom_quests(self):
         def _with_subs(title: str, is_event: bool):
             titles = [title]
