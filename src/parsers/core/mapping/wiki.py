@@ -148,7 +148,7 @@ def merge_atlas_na_mapping(mappings: MappingData):
         if settings.is_debug:
             return load_json(na_folder / fn) or {}
         else:
-            url = f"https://raw.githubusercontent.com/atlasacademy/fgo-game-data-api/master/app/data/mappings/{fn}"
+            url = f"https://cdn.jsdelivr.net/gh/atlasacademy/fgo-game-data-api/app/data/mappings/{fn}"
             return requests.get(url).json()
 
     for src_fn, dest in src_mapping:

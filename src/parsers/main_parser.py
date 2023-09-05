@@ -68,6 +68,7 @@ from ..wiki.wiki_tool import KnownTimeZone
 from .core.aa_export import update_exported_files
 from .core.const_data import get_const_data
 from .core.dump import DataEncoder
+from .core.mapping.autofill import autofill_mapping
 from .core.mapping.common import _KT, _T
 from .core.mapping.official import (
     fix_cn_transl_qab,
@@ -790,8 +791,12 @@ class MainParser:
 
     def merge_all_mappings(self):
         logger.info("merge all mappings")
-        if not self.payload.skip_mapping:
-            # CN
+        run_mapping: dict[Region, bool] = {
+            r: not self.payload.skip_mapping
+            and (not self.payload.regions or r in self.payload.regions)
+            for r in Region
+        }
+        if run_mapping[Region.CN]:
             merge_official_mappings(
                 self.jp_data, self.load_master_data(Region.CN), self.wiki_data
             )
@@ -800,6 +805,8 @@ class MainParser:
                 Region.CN,
                 parse_file_as(WikiTranslation, settings.output_wiki / "mcTransl.json"),
             )
+            self._fix_cn_translation()
+        if run_mapping[Region.NA]:
             # NA
             merge_official_mappings(
                 self.jp_data, self.load_master_data(Region.NA), self.wiki_data
@@ -812,17 +819,21 @@ class MainParser:
                     WikiTranslation, settings.output_wiki / "fandomTransl.json"
                 ),
             )
+        if run_mapping[Region.TW]:
             # TW
             merge_official_mappings(
                 self.jp_data, self.load_master_data(Region.TW), self.wiki_data
             )
+        if run_mapping[Region.KR]:
             # KR
             merge_official_mappings(
                 self.jp_data, self.load_master_data(Region.KR), self.wiki_data
             )
         self._add_enum_mappings()
         self._merge_repo_mapping()
-        self._fix_cn_translation()
+        self.jp_data.mappingData = MappingData.parse_obj(
+            autofill_mapping(orjson.loads(self.jp_data.mappingData.json()))
+        )
         self.event_field_trait()
         self._post_mappings()
 

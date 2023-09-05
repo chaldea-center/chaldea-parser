@@ -129,6 +129,7 @@ class _QuestParser:
 
         retry_jp = _check(quest.closedAt, quest.openedAt)
         retry_na = quest_na and _check(quest_na.closedAt, quest_na.openedAt)
+        retry_na = False  # useless for now
         retry = (
             is_quest_in_expired_wars(quest, self.payload.expired_wars)
             or retry_jp
