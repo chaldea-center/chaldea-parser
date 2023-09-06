@@ -119,7 +119,7 @@ class MainParser:
             return
 
         # check news.json
-        parse_file_as(list[AppNews], settings.output_dist / "news.json")
+        parse_file_as(list[AppNews], Path(settings.output_dir) / "static" / "news.json")
 
         if self.payload.clear_cache_http:
             logger.warning("clear all http_cache")
@@ -564,13 +564,7 @@ class MainParser:
         # delete files after old mappings read
         if not settings.is_debug:
             for f in settings.output_dist.glob("**/*"):
-                if f.name in (
-                    "news.json",
-                    "config.json",
-                    "addData.json",
-                    "mappingPatch.json",
-                    "dropData.json",
-                ):
+                if f.name in ("addData.json",):
                     continue
                 elif f.is_file():
                     f.unlink()
@@ -609,13 +603,6 @@ class MainParser:
             use_dict=True,
         )
         if mapping_patch:
-            _normal_dump(mapping_patch, "mappingPatch")
-        else:
-            # *_release's value is too looooong, always keep it there
-            logger.info("reset mappingPatch")
-            mapping_patch = {
-                k: v for k, v in mappings_new.items() if k.endswith("release")
-            }
             _normal_dump(mapping_patch, "mappingPatch")
 
         _dump_by_ranges(
@@ -722,7 +709,11 @@ class MainParser:
         encoded = self._replace_dw_chars(encoded)
 
         data1: dict = orjson.loads(encoded)
-        releases = {k: v for k, v in data1.items() if str(k).endswith("_release")}
+        releases = {
+            k: v
+            for k, v in data1.items()
+            if str(k).endswith("_release") or str(k).endswith("_priority")
+        }
         if not self.payload.patch_mappings:
             return data1, releases
         data0 = {}
@@ -780,12 +771,8 @@ class MainParser:
 
     def merge_all_mappings(self):
         logger.info("merge all mappings")
-        run_mapping: dict[Region, bool] = {
-            r: not self.payload.skip_mapping
-            and (not self.payload.regions or r in self.payload.regions)
-            for r in Region
-        }
-        if run_mapping[Region.CN]:
+        if not self.payload.skip_mapping:
+            # CN
             merge_official_mappings(
                 self.jp_data, self.load_master_data(Region.CN), self.wiki_data
             )
@@ -795,7 +782,6 @@ class MainParser:
                 parse_file_as(WikiTranslation, settings.output_wiki / "mcTransl.json"),
             )
             self._fix_cn_translation()
-        if run_mapping[Region.NA]:
             # NA
             merge_official_mappings(
                 self.jp_data, self.load_master_data(Region.NA), self.wiki_data
@@ -808,12 +794,10 @@ class MainParser:
                     WikiTranslation, settings.output_wiki / "fandomTransl.json"
                 ),
             )
-        if run_mapping[Region.TW]:
             # TW
             merge_official_mappings(
                 self.jp_data, self.load_master_data(Region.TW), self.wiki_data
             )
-        if run_mapping[Region.KR]:
             # KR
             merge_official_mappings(
                 self.jp_data, self.load_master_data(Region.KR), self.wiki_data
