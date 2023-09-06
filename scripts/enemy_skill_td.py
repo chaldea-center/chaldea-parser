@@ -1,5 +1,7 @@
 """
 python -m scripts.enemy_skill_td
+
+Add enemy skill/td translations from raw data, usually called after new main story released
 """
 #%%
 import re

@@ -10,24 +10,17 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Callable, TypeVar
 
-import gspread
 import orjson
 from pydantic import parse_file_as, parse_obj_as
 
+from scripts._dir import MAPPINGS_DIR, PROJECT_ROOT, WIKI_DIR
+from scripts._gs import get_worksheet
 from src.utils.helper import dump_json, dump_json_beautify
 
 
 #%%
-try:
-    ROOT = Path(__file__).resolve().parents[1]
-except:
-    ROOT = Path(".").absolute()
-PROJECT_ROOT = ROOT.parent.resolve()
-print(ROOT)
 
 ARB_DIR = PROJECT_ROOT / "chaldea/lib/l10n"
-MAPPINGS_DIR = PROJECT_ROOT / "chaldea-parser/data/mappings"
-WIKI_DIR = PROJECT_ROOT / "chaldea-parser/data/wiki"
 
 assert ARB_DIR.exists() and MAPPINGS_DIR.exists()
 
@@ -68,7 +61,6 @@ class Region(StrEnum):
 
 
 # %%
-SPREADSHEET_ID = "1SSFQgfg-EFqfRzdKnoyRZIB7t6cwc_4MyseFXRdOSqs"
 MAPPING_FILES = [
     "bgm_names",
     "buff_detail",
@@ -118,26 +110,6 @@ def merge_dict(d1: Mapping[_KT], d2: Mapping[_KT], force=False):
             else:
                 t[kk] = t.get(kk) or vv
     return out
-
-
-gc: gspread.Client | None = None
-workbook: gspread.Spreadsheet | None = None
-
-
-def get_worksheet(name: str):
-    global gc, workbook
-    if gc is None:
-        gc = gspread.oauth(
-            credentials_filename=ROOT / "secrets/google-credentials.json",
-            authorized_user_filename=ROOT / "secrets/google-token.json",
-        )
-    if workbook is None:
-        workbook = gc.open_by_key(SPREADSHEET_ID)
-
-    try:
-        return workbook.worksheet(name)
-    except gspread.WorksheetNotFound:
-        return workbook.add_worksheet(name, 1, 1)
 
 
 def sheet2json(table: list[list], column: Callable[[str], _KT]) -> Mapping[_KT]:
@@ -278,8 +250,6 @@ def upload_all_mappings():
     upload_mapping("summon_names")
     (MAPPINGS_DIR / "summon_names.json").unlink()
     for name in MAPPING_FILES:
-        if name == "costume_detail":
-            continue
         upload_mapping(name)
 
 
