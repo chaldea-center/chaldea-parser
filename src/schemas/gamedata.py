@@ -103,14 +103,21 @@ class NiceEquipSort(NiceEquip):
 
 class NewAddedData(BaseModelORJson):
     time: str
-    svt: list[NiceServant] = []
-    ce: list[NiceEquip] = []
-    cc: list[NiceCommandCode] = []
-    item: list[NiceItem] = []
+    svts: list[int] = []
+    ces: list[int] = []
+    ccs: list[int] = []
+    items: list[int] = []
+    events: list[int] = []
 
     def is_empty(self):
         # skip item only changes
-        return not self.svt and not self.ce and not self.cc and not self.cc
+        return (
+            not self.svts
+            and not self.ces
+            and not self.ccs
+            # and not self.items
+            and not not self.events
+        )
 
 
 class MasterData(BaseModelORJson):

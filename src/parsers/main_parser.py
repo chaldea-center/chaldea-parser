@@ -10,20 +10,18 @@ from typing import Any, Iterable
 import orjson
 import pytz
 import requests
+from app.schemas.basic import BasicCommandCode, BasicEquip
 from app.schemas.common import Region
-from app.schemas.enums import CLASS_NAME, OLD_TRAIT_MAPPING, NiceSvtType, SvtClass
-from app.schemas.gameenums import NiceCondType, SvtType
+from app.schemas.enums import CLASS_NAME, OLD_TRAIT_MAPPING, SvtClass
+from app.schemas.gameenums import EventType, NiceCondType, SvtType
 from app.schemas.nice import (
     NiceBaseFunction,
     NiceBuff,
     NiceBuffType,
     NiceClassBoardClass,
-    NiceCommandCode,
-    NiceEquip,
     NiceItem,
-    NiceServant,
 )
-from app.schemas.raw import MstQuestPhase
+from app.schemas.raw import MstEvent, MstQuestPhase, MstSvt
 from pydantic import BaseModel, parse_file_as, parse_obj_as
 from pydantic.json import pydantic_encoder
 
@@ -181,64 +179,55 @@ class MainParser:
                         out[entry[field_key]] = entry
             return out
 
-        remote_svts: list[dict] = DownUrl.gitaa("mstSvt")
+        remote_svts = parse_obj_as(list[MstSvt], DownUrl.gitaa("mstSvt"))
         local_svts = load_data_dict("servants", "collectionNo")
         for svt in remote_svts:
-            collection = svt["collectionNo"]
-            if collection == 0 or svt["type"] not in [
+            collection = svt.collectionNo
+            if collection == 0 or svt.type not in [
                 SvtType.NORMAL,
                 SvtType.ENEMY_COLLECTION_DETAIL,
             ]:
                 continue
             if collection in local_svts:
                 continue
-            svt = AtlasApi.api_model(
-                f"/nice/JP/servant/{collection}?lore=true", NiceServant, 0
-            )
-            if (
-                not svt
-                or svt.collectionNo == 0
-                or svt.type
-                not in [NiceSvtType.normal, NiceSvtType.enemyCollectionDetail]
-            ):
-                continue
-            added.svt.append(svt)
+            added.svts.append(svt.id)
 
-        remote_ces = DownUrl.export("basic_equip")
+        remote_ces = parse_obj_as(list[BasicEquip], DownUrl.export("basic_equip"))
         local_ces = load_data_dict("craftEssences", "collectionNo")
         for ce in remote_ces:
-            collection = ce["collectionNo"]
+            collection = ce.collectionNo
             if collection == 0 or collection in local_ces:
                 continue
-            ce = AtlasApi.api_model(
-                f"/nice/JP/equip/{collection}?lore=true", NiceEquip, 0
-            )
-            if not ce or ce.collectionNo == 0:
-                continue
-            added.ce.append(ce)
+            added.ces.append(ce.id)
         # valentine/anniversary CE
-        if len(added.ce) > 15:
-            added.ce = []
+        if len(added.ces) > 15:
+            added.ces = []
 
-        remote_ccs = DownUrl.export("basic_command_code")
+        remote_ccs = parse_obj_as(
+            list[BasicCommandCode], DownUrl.export("basic_command_code")
+        )
         local_ccs = load_data_dict("commandCodes", "collectionNo")
         for cc in remote_ccs:
-            collection = cc["collectionNo"]
+            collection = cc.collectionNo
             if collection == 0 or collection in local_ccs:
                 continue
-            cc = AtlasApi.api_model(f"/nice/JP/CC/{collection}", NiceCommandCode, 0)
-            if not cc or cc.collectionNo == 0:
-                continue
-            added.cc.append(cc)
+            added.ccs.append(cc.id)
 
-        remote_items = DownUrl.export("nice_item")
+        remote_items = parse_obj_as(list[NiceItem], DownUrl.export("nice_item"))
         local_items = load_data_dict("items", "id")
         for item in remote_items:
-            if item["id"] not in local_items:
-                added.item.append(NiceItem.parse_obj(item))
+            if item.id not in local_items:
+                added.items.append(item.id)
+
+        remote_events = parse_obj_as(list[MstEvent], DownUrl.gitaa("mstEvent"))
+        local_events = load_data_dict("events", "id")
+        for event in remote_events:
+            if event.id in local_events or event.type != EventType.EVENT_QUEST:
+                continue
+            added.events.append(event.id)
 
         if added.is_empty():
-            logger.info(f"No new user playable card added")
+            logger.info(f"No new notable resources added")
             return
 
         def _encoder(obj):
