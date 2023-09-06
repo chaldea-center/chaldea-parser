@@ -1,8 +1,6 @@
 import re
 from typing import Callable, Literal
 
-from ....schemas.mappings import MappingData
-
 
 _Region = Literal["JP", "CN", "TW", "NA", "KR"]
 Mapping = dict[str, dict[_Region, str | None]]
@@ -14,9 +12,14 @@ def autofill_mapping(mappings: dict[str, Mapping]) -> dict:
     quest_names: Mapping = mappings["quest_names"]
     svt_names: Mapping = mappings["svt_names"]
     entity_names: Mapping = mappings["entity_names"]
+    event_names: Mapping = mappings["event_names"]
+    item_names: Mapping = mappings["item_names"]
 
     def _repl_svt(name_jp: str) -> dict[_Region, str | None]:
         return svt_names.get(name_jp) or entity_names.get(name_jp) or {}
+
+    def _repl_item(name_jp: str) -> dict[_Region, str | None]:
+        return item_names.get(name_jp) or {}
 
     def _repl0(x: str) -> dict[_Region, str | None]:
         return {"CN": x, "TW": x, "NA": x, "KR": x}
@@ -32,17 +35,18 @@ def autofill_mapping(mappings: dict[str, Mapping]) -> dict:
         },
         krepls=[_repl_svt, _repl0],
     )
-    update_k(
-        quest_names,
-        pattern=re.compile(r"^(.+)体験クエスト$"),
-        templates={
-            "CN": "{0}体验关卡",
-            "TW": "{0}體驗任務",
-            "NA": "{0} Trial Quest",
-            "KR": "{0} 체험 퀘스트",
-        },
-        krepls=[_repl_svt],
-    )
+    for names in [quest_names, event_names]:
+        update_k(
+            names,
+            pattern=re.compile(r"^(.+)体験クエスト$"),
+            templates={
+                "CN": "{0}体验关卡",
+                "TW": "{0}體驗任務",
+                "NA": "{0} Trial Quest",
+                "KR": "{0} 체험 퀘스트",
+            },
+            krepls=[_repl_svt],
+        )
 
     ranks: dict[str, dict[_Region, str | None]] = {
         "開位級": {"CN": "开位级", "TW": "開位級", "NA": "Cause Rank", "KR": "개위급"},
@@ -61,6 +65,45 @@ def autofill_mapping(mappings: dict[str, Mapping]) -> dict:
             "KR": "{enemy} 헌트【{rank}】",
         },
         kwrepls={"enemy": _repl_svt, "rank": lambda x: ranks.get(x)},
+    )
+    update_k(
+        event_names,
+        pattern=re.compile(r"^(.+?)\s*獲得経験値2倍！$"),
+        templates={
+            "CN": "{0}获得经验值2倍！",
+            "TW": "{0}獲得經驗值2倍！",
+            "NA": "{0} 2X EXP!",
+            "KR": "{0} 획득 경험치 2배!",
+        },
+        krepls=[_repl_svt],
+    )
+    update_k(
+        event_names,
+        pattern=re.compile(r"^アドバンスドクエスト 第(\d+)弾$"),
+        templates={
+            "CN": "进阶关卡 第{0}弹",
+            "TW": "進階關卡 第{0}彈",
+            "NA": "Advanced Quest Vol. {0}",
+            "KR": "어드밴스드 퀘스트 {0}탄",
+        },
+        krepls=[_repl0],
+    )
+    update_k(
+        event_names,
+        pattern=re.compile(r"^「巡霊の祝祭 第(\d+)弾」関連サーヴァント 獲得経験値(\d+)倍！$"),
+        templates={
+            "CN": "「巡灵的祝祭 第{0}弹」关联从者获得经验值{1}倍！",
+            "TW": "「巡靈的祝祭 第{0}彈」特定從者獲得經驗值{1}倍！",
+            "NA": '"Evocation Vestival Part {0}" Related Servants {1}X EXP!',
+        },
+        krepls=[_repl0, _repl0],
+    )
+
+    update_k(
+        item_names,
+        pattern=re.compile(r"^(\d+)月交換券\((20\d\d)\)$"),
+        templates={"CN": "{0}月交换券({1} JP)", "TW": "{0}月交換券({1} JP)"},
+        krepls=[_repl0, _repl0],
     )
     return mappings
 
