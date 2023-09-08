@@ -687,7 +687,7 @@ class MainParser:
     @staticmethod
     def _replace_dw_chars(content: _T) -> _T:
         # '魔{jin}剑', 鯖江
-        chars = {"\ue000": "{jin}", "\ue001": "鯖"}
+        chars = {"\ue000": "{jin}", "\ue001": "鯖", "\ue00b": "槌"}
         if isinstance(content, str):
             for k, v in chars.items():
                 content = content.replace(k, v)

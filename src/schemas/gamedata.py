@@ -116,7 +116,7 @@ class NewAddedData(BaseModelORJson):
             and not self.ces
             and not self.ccs
             # and not self.items
-            and not not self.events
+            and not self.events
         )
 
 
