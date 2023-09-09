@@ -712,7 +712,7 @@ class MainParser:
         releases = {
             k: v
             for k, v in data1.items()
-            if str(k).endswith("_release") or str(k).endswith("_priority")
+            if str(k).endswith("_release")
         }
         if not self.payload.patch_mappings:
             return data1, releases
