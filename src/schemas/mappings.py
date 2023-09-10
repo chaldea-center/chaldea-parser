@@ -33,31 +33,20 @@ from .common import (
 )
 
 
-CN_REPLACE = {
-    "西行者": "玄奘三藏",
-    "匕见": "荆轲",
-    "虎狼": "吕布",
-    "歌果": "美杜莎",
-    "雾都弃子": "开膛手杰克",
-    "莲偶": "哪吒",
-    "周照": "武则天",
-    "瞑生院": "杀生院",
-    "重瞳": "项羽",
-    "忠贞": "秦良玉",
-    "祖政": "始皇帝",
-    "雏罂": "虞美人",
-    "丹驹": "赤兔马",
-    "琰女": "杨贵妃",
-    "爱迪·萨奇": "爱德华·蒂奇",
-    "萨奇": "蒂奇",
-    "方巿": "徐福",
-    # item
-    "祸骨": "凶骨",
-}
+class EventTrait(MappingStr):
+    eventId: int = 0
+
+
+class FieldTrait(MappingStr):
+    warIds: list[int] = []
+
+
+class SvtClassMapping(MappingStr):
+    name: str | None = None
 
 
 class EnumMapping(BaseModel):
-    svt_class: dict[int, MappingStr] = {}
+    svt_class: dict[int, SvtClassMapping] = {}
     attribute: dict[Attribute, MappingStr] = {}
     svt_type: dict[NiceSvtType, MappingStr] = {}
     servant_policy: dict[ServantPolicy, MappingStr] = {}
@@ -130,14 +119,6 @@ class EnumMapping(BaseModel):
                 key2 = _deprecated_buff_types[key]
                 vv2 = self.buff_type.setdefault(key2, MappingBase())
                 vv2.update_from(vv)
-
-
-class EventTrait(MappingStr):
-    eventId: int = 0
-
-
-class FieldTrait(MappingStr):
-    warIds: list[int] = []
 
 
 class MappingData(BaseModel):

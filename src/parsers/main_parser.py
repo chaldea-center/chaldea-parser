@@ -12,7 +12,7 @@ import pytz
 import requests
 from app.schemas.basic import BasicCommandCode, BasicEquip
 from app.schemas.common import Region
-from app.schemas.enums import CLASS_NAME, OLD_TRAIT_MAPPING, SvtClass
+from app.schemas.enums import CLASS_NAME, OLD_TRAIT_MAPPING, SvtClass, get_class_name
 from app.schemas.gameenums import EventType, NiceCondType, SvtType
 from app.schemas.nice import (
     NiceBaseFunction,
@@ -45,7 +45,7 @@ from ..schemas.gamedata import (
     NiceBaseTd,
     NiceEquipSort,
 )
-from ..schemas.mappings import CN_REPLACE, FieldTrait
+from ..schemas.mappings import FieldTrait, SvtClassMapping
 from ..schemas.wiki_data import AppNews, WikiData, WikiTranslation
 from ..utils import (
     AtlasApi,
@@ -76,7 +76,7 @@ from .core.mapping.official import (
 from .core.mapping.wiki import merge_atlas_na_mapping, merge_wiki_translation
 from .core.quest import parse_quest_drops
 from .core.ticket import parse_exchange_tickets
-from .data import ADD_CES, MIN_APP
+from .data import ADD_CES, CN_REPLACE, MIN_APP
 from .domus_aurea import run_drop_rate_update
 from .helper import get_all_func_val
 from .update_mapping import run_mapping_update
@@ -840,7 +840,11 @@ class MainParser:
         enums = self.jp_data.mappingData.enums
         enums.update_enums()
         for cls_info in self.jp_data.mstClass:
-            enums.svt_class.setdefault(cls_info.id, MappingBase())
+            v = enums.svt_class.setdefault(cls_info.id, SvtClassMapping())
+            name = get_class_name(cls_info.id)
+            if isinstance(name, SvtClass):
+                name = name.value
+            v.name = name
         enums.svt_class = sort_dict(enums.svt_class)
 
     def _fix_cn_translation(self):
