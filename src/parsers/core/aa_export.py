@@ -31,7 +31,7 @@ def update_exported_files(regions: list[Region], force_update: bool):
         logger.info(f'API changed:\n{dict(openapi_remote["info"], description="")}')
 
     for region in Region.__members__.values():
-        worker = Worker(f"exported_file_{region}")
+        worker = Worker(f"exported_file_{region}", fake_mode=False)
         fp_info = settings.atlas_export_dir / region.value / "info.json"
         info_local = load_json(fp_info) or {}
         info_remote = DownUrl.export("info.json", region)

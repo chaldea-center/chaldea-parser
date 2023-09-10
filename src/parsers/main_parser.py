@@ -243,7 +243,7 @@ class MainParser:
 
         msg = f"[JP] {version.utc} " + ";".join(
             [
-                k + " " + ",".join([str(x.get("collectionNo") or x["id"]) for x in v])
+                k + " " + ",".join([str(x) for x in v])
                 for k, v in added.dict(exclude_defaults=True, exclude={"time"}).items()
             ]
         )
@@ -709,11 +709,7 @@ class MainParser:
         encoded = self._replace_dw_chars(encoded)
 
         data1: dict = orjson.loads(encoded)
-        releases = {
-            k: v
-            for k, v in data1.items()
-            if str(k).endswith("_release")
-        }
+        releases = {k: v for k, v in data1.items() if str(k).endswith("_release")}
         if not self.payload.patch_mappings:
             return data1, releases
         data0 = {}

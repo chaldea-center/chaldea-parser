@@ -89,7 +89,7 @@ class PayloadSetting(BaseSettings):
     use_prev_drops: bool = True
     recent_quest_expire: int = 10
     main_story_quest_expire: int = 90
-    expired_wars: list[int] = []
+    expired_wars: list[int] = []  # -1=any interlude
     skip_prev_quest_drops: bool = False
     slow_mode: bool = False
     patch_mappings: bool = True
