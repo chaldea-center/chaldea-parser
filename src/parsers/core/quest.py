@@ -63,6 +63,8 @@ class _QuestParser:
                     _quest.type == NiceQuestType.free
                     and _quest.warId < 1000
                     and _quest.afterClear == NiceQuestAfterClearType.repeatLast
+                    and NiceQuestFlag.forceToNoDrop not in _quest.flags
+                    and NiceQuestFlag.dropFirstTimeOnly not in _quest.flags
                 ):
                     worker.add(self._save_main_free, _quest)
                     continue
