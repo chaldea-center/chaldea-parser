@@ -88,3 +88,4 @@ class ConstGameData(BaseModel):
     buffTypeDetail: dict[int, NiceBuffTypeDetail]
     eventPointBuffGroupSkillNumMap: dict[int, dict[int, int]]
     laplaceUploadAllowAiQuests: list[int]
+    excludeRewardsQuests: list[int]

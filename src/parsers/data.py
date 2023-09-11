@@ -104,3 +104,11 @@ CN_REPLACE = {
     # item
     "祸骨": "凶骨",
 }
+
+
+EXCLUDE_REWARDS_QUESTS = [
+    1000825,  # 终局特异点 section 12
+    3000540,  # Atlantis section 18
+    94040905,  # Battle In NewYork 2019
+    94067707,  # Battle In NewYork 2022 > 2019 rerun story
+]
