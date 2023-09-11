@@ -88,7 +88,7 @@ _excluded_fields: dict[type, list[str]] = {
     NiceTdSvt: ["motion"],
     NiceBgm: ["name", "fileName", "notReleased", "audioAsset"],
     NiceTrait: ["name"],
-    NiceGift: ["id", "priority"],
+    NiceGift: ["priority"],
     NiceLore: ["comments", "voices"],
     NiceWar: ["originalLongName", "emptyMessage"],
     NiceMap: [],
