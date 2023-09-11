@@ -42,7 +42,7 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
         skip_exists=True,
         skip_unknown_key=False,
     ):
-        if _key is None:
+        if _key in (None, "", "-"):
             return
         m.setdefault(_key, MappingBase())
         if value == _key:
@@ -59,6 +59,11 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
             skip_unknown_key=skip_unknown_key,
         )
 
+    def _set_key(m: dict[_KT, MappingBase[_KV]], _key: _KT):
+        if _key in (None, "", "-"):
+            return
+        m.setdefault(_key, MappingBase())
+
     # str key
     for item_jp in jp_data.nice_item:
         item = data.item_dict.get(item_jp.id)
@@ -69,9 +74,13 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
         cv_names = [str(s).strip() for s in re.split(r"[&＆]+", cv_jp.name) if s]
         if len(cv_names) > 1:
             for one_name in cv_names:
-                mappings.cv_names.setdefault(one_name, MappingBase())
+                _set_key(mappings.cv_names, one_name)
     for illustrator_jp in jp_data.nice_illustrator:
         illustrator = data.illustrator_dict.get(illustrator_jp.id)
+        if re.match(r"^[\w\.\- ]+$", illustrator_jp.name) and (
+            not illustrator or illustrator.name == illustrator_jp.name
+        ):
+            continue
         _update_mapping(
             mappings.illustrator_names,
             illustrator_jp.name,
@@ -82,7 +91,9 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
         ]
         if len(illustrator_names) > 1:
             for one_name in illustrator_names:
-                mappings.illustrator_names.setdefault(one_name, MappingBase())
+                if re.match(r"^[\w\.\- ]+$", one_name):
+                    continue
+                _set_key(mappings.illustrator_names, one_name)
     for bgm_jp in jp_data.nice_bgm:
         bgm = data.bgm_dict.get(bgm_jp.id)
         _update_mapping(mappings.bgm_names, bgm_jp.name, bgm.name if bgm else None)
@@ -93,10 +104,10 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
         event_extra = wiki_data.get_event(event_jp.id, event_jp.name)
         event_extra.startTime.JP = event_jp.startedAt
         event_extra.endTime.JP = event_jp.endedAt
-        mappings.event_names.setdefault(event_jp.name, MappingBase())
+        _set_key(mappings.event_names, event_jp.name)
         for event_add in event_jp.eventAdds:
             if event_add.overwriteType == NiceEventOverwriteType.name_:
-                mappings.event_names.setdefault(event_add.overwriteText, MappingBase())
+                _set_key(mappings.event_names, event_add.overwriteText)
 
         for point_jp in event_jp.pointGroups:
             point = data.event_point_groups.get(point_jp.groupId)
@@ -131,14 +142,14 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
     for war_jp in jp_data.nice_war:
         if war_jp.id < 1000:
             wiki_data.get_war(war_jp.id)
-        mappings.war_names.setdefault(war_jp.name, MappingBase())
-        mappings.war_names.setdefault(war_jp.longName, MappingBase())
+        _set_key(mappings.war_names, war_jp.name)
+        _set_key(mappings.war_names, war_jp.longName)
         for war_add in war_jp.warAdds:
             if war_add.type in [
                 NiceWarOverwriteType.longName,
                 NiceWarOverwriteType.name_,
             ]:
-                mappings.war_names.setdefault(war_add.overwriteStr, MappingBase())
+                _set_key(mappings.war_names, war_add.overwriteStr)
         war = data.war_dict.get(war_jp.id)
         if war is None or (war.id < 1000 and war.lastQuestId == 0):
             continue
