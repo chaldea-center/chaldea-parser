@@ -106,7 +106,7 @@ CN_REPLACE = {
 }
 
 
-EXCLUDE_REWARDS_QUESTS = [
+EXCLUDE_REWARD_QUESTS = [
     1000825,  # 终局特异点 section 12
     3000540,  # Atlantis section 18
     94040905,  # Battle In NewYork 2019

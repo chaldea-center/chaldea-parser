@@ -11,7 +11,7 @@ from ...utils.helper import sort_dict
 from ...utils.url import DownUrl
 from ..data import (
     EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP,
-    EXCLUDE_REWARDS_QUESTS,
+    EXCLUDE_REWARD_QUESTS,
     LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
 )
 
@@ -67,7 +67,7 @@ def get_const_data(data: MasterData):
         },
         eventPointBuffGroupSkillNumMap=EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP,
         laplaceUploadAllowAiQuests=LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
-        excludeRewardsQuests=EXCLUDE_REWARDS_QUESTS,
+        excludeRewardQuests=EXCLUDE_REWARD_QUESTS,
     )
 
 
