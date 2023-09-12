@@ -130,7 +130,6 @@ class EventWBase(BaseModel):
     extraBanners: MappingBase[list[str]] = MappingBase()
     noticeLink: MappingStr = MappingStr()
     huntingId: int = 0
-    huntingQuestIds: list[int] = []
     extraFixedItems: list[EventExtraFixedItems] = []
     extraItems: list[EventExtraItems] = []
 

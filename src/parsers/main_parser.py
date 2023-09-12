@@ -89,7 +89,6 @@ class MainParser:
     def __init__(self):
         self.jp_data = MasterData(region=Region.JP)
         self.wiki_data = WikiData()
-        self.huntingQuests: list[int] = []
         self.payload: PayloadSetting = PayloadSetting()
         logger.info(f"Payload: {self.payload}")
         self.stopwatch = Stopwatch("MainParser")
@@ -134,9 +133,6 @@ class MainParser:
         update_exported_files(self.payload.regions, self.payload.force_update_export)
         self.stopwatch.log("update_export")
         self.wiki_data = WikiData.parse_dir(full_version=True)
-        self.huntingQuests = [
-            q for event in self.wiki_data.events.values() for q in event.huntingQuestIds
-        ]
         self.stopwatch.log(f"load wiki data")
         self.encoder.jp_data = self.jp_data = self.load_master_data(Region.JP)
 
@@ -281,7 +277,6 @@ class MainParser:
         for svt in master_data.nice_servant_lore:
             master_data.remainedQuestIds.update(svt.relateQuestIds)
             master_data.remainedQuestIds.update(svt.trialQuestIds)
-        master_data.remainedQuestIds.update(self.huntingQuests)
         master_data.extraMasterMission = [
             mm for mm in master_data.nice_master_mission if mm.id == 10001
         ]
