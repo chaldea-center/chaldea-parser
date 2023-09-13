@@ -5,13 +5,14 @@ Event: wiki_data/events.json + MC data
 Summon: wiki_data/summons.json + MC data
 """
 import re
+from collections import defaultdict
 from typing import Optional
 from urllib.parse import urlparse
 
 import requests
 import wikitextparser
 from app.schemas.gameenums import NiceEventType
-from app.schemas.nice import NiceEvent, NiceServant
+from app.schemas.nice import NiceEvent, NiceLoreComment, NiceServant
 from pydantic import parse_file_as
 
 from ..config import PayloadSetting, settings
@@ -166,18 +167,23 @@ class WikiParser:
         }
 
     def _need_wiki_profile(self, region: Region, collectionNo: int) -> bool:
-        servants = (
-            self._mc.released_svts
-            if region == Region.CN
-            else self._fandom.released_svts
-        )
-        if collectionNo not in servants or collectionNo not in self._jp.released_svts:
+        servants = (self._mc if region == Region.CN else self._fandom).released_svts
+        if collectionNo not in servants:
             return True
+        if collectionNo not in self._jp.released_svts:
+            return False
         svt = servants[collectionNo]
         svt_jp = self._jp.released_svts[collectionNo]
         assert svt.profile and svt_jp.profile
-        comments = {c.id * 10 + c.priority: c for c in svt.profile.comments}
-        comments_jp = {c.id * 10 + c.priority: c for c in svt_jp.profile.comments}
+
+        def _get_dict(_comments: list[NiceLoreComment]):
+            tmp = defaultdict(dict)
+            for c in _comments:
+                tmp[c.id][c.priority] = c
+            return {k * 10 + min(v.keys()): v[min(v.keys())] for k, v in tmp.items()}
+
+        comments = _get_dict(svt.profile.comments)
+        comments_jp = _get_dict(svt_jp.profile.comments)
         if len(comments) != len(comments_jp):
             return True
         for key, comment in comments.items():
