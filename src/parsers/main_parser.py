@@ -21,7 +21,7 @@ from app.schemas.nice import (
     NiceClassBoardClass,
     NiceItem,
 )
-from app.schemas.raw import MstEvent, MstQuestPhase, MstSvt
+from app.schemas.raw import MstEvent, MstQuestPhase, MstSvt, MstWar
 from pydantic import BaseModel, parse_file_as, parse_obj_as
 from pydantic.json import pydantic_encoder
 
@@ -221,6 +221,13 @@ class MainParser:
             if event.id in local_events or event.type != EventType.EVENT_QUEST:
                 continue
             added.events.append(event.id)
+
+        remote_wars = parse_obj_as(list[MstWar], DownUrl.gitaa("mstWar"))
+        local_wars = load_data_dict("wars", "id")
+        for war in remote_wars:
+            if war.id in local_wars:
+                continue
+            added.wars.append(war.id)
 
         if added.is_empty():
             logger.info(f"No new notable resources added")

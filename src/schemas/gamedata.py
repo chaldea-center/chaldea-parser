@@ -108,6 +108,7 @@ class NewAddedData(BaseModelORJson):
     ccs: list[int] = []
     items: list[int] = []
     events: list[int] = []
+    wars: list[int] = []
 
     def is_empty(self):
         # skip item only changes
@@ -117,6 +118,7 @@ class NewAddedData(BaseModelORJson):
             and not self.ccs
             # and not self.items
             and not self.events
+            and not self.wars
         )
 
 
