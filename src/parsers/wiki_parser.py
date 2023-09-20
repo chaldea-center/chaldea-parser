@@ -221,6 +221,8 @@ class WikiParser:
                 obtains = list(set(obtains))
                 svt_add.obtains = sorted(obtains)
 
+            if not svt_add.mcLink and svt_id in self.payload.mc_extra_svt:
+                svt_add.mcLink = self.payload.mc_extra_svt[svt_id]
             if not svt_add.mcLink:
                 return
             svt_add.mcLink = MOONCELL.moved_pages.get(svt_add.mcLink) or svt_add.mcLink
@@ -338,7 +340,9 @@ class WikiParser:
 
         worker = Worker.from_map(
             _parse_one,
-            set(self.wiki_data.servants.keys()) | set(index_data.keys()),
+            set(self.wiki_data.servants.keys())
+            | set(index_data.keys())
+            | set(self.payload.mc_extra_svt),
             name="mc_svt",
         )
         worker.wait()
@@ -366,6 +370,8 @@ class WikiParser:
                     des_max = remove_tag(des_max).replace("\n", "").strip()
                     self.mc_transl.ce_skill_des_max[ce_add.collectionNo] = des_max
 
+            if not ce_add.mcLink and ce_id in self.payload.mc_extra_ce:
+                ce_add.mcLink = self.payload.mc_extra_ce[ce_id]
             if not ce_add.mcLink:
                 return
             ce_add.mcLink = MOONCELL.moved_pages.get(ce_add.mcLink) or ce_add.mcLink
@@ -394,7 +400,7 @@ class WikiParser:
                 ce_add.obtain = CEObtain.from_cn2(detail_obtain)
 
             skill_des = params.get2("持有技能")
-            if skill_des and skill_des != "无效果" and jp_chars.search(skill_des):
+            if skill_des and skill_des != "无效果" and not jp_chars.search(skill_des):
                 lines = skill_des.splitlines()
                 if len(lines) == 2 and "最大解放" in skill_des:
                     self.mc_transl.ce_skill_des.setdefault(
@@ -410,7 +416,9 @@ class WikiParser:
 
         worker = Worker.from_map(
             _parse_one,
-            set(self.wiki_data.craftEssences.keys()) | set(index_data.keys()),
+            set(self.wiki_data.craftEssences.keys())
+            | set(index_data.keys())
+            | set(self.payload.mc_extra_ce.keys()),
             name="mc_ce",
         )
         worker.wait()

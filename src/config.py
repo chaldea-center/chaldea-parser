@@ -93,6 +93,8 @@ class PayloadSetting(BaseSettings):
     skip_prev_quest_drops: bool = False
     slow_mode: bool = False
     patch_mappings: bool = True
+    mc_extra_svt: dict[int, str] = {}
+    mc_extra_ce: dict[int, str] = {}
     extra: dict = {}
 
     class Config:
