@@ -1,5 +1,8 @@
 import re
+from pathlib import Path
 from typing import Callable, Literal
+
+from pydantic import parse_file_as
 
 
 _Region = Literal["JP", "CN", "TW", "NA", "KR"]
@@ -9,7 +12,7 @@ _VReplacer = dict[_Region, str | None] | None
 _Replacer = Callable[[str], _VReplacer]
 
 
-def autofill_mapping(mappings: dict[str, Mapping]) -> dict:
+def autofill_mapping(mappings: dict[str, Mapping]):
     # actually not dict[str,Mapping], but here only use this kind of format
     quest_names: Mapping = mappings["quest_names"]
     svt_names: Mapping = mappings["svt_names"]
@@ -25,7 +28,7 @@ def autofill_mapping(mappings: dict[str, Mapping]) -> dict:
     def _repl_svt(name_jp: str):
         return svt_names.get(name_jp) or entity_names.get(name_jp)
 
-    def _repl_item(name_jp: str) -> dict[_Region, str | None] | None:
+    def _repl_item(name_jp: str) -> _VReplacer:
         items = [x.strip() for x in name_jp.split("、")]
         names = {}
         for r in Regions:
@@ -41,6 +44,12 @@ def autofill_mapping(mappings: dict[str, Mapping]) -> dict:
 
     def _repl_event(name_jp: str):
         return event_war.get(name_jp)
+
+    def _repl_mlb(name_jp: str) -> _VReplacer:
+        if not name_jp:
+            return _repl0(name_jp)
+        assert name_jp == "[最大解放]"
+        return {"CN": "[最大解放]", "TW": "[最大解放]", "NA": "[MAX] "}
 
     def _repl0(x: str) -> _VReplacer:
         return {"CN": x, "TW": x, "NA": x, "KR": x}
@@ -137,6 +146,13 @@ def autofill_mapping(mappings: dict[str, Mapping]) -> dict:
         krepls=[_repl_event],
     )
 
+    kwrepls_skill = {
+        "item": _repl_item,
+        "count": _repl0,
+        "mlb": _repl_mlb,
+        "event": _repl_event,
+    }
+
     update_k(
         skill_names,
         pattern=re.compile(r"^(.+)のドロップ獲得数アップ$"),
@@ -147,6 +163,68 @@ def autofill_mapping(mappings: dict[str, Mapping]) -> dict:
             "KR": "{0} 획득 UP",
         },
         krepls=[_repl_item],
+    )
+
+    update_kw(
+        skill_detail,
+        pattern=re.compile(
+            r"^(?P<item>.+)のドロップ獲得数を(?P<count>[\d%]+)個増やす(?P<mlb>\[最大解放\]|)【『(?P<event>.+)』イベント期間限定】$"
+        ),
+        templates={
+            "CN": "{item}的掉落获得数增加{count}个{mlb}【『{event}』活动限定】",
+            "TW": "{item}的掉落獲得數增加{count}個{mlb}【『{event}』活動限定】",
+            "NA": "Increase {item} amount per drop by {count} {mlb}[Event Only]",
+        },
+        kwrepls=kwrepls_skill,
+    )
+
+    update_kw(
+        skill_detail,
+        pattern=re.compile(
+            r"^自身の『(?P<event>.+?)』における攻撃の威力を(?P<count>\d+)%アップ(?P<mlb>\[最大解放\]|)【『(?P=event)』イベント期間限定】$"
+        ),
+        templates={
+            "CN": "自身在『{event}』中的攻击威力提升{count}%{mlb}【『{event}』活动限定】",
+            "TW": "自身在『{event}』中的攻擊威力提升{count}%【『{event}』活動限定】",
+            "NA": 'Increase your ATK Strength by {count}% in "{event}" [Event Only]',
+        },
+        kwrepls=kwrepls_skill,
+    )
+    update_kw(
+        skill_detail,
+        pattern=re.compile(r"^『(?P<event>.+?)』において、自身の攻撃の威力を(?P<count>\d+)%アップ(?P<mlb>\[最大解放\]|)【『(?P=event)』イベント期間限定】$"),
+        templates={
+            "CN": "自身在『{event}』中的攻击威力提升{count}%{mlb}【『{event}』活动限定】",
+            "TW": "自身在『{event}』中的攻擊威力提升{count}%{mlb}【『{event}』活動限定】",
+            "NA": 'Increase your ATK Strength by {count}% in "{event}" {mlb}[Event Only]',
+        },
+        kwrepls=kwrepls_skill,
+    )
+    update_kw(
+        skill_detail,
+        pattern=re.compile(
+            r"^自身の『(?P<event>.*?)』における攻撃の威力を(?P<count>\d+)%アップ＆クエストクリア時に得られる絆を(?P<count2>\d+)%増やす【『(?P=event)』イベント期間限定】$"
+        ),
+        templates={
+            "CN": "自身在『{event}』中的攻击威力提升{count}%＆关卡通关时获得的牵绊值提升{count2}%【『{event}』活动限定】",
+            "TW": "自身在『{event}』中的攻擊威力提升{count}%＆關卡通關時獲得的羈絆值提升{count2}%【『{event}』活動限定】",
+            "NA": 'Increase your ATK Strength by {count}% in "{event}" & increase Bond gained when completing quests by {count2}% [Event Only]',
+        },
+        kwrepls=kwrepls_skill | {"count2": _repl0},
+    )
+
+    update_kw(
+        skill_detail,
+        pattern=re.compile(
+            # "自身の『     』における攻撃の威力を50%アップ ＋ 味方全体＜控え含む＞の『ワンジナ・ワールドツアー！』のクエストクリア時に得られる絆を5%アップ(サポート時は無効)【『ワンジナ・ワールドツアー！』イベント期間限定】": {
+            r"^自身の『(?P<event>.+)』における攻撃の威力を(?P<count>\d+)%アップ ＋ 味方全体[＜<]控え含む[＞>]の『(?P=event)』のクエストクリア時に得られる絆を(?P<count2>\d+)%(?:アップ|増やす)\(サポート時は無効\)【『(?P=event)』イベント期間限定】$"
+        ),
+        templates={
+            "CN": "自身的攻击威力提升{count}%＋己方全体<包括替补>在关卡通关时获得的牵绊值提升{count2}%(作为助战时无效)【『{event}』活动限定】",
+            "TW": "自身的攻擊威力提升{count}%＋我方全體<包括替補>在關卡通關時獲得的羈絆值提升{count2}%(作為助戰時無效)【『{event}』活動限定】",
+            "NA": 'Increase your ATK Strength by {count}% & increase Bond gained for all allies <including sub-members> when completing quests in "{event}" by {count2}% (No effect when equipped as Support) [Event Only]',
+        },
+        kwrepls=kwrepls_skill | {"count2": _repl0},
     )
 
     return mappings
@@ -192,6 +270,7 @@ def update_kw(
         repls = {
             key: repl_func(groupdict[key]) if repl_func else None
             for key, repl_func in kwrepls.items()
+            if key in groupdict
         }
 
         for region in list(transl.keys()):
@@ -206,3 +285,27 @@ def update_kw(
                 print(f"{name_jp}: found unformatted '{value}'")
                 continue
             transl[region] = value
+
+
+def main(folder: Path):
+    from src.utils.helper import dump_json
+
+    mappings: dict[str, Mapping] = {}
+    for fp in folder.iterdir():
+        if not fp.is_file() or not fp.name.endswith(".json"):
+            continue
+        name = fp.name[:-5]
+        try:
+            fp.name
+            mappings[name] = parse_file_as(Mapping, fp)
+        except:
+            print(f"unmatched mapping format, skip {fp.name}")
+    autofill_mapping(mappings)
+    for k, v in mappings.items():
+        dump_json(v, folder / f"{k}.json")
+
+
+if __name__ == "__main__":
+    import sys
+
+    main(Path(sys.argv[1]))
