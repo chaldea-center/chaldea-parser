@@ -3,8 +3,10 @@ from typing import Callable, Literal
 
 
 _Region = Literal["JP", "CN", "TW", "NA", "KR"]
+Regions: list[_Region] = ["JP", "CN", "TW", "NA", "KR"]
 Mapping = dict[str, dict[_Region, str | None]]
-_Replacer = Callable[[str], dict[_Region, str | None] | None]
+_VReplacer = dict[_Region, str | None] | None
+_Replacer = Callable[[str], _VReplacer]
 
 
 def autofill_mapping(mappings: dict[str, Mapping]) -> dict:
@@ -13,15 +15,34 @@ def autofill_mapping(mappings: dict[str, Mapping]) -> dict:
     svt_names: Mapping = mappings["svt_names"]
     entity_names: Mapping = mappings["entity_names"]
     event_names: Mapping = mappings["event_names"]
+    war_names: Mapping = mappings["war_names"]
     item_names: Mapping = mappings["item_names"]
+    buff_names: Mapping = mappings["buff_names"]
+    skill_names: Mapping = mappings["skill_names"]
+    skill_detail: Mapping = mappings["skill_detail"]
+    event_war: Mapping = event_names | war_names
 
-    def _repl_svt(name_jp: str) -> dict[_Region, str | None]:
-        return svt_names.get(name_jp) or entity_names.get(name_jp) or {}
+    def _repl_svt(name_jp: str):
+        return svt_names.get(name_jp) or entity_names.get(name_jp)
 
-    def _repl_item(name_jp: str) -> dict[_Region, str | None]:
-        return item_names.get(name_jp) or {}
+    def _repl_item(name_jp: str) -> dict[_Region, str | None] | None:
+        items = [x.strip() for x in name_jp.split("、")]
+        names = {}
+        for r in Regions:
+            _names = [(item_names.get(x) or {}).get(r) for x in items]
+            _names2 = [x for x in _names if x]
+            if len(_names) != len(_names2):
+                continue
+            if r == "CN" or r == "TW":
+                names[r] = "、".join(_names2)
+            elif r == "NA" or r == "KR":
+                names[r] = ", ".join(_names2)
+        return names
 
-    def _repl0(x: str) -> dict[_Region, str | None]:
+    def _repl_event(name_jp: str):
+        return event_war.get(name_jp)
+
+    def _repl0(x: str) -> _VReplacer:
         return {"CN": x, "TW": x, "NA": x, "KR": x}
 
     update_k(
@@ -105,6 +126,29 @@ def autofill_mapping(mappings: dict[str, Mapping]) -> dict:
         templates={"CN": "{0}月交换券({1} JP)", "TW": "{0}月交換券({1} JP)"},
         krepls=[_repl0, _repl0],
     )
+    update_k(
+        buff_names,
+        pattern=re.compile(r"^『(.+)』において与えるダメージをアップ$"),
+        templates={
+            "CN": "在『{0}』中造成的伤害提升",
+            "TW": "在『{0}』中造成的傷害提升",
+            "NA": 'Increase damage dealt during "{0}"',
+        },
+        krepls=[_repl_event],
+    )
+
+    update_k(
+        skill_names,
+        pattern=re.compile(r"^(.+)のドロップ獲得数アップ$"),
+        templates={
+            "CN": "{0}的掉落获得数提升",
+            "TW": "{0}的掉落獲得數提升",
+            "NA": "Increase amount of {0} per drop",
+            "KR": "{0} 획득 UP",
+        },
+        krepls=[_repl_item],
+    )
+
     return mappings
 
 
