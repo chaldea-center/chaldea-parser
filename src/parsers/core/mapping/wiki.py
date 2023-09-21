@@ -123,6 +123,7 @@ def merge_atlas_na_mapping(mappings: MappingData):
     logger.debug(f"AA mappings path: {na_folder}")
     src_mapping: list[tuple[str, dict[str, MappingStr]]] = [
         ("bgm_names.json", mappings.bgm_names),
+        ("buff_names.json", mappings.buff_names),
         ("cc_names.json", mappings.cc_names),
         # class_names.json
         ("costume_names.json", mappings.costume_names),
@@ -140,6 +141,7 @@ def merge_atlas_na_mapping(mappings: MappingData):
         ("servant_names.json", mappings.svt_names),
         ("skill_names.json", mappings.skill_names),
         ("spot_names.json", mappings.spot_names),
+        ("blank_earth_spot_names.json", mappings.spot_names),
         ("war_names.json", mappings.war_names),
         ("war_short_names.json", mappings.war_names),
     ]
