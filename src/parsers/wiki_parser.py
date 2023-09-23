@@ -18,6 +18,7 @@ from pydantic import parse_file_as
 from ..config import PayloadSetting, settings
 from ..schemas.common import CEObtain, MappingStr, Region, SummonType, SvtObtain
 from ..schemas.wiki_data import (
+    CraftEssenceW,
     EventW,
     LimitedSummon,
     ProbGroup,
@@ -204,6 +205,12 @@ class WikiParser:
     def mc_svt(self):
         index_data = _mc_index_data("英灵图鉴/数据")
 
+        prev_data = parse_file_as(
+            list[ServantW], settings.output_wiki / "servants.json"
+        )
+        extra_pages = {v.collectionNo: v.mcLink for v in prev_data if v.mcLink}
+        extra_pages |= self.payload.mc_extra_svt
+
         def _parse_one(svt_id: int):
             svt_add = self.wiki_data.get_svt(svt_id)
             col_no = svt_add.collectionNo
@@ -221,8 +228,8 @@ class WikiParser:
                 obtains = list(set(obtains))
                 svt_add.obtains = sorted(obtains)
 
-            if not svt_add.mcLink and svt_id in self.payload.mc_extra_svt:
-                svt_add.mcLink = self.payload.mc_extra_svt[svt_id]
+            if not svt_add.mcLink and svt_id in extra_pages:
+                svt_add.mcLink = extra_pages[svt_id]
             if not svt_add.mcLink:
                 return
             svt_add.mcLink = MOONCELL.moved_pages.get(svt_add.mcLink) or svt_add.mcLink
@@ -342,7 +349,7 @@ class WikiParser:
             _parse_one,
             set(self.wiki_data.servants.keys())
             | set(index_data.keys())
-            | set(self.payload.mc_extra_svt),
+            | set(extra_pages.keys()),
             name="mc_svt",
         )
         worker.wait()
@@ -350,6 +357,12 @@ class WikiParser:
     def mc_ce(self):
         index_data = _mc_index_data("礼装图鉴/数据")
         index_data.update(EXTRA_CAMPAIGN_CE_MC_DATA)
+
+        prev_data = parse_file_as(
+            list[CraftEssenceW], settings.output_wiki / "craftEssences.json"
+        )
+        extra_pages = {v.collectionNo: v.mcLink for v in prev_data if v.mcLink}
+        extra_pages |= self.payload.mc_extra_ce
 
         def _parse_one(ce_id: int):
             ce_add = self.wiki_data.get_ce(ce_id)
@@ -370,8 +383,8 @@ class WikiParser:
                     des_max = remove_tag(des_max).replace("\n", "").strip()
                     self.mc_transl.ce_skill_des_max[ce_add.collectionNo] = des_max
 
-            if not ce_add.mcLink and ce_id in self.payload.mc_extra_ce:
-                ce_add.mcLink = self.payload.mc_extra_ce[ce_id]
+            if not ce_add.mcLink and ce_id in extra_pages:
+                ce_add.mcLink = extra_pages[ce_id]
             if not ce_add.mcLink:
                 return
             ce_add.mcLink = MOONCELL.moved_pages.get(ce_add.mcLink) or ce_add.mcLink
@@ -418,7 +431,7 @@ class WikiParser:
             _parse_one,
             set(self.wiki_data.craftEssences.keys())
             | set(index_data.keys())
-            | set(self.payload.mc_extra_ce.keys()),
+            | set(extra_pages.keys()),
             name="mc_ce",
         )
         worker.wait()
