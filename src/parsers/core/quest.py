@@ -112,7 +112,7 @@ class _QuestParser:
         phase_data = AtlasApi.quest_phase(
             quest.id,
             phase,
-            enemyHash=MAIN_FREE_ENEMY_HASH.get(quest.id),
+            # enemyHash=MAIN_FREE_ENEMY_HASH.get(quest.id),
             # filter_fn=_check_quest_phase_in_recent,
             expire_after=self._get_expire(quest, self.payload.main_story_quest_expire),
         )
