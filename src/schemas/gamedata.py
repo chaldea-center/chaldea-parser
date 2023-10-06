@@ -203,9 +203,9 @@ class MasterData(BaseModelORJson):
         self.base_skills = sort_dict(self.base_skills)
         self.base_functions = sort_dict(self.base_functions)
 
-    @cached_property
-    def svt_dict(self) -> dict[int, NiceServant]:
-        return {x.collectionNo: x for x in self.nice_servant_lore}
+    # @cached_property
+    # def svt_dict(self) -> dict[int, NiceServant]:
+    #     return {x.collectionNo: x for x in self.nice_servant_lore}
 
     @cached_property
     def svt_id_dict(self) -> dict[int, NiceServant]:
@@ -223,9 +223,9 @@ class MasterData(BaseModelORJson):
                 d.update(svt.profile.costume)
         return d
 
-    @cached_property
-    def ce_dict(self) -> dict[int, NiceEquip]:
-        return {x.collectionNo: x for x in self.nice_equip_lore}
+    # @cached_property
+    # def ce_dict(self) -> dict[int, NiceEquip]:
+    #     return {x.collectionNo: x for x in self.nice_equip_lore}
 
     @cached_property
     def ce_id_dict(self) -> dict[int, NiceEquip]:
@@ -233,7 +233,7 @@ class MasterData(BaseModelORJson):
 
     @cached_property
     def cc_dict(self) -> dict[int, NiceCommandCode]:
-        return {x.collectionNo: x for x in self.nice_command_code}
+        return {x.id: x for x in self.nice_command_code}
 
     @cached_property
     def cc_id_dict(self) -> dict[int, NiceCommandCode]:

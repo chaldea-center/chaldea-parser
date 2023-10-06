@@ -26,11 +26,6 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
     logger.info(f"merging official translations from {region}")
     mappings = jp_data.mappingData
 
-    mappings.ce_release.update(
-        region,
-        sorted(set(data.ce_dict.keys()) | set(ADD_CES.get(region, {}).keys())),
-    )
-    mappings.svt_release.update(region, sorted(data.svt_dict.keys()))
     mappings.entity_release.update(region, sorted([svt.id for svt in data.basic_svt]))
     mappings.cc_release.update(region, sorted(data.cc_dict.keys()))
     mappings.mc_release.update(region, sorted(data.mc_dict.keys()))
