@@ -934,22 +934,20 @@ class MainParser:
                 "bundle": "com.aniplex.fategrandorder.en",
             },
         }
-        with LocalProxy():
-            ver_codes = requests.get(
-                f"https://raw.githubusercontent.com/chaldea-center/FGO-VerCode-extractor/main/ver_codes.json"
-            ).json()
         for region in ["JP", "NA"]:
             top = DownUrl.gitaa("gamedatatop", Region(region), "")
             top = top["response"][0]["success"]
             assetbundle = DownUrl.gitaa("assetbundle", Region(region), "metadata/")
-            app_ver = requests.get(
-                f'https://worker.chaldea.center/proxy/gplay-ver?id={data[region]["bundle"]}'
+            ver_codes = requests.get(
+                f"https://fgo.square.ovh/{region}/verCode.txt?t={int(time.time())}"
             ).text
-            if not re.match(r"\d+\.\d+\.\d+", app_ver):
-                app_ver = ver_codes[region]["version"]
+            ver_code_match = re.match(
+                r"^appVer=(\d+\.\d+\.\d+)&verCode=([0-9a-f]{64})$", ver_codes
+            )
+            assert ver_code_match, ver_codes
             data[region] |= {
-                "appVer": app_ver,
-                "verCode": ver_codes[region]["verCode"],
+                "appVer": ver_code_match.group(1),
+                "verCode": ver_code_match.group(2),
                 "dataVer": top["dataVer"],
                 "dateVer": top["dateVer"],
                 "assetbundle": top["assetbundle"],
