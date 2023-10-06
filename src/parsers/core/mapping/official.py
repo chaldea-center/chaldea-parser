@@ -16,7 +16,7 @@ from ....schemas.common import NEVER_CLOSED_TIMESTAMP, MappingBase, MappingStr
 from ....schemas.gamedata import MasterData
 from ....schemas.wiki_data import CommandCodeW, WikiData
 from ....utils import logger
-from ...data import ADD_CES, CN_REPLACE, STORY_UPGRADE_QUESTS, jp_chars
+from ...data import CN_REPLACE, STORY_UPGRADE_QUESTS, jp_chars
 from .common import _KT, _KV, process_skill_detail, update_key_mapping
 
 

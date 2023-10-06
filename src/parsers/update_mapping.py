@@ -31,9 +31,7 @@ def run_mapping_update(mappings: MappingData | None = None):
         if not settings.is_debug and key in (
             "skill_priority",
             "td_priority",
-            "svt_release",
             "entity_release",
-            "ce_release",
             "cc_release",
             "mc_release",
             "war_release",

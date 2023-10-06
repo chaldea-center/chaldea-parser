@@ -280,7 +280,8 @@ class MainParser:
                     )
                     assert ce and ce.profile
                     ce.profile.illustrator = illustrator
-                    ce.sortId = sort_id
+                    # ce.sortId = sort_id
+                    ce.sortId = -ce.collectionNo
                     master_data.nice_equip_lore.append(ce)
         if region == Region.NA:
             self.jp_data.all_quests_na = master_data.quest_dict
