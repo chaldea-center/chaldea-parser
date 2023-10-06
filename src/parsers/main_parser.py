@@ -99,7 +99,10 @@ class MainParser:
     def start(self):
         self.stopwatch.start()
 
-        if self.payload.event == "gametop":
+        if (
+            self.payload.event == "gametop"
+            or self.payload.event == "new_apk_downloaded"
+        ):
             time.sleep(300)
             self.gametop()
             settings.commit_msg.write_text(
