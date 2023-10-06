@@ -40,7 +40,7 @@ from ..wiki.template import (
 )
 from ..wiki.wiki_tool import KnownTimeZone
 from .core.aa_export import update_exported_files
-from .data import EXTRA_CAMPAIGN_CE_MC_DATA, jp_chars
+from .data import ADD_CES, EXTRA_CAMPAIGN_CE_MC_DATA, jp_chars
 from .wiki import replace_banner_url
 
 
@@ -364,9 +364,11 @@ class WikiParser:
         extra_pages = {v.collectionNo: v.mcLink for v in prev_data if v.mcLink}
         extra_pages |= self.payload.mc_extra_ce
 
+        region_campaign_ces = set(k for v in ADD_CES.values() for k in v.keys())
+
         def _parse_one(ce_id: int):
             ce_add = self.wiki_data.get_ce(ce_id)
-            if ce_id in EXTRA_CAMPAIGN_CE_MC_DATA:
+            if ce_id in region_campaign_ces:
                 ce_add.obtain = CEObtain.campaign
 
             record = index_data.get(ce_id)
@@ -431,7 +433,8 @@ class WikiParser:
             _parse_one,
             set(self.wiki_data.craftEssences.keys())
             | set(index_data.keys())
-            | set(extra_pages.keys()),
+            | set(extra_pages.keys())
+            | region_campaign_ces,
             name="mc_ce",
         )
         worker.wait()
