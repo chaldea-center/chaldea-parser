@@ -7,12 +7,13 @@ from dataclasses import dataclass
 from io import StringIO
 
 import requests
-from app.schemas.gameenums import NiceQuestAfterClearType, NiceQuestType
+from app.schemas.gameenums import NiceQuestAfterClearType, NiceQuestFlag, NiceQuestType
 from app.schemas.nice import NiceItem, NiceQuest, NiceWar
 from app.schemas.raw import MstQuestPhase
 from pydantic import parse_file_as, parse_obj_as
 
 from src.config import settings
+from src.parsers.core.aa_export import update_exported_files
 from src.parsers.domus_aurea_data import FIX_SPOT_QUEST_MAPPING, ITEM_NAME_MAPPING
 from src.schemas.drop_data import DomusAureaData, DropRateSheet
 from src.utils import logger
@@ -65,6 +66,8 @@ def get_master_data():
                 if (
                     quest.type == NiceQuestType.free
                     and quest.afterClear == NiceQuestAfterClearType.repeatLast
+                    and NiceQuestFlag.dropFirstTimeOnly not in quest.flags
+                    and NiceQuestFlag.forceToNoDrop not in quest.flags
                 )
                 or quest.id in extra_quest_ids
             ]
@@ -167,5 +170,6 @@ def run_drop_rate_update():
 
 # %%
 if __name__ == "__main__":
+    update_exported_files([], False)
     run_drop_rate_update()
     pass

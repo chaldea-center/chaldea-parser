@@ -52,6 +52,8 @@ FIX_SPOT_QUEST_MAPPING: dict[str, int] = {
     "代々木二丁目": 93020101,
     # LB2.7 角のような岩山 => 賢者の隠れ家
     "賢者の隠れ家": 93031302,
+    # Ordeal Call
+    "西アメリカエリア": 93040104,  # JP renamed to アメリカ西部エリア
 }
 
 

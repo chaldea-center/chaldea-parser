@@ -13,6 +13,9 @@ from ...utils.worker import Worker
 
 
 def update_exported_files(regions: list[Region], force_update: bool):
+    if not regions:
+        regions = [r for r in Region]
+
     def _add_download_task(_url, _fp):
         Path(_fp).write_bytes(
             requests.get(_url, headers={"cache-control": "no-cache"}).content
