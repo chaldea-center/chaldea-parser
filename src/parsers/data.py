@@ -26,6 +26,12 @@ STORY_UPGRADE_QUESTS = {
     38: [3000915],  # Cú Chulainn
 }
 
+# Ordeal Call quests, radom enemy
+# Need to update it if enemy trait changed, such as "Seven-Knight Servant"
+MAIN_FREE_ENEMY_HASH = {
+    93040105: "1_0649_51e792f",
+    94089602: "1_0607_ca2dbef",
+}
 
 EXTRA_CAMPAIGN_CE_MC_DATA = {
     102022: {

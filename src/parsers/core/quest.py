@@ -1,5 +1,4 @@
 import time
-from collections import defaultdict
 from dataclasses import dataclass
 
 from app.schemas.common import Region
@@ -9,16 +8,17 @@ from app.schemas.gameenums import (
     NiceQuestFlag,
     NiceQuestType,
 )
-from app.schemas.nice import NiceQuest, NiceQuestPhase
+from app.schemas.nice import NiceQuest
 
 from ...config import PayloadSetting, settings
 from ...schemas.common import NEVER_CLOSED_TIMESTAMP
 from ...schemas.drop_data import DropData, QuestDropData
 from ...schemas.gamedata import MasterData
 from ...utils import SECS_PER_DAY, AtlasApi
-from ...utils.helper import NumDict, load_json, sort_dict
+from ...utils.helper import sort_dict
 from ...utils.log import logger
 from ...utils.worker import Worker
+from ..data import MAIN_FREE_ENEMY_HASH
 from ..helper import is_quest_in_expired_wars
 
 
@@ -112,6 +112,7 @@ class _QuestParser:
         phase_data = AtlasApi.quest_phase(
             quest.id,
             phase,
+            enemyHash=MAIN_FREE_ENEMY_HASH.get(quest.id),
             # filter_fn=_check_quest_phase_in_recent,
             expire_after=self._get_expire(quest, self.payload.main_story_quest_expire),
         )
@@ -152,12 +153,15 @@ class _QuestParser:
                 phase_data = AtlasApi.quest_phase(
                     quest.id,
                     phase,
-                    Region.JP,
+                    region=Region.JP,
                     expire_after=self._get_expire(quest),
                 )
             elif quest_na and phase in quest_na.phasesWithEnemies:
                 phase_data = AtlasApi.quest_phase(
-                    quest_na.id, phase, Region.NA, expire_after=self._get_expire(quest)
+                    quest_na.id,
+                    phase,
+                    region=Region.NA,
+                    expire_after=self._get_expire(quest),
                 )
             if not phase_data:
                 continue
@@ -212,12 +216,15 @@ class _QuestParser:
             phase_data = AtlasApi.quest_phase(
                 quest.id,
                 phase,
-                Region.JP,
+                region=Region.JP,
                 expire_after=self._get_expire(quest),
             )
         elif quest_na and phase in quest_na.phasesWithEnemies:
             phase_data = AtlasApi.quest_phase(
-                quest_na.id, phase, Region.NA, expire_after=self._get_expire(quest)
+                quest_na.id,
+                phase,
+                region=Region.NA,
+                expire_after=self._get_expire(quest),
             )
         if not phase_data:
             return

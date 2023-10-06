@@ -203,13 +203,17 @@ class HttpApiUtil(abc.ABC):
         self,
         quest_id: int,
         phase: int,
+        enemyHash: str | None = None,
         region=Region.JP,
         expire_after: ExpirationTime = None,
         filter_fn: FILTER_FN2 = None,
         **kwargs,
     ):
+        url = f"/nice/{region}/quest/{quest_id}/{phase}"
+        if enemyHash:
+            url += f"?hash={enemyHash}"
         return self.api_model(
-            f"/nice/{region}/quest/{quest_id}/{phase}",
+            url,
             NiceQuestPhase,
             expire_after,
             filter_fn,
