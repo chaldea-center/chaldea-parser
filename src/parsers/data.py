@@ -6,17 +6,27 @@ from app.schemas.common import Region
 MIN_APP = "2.4.16"
 
 
-# cn_ces: dict[int, tuple[str, float]] = {102022: ("STAR影法師", 1461.5)}
-ADD_CES = {
+ADD_CES: dict[Region, dict[int, tuple[str, float]]] = {
+    # 2017.11
+    Region.KR: {
+        202022: ("ダンミル", 1269.1),  # 5th 90082001
+    },
+    # 2017.06
+    Region.NA: {
+        402023: ("Namie", 1466.2),  # 6th 90084001
+    },
+    # 2017.05
     Region.TW: {
         # 6th anniversary, same id with CN 102022, put if before CN
-        302023: ("リヨ", 1466.1),
+        302023: ("リヨ", 1466.1),  # 6th 90086001
     },
+    # 2016.08 (2016.09)
     Region.CN: {
-        102019: ("STAR影法師", 1526.1),  # 3rd
-        102020: ("STAR影法師", 1526.2),  # 4th
-        102021: ("STAR影法師", 1526.3),  # 5th
-        102022: ("STAR影法師", 1526.4),  # 6th anniversary
+        102019: ("STAR影法師", 1458.1),  # 3rd 90086002
+        102020: ("STAR影法師", 1458.2),  # 4th 90086003
+        102021: ("STAR影法師", 1458.3),  # 5th 90086004
+        102022: ("STAR影法師", 1458.4),  # 6th 90086001
+        102023: ("STAR影法師", 1458.4),  # 7th 90086005
     },
 }
 
