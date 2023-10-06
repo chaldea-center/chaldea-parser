@@ -192,7 +192,9 @@ def autofill_mapping(mappings: dict[str, Mapping]):
     )
     update_kw(
         skill_detail,
-        pattern=re.compile(r"^『(?P<event>.+?)』において、自身の攻撃の威力を(?P<count>\d+)%アップ(?P<mlb>\[最大解放\]|)【『(?P=event)』イベント期間限定】$"),
+        pattern=re.compile(
+            r"^『(?P<event>.+?)』において、自身の攻撃の威力を(?P<count>\d+)%アップ(?P<mlb>\[最大解放\]|)【『(?P=event)』イベント期間限定】$"
+        ),
         templates={
             "CN": "自身在『{event}』中的攻击威力提升{count}%{mlb}【『{event}』活动限定】",
             "TW": "自身在『{event}』中的攻擊威力提升{count}%{mlb}【『{event}』活動限定】",

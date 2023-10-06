@@ -3,7 +3,7 @@ import re
 from app.schemas.common import Region
 
 
-MIN_APP = "2.4.14"
+MIN_APP = "2.4.16"
 
 
 # cn_ces: dict[int, tuple[str, float]] = {102022: ("STAR影法師", 1461.5)}
