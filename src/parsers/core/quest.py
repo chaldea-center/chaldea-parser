@@ -18,7 +18,7 @@ from ...utils import SECS_PER_DAY, AtlasApi
 from ...utils.helper import sort_dict
 from ...utils.log import logger
 from ...utils.worker import Worker
-from ..data import MAIN_FREE_ENEMY_HASH
+from ..data import RANDOM_ENEMY_QUESTS
 from ..helper import is_quest_in_expired_wars
 
 
@@ -257,7 +257,10 @@ class _QuestParser:
         close_limit = self._now - 3 * SECS_PER_DAY
         if close_limit < quest.closedAt < NEVER_CLOSED_TIMESTAMP:
             return 0
-        open_limit = self._now - self.payload.recent_quest_expire * SECS_PER_DAY
+        recent_expire = self.payload.recent_quest_expire
+        if quest.id in RANDOM_ENEMY_QUESTS:
+            recent_expire = recent_expire // 3
+        open_limit = self._now - recent_expire * SECS_PER_DAY
         if quest.openedAt > open_limit:
             return 0
         if cache_days is not None:

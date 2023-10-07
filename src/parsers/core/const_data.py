@@ -13,6 +13,7 @@ from ..data import (
     EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP,
     EXCLUDE_REWARD_QUESTS,
     LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
+    RANDOM_ENEMY_QUESTS,
 )
 
 
@@ -68,6 +69,7 @@ def get_const_data(data: MasterData):
         eventPointBuffGroupSkillNumMap=EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP,
         laplaceUploadAllowAiQuests=LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
         excludeRewardQuests=EXCLUDE_REWARD_QUESTS,
+        randomEnemyQuests=RANDOM_ENEMY_QUESTS,
     )
 
 

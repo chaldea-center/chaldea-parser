@@ -79,6 +79,13 @@ MAIN_FREE_ENEMY_HASH = {
 }
 
 
+RANDOM_ENEMY_QUESTS = [
+    # Ordeal Call
+    93040105,  # オセアニア北部エリア
+    94089602,  # アメリカ南部エリア
+]
+
+
 jp_chars = re.compile(r"[\u3040-\u309f\u30a0-\u30ff]")
 
 
