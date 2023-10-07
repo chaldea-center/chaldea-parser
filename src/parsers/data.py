@@ -3,7 +3,7 @@ import re
 from app.schemas.common import Region
 
 
-MIN_APP = "2.4.16"
+MIN_APP = "2.4.17"
 
 
 ADD_CES: dict[Region, dict[int, tuple[str, float]]] = {
