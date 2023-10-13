@@ -90,3 +90,4 @@ class ConstGameData(BaseModel):
     laplaceUploadAllowAiQuests: list[int]
     excludeRewardQuests: list[int]
     randomEnemyQuests: list[int]
+    freeExchangeSvtEvents: list[int]

@@ -145,3 +145,11 @@ EXCLUDE_REWARD_QUESTS = [
     94040905,  # Battle In NewYork 2019
     94067707,  # Battle In NewYork 2022 > 2019 rerun story
 ]
+
+FREE_EXCHANGE_SVT_EVENTS = [
+    80374,  # 68, 2500万DL突破纪念活动
+    80288,  # 25, 2000万DL突破活动
+    80265,  # 60, 1800万下载突破纪念活动
+    80220,  # 54, 1500万DL突破纪念活动
+    80068,  # 42, 1000万下载突破纪念活动
+]

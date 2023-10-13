@@ -12,6 +12,7 @@ from ...utils.url import DownUrl
 from ..data import (
     EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP,
     EXCLUDE_REWARD_QUESTS,
+    FREE_EXCHANGE_SVT_EVENTS,
     LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
     RANDOM_ENEMY_QUESTS,
 )
@@ -70,6 +71,7 @@ def get_const_data(data: MasterData):
         laplaceUploadAllowAiQuests=LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
         excludeRewardQuests=EXCLUDE_REWARD_QUESTS,
         randomEnemyQuests=RANDOM_ENEMY_QUESTS,
+        freeExchangeSvtEvents=FREE_EXCHANGE_SVT_EVENTS,
     )
 
 
