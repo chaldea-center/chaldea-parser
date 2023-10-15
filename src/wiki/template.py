@@ -33,7 +33,7 @@ _T = TypeVar("_T")
 
 
 def mwparse(value, context=0, skip_style_tags=False) -> Wikicode:
-    return mwparserfromhell.parse(value, context, skip_style_tags)
+    return mwparserfromhell.parse(value, context, skip_style_tags=skip_style_tags)
 
 
 class Params(dict[Any, str]):
