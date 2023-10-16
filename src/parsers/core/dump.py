@@ -1,6 +1,7 @@
 from typing import Any
 
 from app.schemas.common import NiceTrait
+from app.schemas.gameenums import NiceCondType
 from app.schemas.nice import (
     AscensionAdd,
     BasicServant,
@@ -240,12 +241,23 @@ class DataEncoder:
             obj = obj.dict(exclude_none=True, exclude_defaults=True, exclude=excludes)
 
             _clean_dict_empty(obj)
-        elif isinstance(obj, NiceQuestPhase):
-            if len(obj.availableEnemyHashes) > 100:
-                hashes = obj.availableEnemyHashes[-100:]
-                if obj.enemyHash and obj.enemyHash not in hashes:
-                    hashes.append(obj.enemyHash)
-                obj.availableEnemyHashes = hashes
+        elif isinstance(obj, NiceQuest):
+            if isinstance(obj, NiceQuestPhase):
+                if len(obj.availableEnemyHashes) > 100:
+                    hashes = obj.availableEnemyHashes[-100:]
+                    if obj.enemyHash and obj.enemyHash not in hashes:
+                        hashes.append(obj.enemyHash)
+                    obj.availableEnemyHashes = hashes
+            else:
+                if obj.warId == 1002:
+                    obj.releaseOverwrites = [
+                        release
+                        for release in obj.releaseOverwrites
+                        if not (
+                            release.eventId == 0
+                            and release.condType == NiceCondType.weekdays
+                        )
+                    ]
         elif isinstance(obj, BasicServant):
             self._save_basic_svt(excludes, obj)
 
