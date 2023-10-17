@@ -37,6 +37,7 @@ class ArbLang(StrEnum):
     zh_Hant = "zh_Hant"
     ko = "ko"
     es = "es"
+    ru = "ru"
     ar = "ar"
 
     @property
