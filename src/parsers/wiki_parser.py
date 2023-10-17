@@ -696,7 +696,7 @@ class WikiParser:
                 return
             params = parse_template(text, r"^{{活动信息")
             name_jp = params.get2("名称jp")
-            name_cn = params.get2("名称cn") or params.get2("名称ha")
+            name_cn = params.get2("名称ha") or params.get2("名称cn")
             if name_jp and name_cn:
                 self.mc_transl.event_names[name_jp] = name_cn
                 self.mc_transl.event_names[name_jp.replace("･", "・")] = name_cn
@@ -850,7 +850,7 @@ class WikiParser:
             summon = self.wiki_data.summons.setdefault(key, LimitedSummon(id=key))
             summon.mcLink = title
             summon.name.JP = params.get2("卡池名jp")
-            summon.name.CN = params.get2("卡池名cn") or params.get2("卡池名ha") or title
+            summon.name.CN = params.get2("卡池名ha") or params.get2("卡池名cn") or title
             summon.startTime.JP = MOONCELL.get_timestamp(
                 params.get("卡池开始时间jp"), KnownTimeZone.jst
             )
