@@ -56,6 +56,7 @@ from .mappings import MappingData
 
 class ExchangeTicket(BaseModel):
     id: int
+    itemId: int
     year: int
     month: int
     items: list[int]

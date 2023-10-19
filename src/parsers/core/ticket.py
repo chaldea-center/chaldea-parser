@@ -42,6 +42,7 @@ def parse_exchange_tickets(nice_item: list[NiceItem]) -> list[ExchangeTicket]:
         tickets.append(
             ExchangeTicket(
                 id=key,
+                itemId=item.id,
                 year=int(year),
                 month=int(month),
                 items=item_ids,
