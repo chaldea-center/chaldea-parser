@@ -12,7 +12,7 @@ import pytz
 import requests
 from app.schemas.basic import BasicCommandCode, BasicEquip
 from app.schemas.common import Region
-from app.schemas.enums import CLASS_NAME, OLD_TRAIT_MAPPING, SvtClass, get_class_name
+from app.schemas.enums import OLD_TRAIT_MAPPING, SvtClass, get_class_name
 from app.schemas.gameenums import EventType, NiceCondType, SvtType
 from app.schemas.nice import (
     NiceBaseFunction,
@@ -59,7 +59,7 @@ from ..utils import (
     logger,
     sort_dict,
 )
-from ..utils.helper import LocalProxy, beautify_file, describe_regions
+from ..utils.helper import beautify_file, describe_regions
 from ..utils.stopwatch import Stopwatch
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.wiki_tool import KnownTimeZone
@@ -156,7 +156,7 @@ class MainParser:
             class_board_extra1.classes = [
                 NiceClassBoardClass(
                     classId=svt_class,
-                    className=CLASS_NAME.get(svt_class, SvtClass.atlasUnmappedClass),
+                    className=get_class_name(svt_class),
                     condType=NiceCondType.forceFalse,
                 )
                 for svt_class in [9, 11, 23, 8]

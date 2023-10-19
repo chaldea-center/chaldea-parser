@@ -1,8 +1,16 @@
 from enum import StrEnum
 from typing import Any, Type
 
-from app.schemas.enums import Attribute, ServantPersonality, ServantPolicy, SvtClass
+from app.schemas.enums import (
+    AI_TIMING_NAME,
+    Attribute,
+    ServantPersonality,
+    ServantPolicy,
+)
 from app.schemas.gameenums import (
+    NiceAiActNum,
+    NiceAiActTarget,
+    NiceAiActType,
     NiceBuffType,
     NiceCombineAdjustTarget,
     NiceEventType,
@@ -62,6 +70,12 @@ class EnumMapping(BaseModel):
     shop_type: dict[NiceShopType, MappingStr] = {}
     purchase_type: dict[NicePurchaseType, MappingStr] = {}
     restriction_type: dict[NiceRestrictionType, MappingStr] = {}
+    # ai
+    ai_act_num: dict[NiceAiActNum, MappingStr] = {}
+    ai_timing: dict[int, MappingStr] = {}
+    ai_act_type: dict[NiceAiActType, MappingStr] = {}
+    ai_act_target: dict[NiceAiActTarget, MappingStr] = {}
+
     # wiki
     svt_obtain: dict[SvtObtain, MappingStr] = {}
     ce_obtain: dict[CEObtain, MappingStr] = {}
@@ -91,6 +105,9 @@ class EnumMapping(BaseModel):
             NicePurchaseType: self.purchase_type,
             NiceRestrictionType: self.restriction_type,
             NiceCombineAdjustTarget: self.combine_adjust_target,
+            NiceAiActNum: self.ai_act_num,
+            NiceAiActType: self.ai_act_type,
+            NiceAiActTarget: self.ai_act_target,
             SvtObtain: self.svt_obtain,
             CEObtain: self.ce_obtain,
             ItemCategory: self.item_category,
@@ -119,6 +136,9 @@ class EnumMapping(BaseModel):
                 key2 = _deprecated_buff_types[key]
                 vv2 = self.buff_type.setdefault(key2, MappingBase())
                 vv2.update_from(vv)
+
+        for timing in AI_TIMING_NAME.keys():
+            self.ai_timing.setdefault(timing, MappingStr())
 
 
 class MappingData(BaseModel):
