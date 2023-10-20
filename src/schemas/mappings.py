@@ -2,13 +2,13 @@ from enum import StrEnum
 from typing import Any, Type
 
 from app.schemas.enums import (
+    AI_ACT_NUM_NAME,
     AI_TIMING_NAME,
     Attribute,
     ServantPersonality,
     ServantPolicy,
 )
 from app.schemas.gameenums import (
-    NiceAiActNum,
     NiceAiActTarget,
     NiceAiActType,
     NiceBuffType,
@@ -71,7 +71,7 @@ class EnumMapping(BaseModel):
     purchase_type: dict[NicePurchaseType, MappingStr] = {}
     restriction_type: dict[NiceRestrictionType, MappingStr] = {}
     # ai
-    ai_act_num: dict[NiceAiActNum, MappingStr] = {}
+    ai_act_num: dict[int, MappingStr] = {}
     ai_timing: dict[int, MappingStr] = {}
     ai_act_type: dict[NiceAiActType, MappingStr] = {}
     ai_act_target: dict[NiceAiActTarget, MappingStr] = {}
@@ -105,7 +105,6 @@ class EnumMapping(BaseModel):
             NicePurchaseType: self.purchase_type,
             NiceRestrictionType: self.restriction_type,
             NiceCombineAdjustTarget: self.combine_adjust_target,
-            NiceAiActNum: self.ai_act_num,
             NiceAiActType: self.ai_act_type,
             NiceAiActTarget: self.ai_act_target,
             SvtObtain: self.svt_obtain,
@@ -137,8 +136,16 @@ class EnumMapping(BaseModel):
                 vv2 = self.buff_type.setdefault(key2, MappingBase())
                 vv2.update_from(vv)
 
+        for act_num in AI_ACT_NUM_NAME.keys():
+            act_num_enum = AI_ACT_NUM_NAME.get(act_num)
+            self.ai_act_num.setdefault(
+                act_num, MappingStr(NA=act_num_enum.value if act_num_enum else None)
+            )
         for timing in AI_TIMING_NAME.keys():
-            self.ai_timing.setdefault(timing, MappingStr())
+            timing_enum = AI_TIMING_NAME.get(timing)
+            self.ai_timing.setdefault(
+                timing, MappingStr(NA=timing_enum.value if timing_enum else None)
+            )
 
 
 class MappingData(BaseModel):
