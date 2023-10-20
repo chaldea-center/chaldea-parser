@@ -11,6 +11,7 @@ from app.schemas.enums import (
 from app.schemas.gameenums import (
     NiceAiActTarget,
     NiceAiActType,
+    NiceAiCond,
     NiceBuffType,
     NiceCombineAdjustTarget,
     NiceEventType,
@@ -75,6 +76,7 @@ class EnumMapping(BaseModel):
     ai_timing: dict[int, MappingStr] = {}
     ai_act_type: dict[NiceAiActType, MappingStr] = {}
     ai_act_target: dict[NiceAiActTarget, MappingStr] = {}
+    ai_cond: dict[NiceAiCond, MappingStr] = {}
 
     # wiki
     svt_obtain: dict[SvtObtain, MappingStr] = {}
@@ -107,6 +109,7 @@ class EnumMapping(BaseModel):
             NiceCombineAdjustTarget: self.combine_adjust_target,
             NiceAiActType: self.ai_act_type,
             NiceAiActTarget: self.ai_act_target,
+            NiceAiCond: self.ai_cond,
             SvtObtain: self.svt_obtain,
             CEObtain: self.ce_obtain,
             ItemCategory: self.item_category,
