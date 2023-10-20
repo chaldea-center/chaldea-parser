@@ -1,4 +1,5 @@
 from app.schemas.base import BaseModelORJson
+from app.schemas.raw import MstMasterMission
 from pydantic import BaseModel, NoneStr
 from pydantic.json import pydantic_encoder
 
@@ -191,6 +192,7 @@ class WikiData(BaseModelORJson):
     summons: dict[str, LimitedSummon] = {}
     mcTransl: WikiTranslation = WikiTranslation()
     fandomTransl: WikiTranslation = WikiTranslation()
+    mms: dict[int, MstMasterMission] = {}
 
     @classmethod
     def parse_dir(cls, full_version: bool = False) -> "WikiData":
@@ -198,15 +200,16 @@ class WikiData(BaseModelORJson):
         data = {
             "craftEssences": {
                 ce["collectionNo"]: ce
-                for ce in load_json(folder / "craftEssences.json") or []
+                for ce in load_json(folder / "craftEssences.json", [])
             },
             "commandCodes": {
                 cc["collectionNo"]: cc
-                for cc in load_json(folder / "commandCodes.json") or []
+                for cc in load_json(folder / "commandCodes.json", [])
             },
-            "wars": {war["id"]: war for war in load_json(folder / "wars.json") or []},
+            "wars": {war["id"]: war for war in load_json(folder / "wars.json", [])},
             "mcTransl": load_json(folder / "mcTransl.json", {}),
             "fandomTransl": load_json(folder / "fandomTransl.json", {}),
+            "mms": {mm["id"]: mm for mm in load_json(folder / "mms.json", [])},
         }
         if full_version:
             data |= {
@@ -252,6 +255,9 @@ class WikiData(BaseModelORJson):
         summons.sort(key=lambda summon: summon.startTime.JP or NEVER_CLOSED_TIMESTAMP)
         self.summons = {summon.id: summon for summon in summons}
         self.mcTransl.sort()
+        mms = list(self.mms.values())
+        mms.sort(key=lambda x: x.id)
+        self.mms = {mm.id: mm for mm in mms}
 
     def save(self, full_version: bool):
         folder = settings.output_wiki
@@ -281,6 +287,10 @@ class WikiData(BaseModelORJson):
             )
             dump_json(self.mcTransl, settings.output_wiki / "mcTransl.json")
             dump_json(self.fandomTransl, settings.output_wiki / "fandomTransl.json")
+            dump_json(
+                [mm.dict(exclude_defaults=True) for mm in self.mms.values()],
+                settings.output_wiki / "mms.json",
+            )
 
         dump_json_beautify(
             list(self.wars.values()), folder / "wars.json", default=_encoder

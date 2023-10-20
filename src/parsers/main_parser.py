@@ -21,7 +21,7 @@ from app.schemas.nice import (
     NiceClassBoardClass,
     NiceItem,
 )
-from app.schemas.raw import MstEvent, MstQuestPhase, MstSvt, MstWar
+from app.schemas.raw import MstEvent, MstMasterMission, MstQuestPhase, MstSvt, MstWar
 from pydantic import BaseModel, parse_file_as, parse_obj_as
 from pydantic.json import pydantic_encoder
 
@@ -148,6 +148,9 @@ class MainParser:
         self.jp_data.questGroups = parse_obj_as(
             list[MstQuestGroup], DownUrl.gitaa("mstQuestGroup")
         )
+        mms = parse_obj_as(list[MstMasterMission], DownUrl.gitaa("mstMasterMission"))
+        for mm in mms:
+            self.wiki_data.mms[mm.id] = mm
         self.jp_data.constData = get_const_data(self.jp_data)
         class_board_extra1 = next(
             board for board in self.jp_data.nice_class_board if board.id == 8
@@ -268,9 +271,6 @@ class MainParser:
         master_data = MasterData.parse_obj(data)
 
         if region == Region.JP:
-            master_data.nice_servant_lore = [
-                svt for svt in master_data.nice_servant_lore if svt.id != 9945170
-            ]
             for add_region, ces in ADD_CES.items():
                 for collection, (illustrator, sort_id) in ces.items():
                     ce = AtlasApi.api_model(
@@ -595,6 +595,7 @@ class MainParser:
         _normal_dump(data.exchangeTickets, "exchangeTickets")
         _normal_dump(data.nice_enemy_master, "enemyMasters")
         _normal_dump(data.nice_class_board, "classBoards")
+        _normal_dump(list(wiki_data.mms.values()), "masterMissions")
 
         logger.info("Updating mappings")
         run_mapping_update(data.mappingData)  # before dump
