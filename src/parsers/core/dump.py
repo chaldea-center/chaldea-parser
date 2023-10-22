@@ -122,10 +122,10 @@ _excluded_fields: dict[type, list[str]] = {
     NiceHeelPortrait: ["dispCondType", "dispCondId", "dispCondNum", "script"],
     NiceShop: [
         "baseShopId",
-        "eventId",
+        # "eventId",
         "detail",
-        "openedAt",
-        "closedAt",
+        # "openedAt",
+        # "closedAt",
         "warningMessage",
         "materialOpenedAt",
     ],
