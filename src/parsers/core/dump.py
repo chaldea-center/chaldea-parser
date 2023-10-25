@@ -39,6 +39,7 @@ from app.schemas.nice import (
     NiceSkill,
     NiceTd,
     NiceTdSvt,
+    NiceVoiceLine,
     NiceWar,
     QuestEnemy,
 )
@@ -239,8 +240,12 @@ class DataEncoder:
             return {"itemId": obj.item.id, "amount": obj.amount}
         elif isinstance(obj, (ExtraAssets, AscensionAdd)):
             obj = obj.dict(exclude_none=True, exclude_defaults=True, exclude=excludes)
-
             _clean_dict_empty(obj)
+        elif isinstance(obj, NiceVoiceLine):
+            if not "".join(obj.text):
+                excludes.add("text")
+            if not [x for x in obj.form if x != 0]:
+                excludes.add("form")
         elif isinstance(obj, NiceQuest):
             if isinstance(obj, NiceQuestPhase):
                 if len(obj.availableEnemyHashes) > 100:
