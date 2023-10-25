@@ -6,7 +6,7 @@ Summon: wiki_data/summons.json + MC data
 """
 import re
 from collections import defaultdict
-from typing import Optional
+from typing import Optional, Type
 from urllib.parse import urlparse
 
 import requests
@@ -16,7 +16,14 @@ from app.schemas.nice import NiceEvent, NiceLoreComment, NiceServant
 from pydantic import parse_file_as
 
 from ..config import PayloadSetting, settings
-from ..schemas.common import CEObtain, MappingStr, Region, SummonType, SvtObtain
+from ..schemas.common import (
+    CEObtain,
+    DataVersion,
+    MappingStr,
+    Region,
+    SummonType,
+    SvtObtain,
+)
 from ..schemas.wiki_data import (
     CommandCodeW,
     CraftEssenceW,
@@ -30,7 +37,7 @@ from ..schemas.wiki_data import (
     WikiTranslation,
 )
 from ..utils import Worker, count_time, discord, dump_json, load_json, logger
-from ..utils.helper import parse_html_xpath, sort_dict
+from ..utils.helper import _KT, parse_html_xpath, sort_dict
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.template import (
     find_tabber,
@@ -203,12 +210,21 @@ class WikiParser:
     def get_svt_obtains(self, methods: str, detail_method: str) -> list[SvtObtain]:
         ...
 
+    @staticmethod
+    def _load_list_from_dist(key: str, _type: Type[_KT]) -> list[_KT]:
+        out: list[_KT] = []
+        versions = parse_file_as(DataVersion, settings.output_dist / "version.json")
+        for file in versions.files.values():
+            if file.key == key:
+                out.extend(
+                    parse_file_as(list[_type], settings.output_dist / file.filename)
+                )
+        return out
+
     def mc_svt(self):
         index_data = _mc_index_data("英灵图鉴/数据")
 
-        prev_data = parse_file_as(
-            list[ServantW], settings.output_wiki / "servants.json"
-        )
+        prev_data = self._load_list_from_dist("wiki.servants", ServantW)
         extra_pages = {v.collectionNo: v.mcLink for v in prev_data if v.mcLink}
         extra_pages |= self.payload.mc_extra_svt
 
@@ -367,9 +383,8 @@ class WikiParser:
         index_data = _mc_index_data("礼装图鉴/数据")
         index_data.update(EXTRA_CAMPAIGN_CE_MC_DATA)
 
-        prev_data = parse_file_as(
-            list[CraftEssenceW], settings.output_wiki / "craftEssences.json"
-        )
+        prev_data = self._load_list_from_dist("wiki.craftEssences", CraftEssenceW)
+
         extra_pages = {v.collectionNo: v.mcLink for v in prev_data if v.mcLink}
         extra_pages |= self.payload.mc_extra_ce
 
@@ -458,9 +473,7 @@ class WikiParser:
     def mc_cc(self):
         index_data = _mc_index_data("指令纹章图鉴/数据")
 
-        prev_data = parse_file_as(
-            list[CommandCodeW], settings.output_wiki / "commandCodes.json"
-        )
+        prev_data = self._load_list_from_dist("wiki.commandCodes", CommandCodeW)
         extra_pages: dict[int, str] = {}
         no_index_ids = [
             cc.collectionNo
@@ -508,7 +521,9 @@ class WikiParser:
 
         worker = Worker.from_map(
             _parse_one,
-            set(self.wiki_data.commandCodes.keys()) | set(index_data.keys()),
+            set(self.wiki_data.commandCodes.keys())
+            | set(index_data.keys())
+            | set(extra_pages.keys()),
             name="mc_cc",
         )
         worker.wait()

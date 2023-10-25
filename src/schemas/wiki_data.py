@@ -266,31 +266,29 @@ class WikiData(BaseModelORJson):
         if full_version:
             dump_json(self.mcTransl, settings.output_wiki / "mcTransl.json")
             dump_json(self.fandomTransl, settings.output_wiki / "fandomTransl.json")
-        else:
-            ...
-        dump_json_beautify(
-            list(self.servants.values()), folder / "servants.json", default=_encoder
-        )
-        dump_json_beautify(
-            list(self.craftEssences.values()),
-            folder / "craftEssences.json",
-            default=_encoder,
-        )
-        dump_json_beautify(
-            list(self.commandCodes.values()),
-            folder / "commandCodes.json",
-            default=_encoder,
-        )
-        dump_json_beautify(
-            list(self.events.values()),
-            folder / "events.json",
-            default=_encoder,
-        )
-        dump_json_beautify(
-            list(self.summons.values()),
-            folder / "summons.json",
-            default=_encoder,
-        )
+            dump_json_beautify(
+                list(self.servants.values()), folder / "servants.json", default=_encoder
+            )
+            dump_json_beautify(
+                list(self.craftEssences.values()),
+                folder / "craftEssences.json",
+                default=_encoder,
+            )
+            dump_json_beautify(
+                list(self.commandCodes.values()),
+                folder / "commandCodes.json",
+                default=_encoder,
+            )
+            dump_json_beautify(
+                list(self.events.values()),
+                folder / "events.json",
+                default=_encoder,
+            )
+            dump_json_beautify(
+                list(self.summons.values()),
+                folder / "summons.json",
+                default=_encoder,
+            )
         dump_json_beautify(
             list(self.wars.values()), folder / "wars.json", default=_encoder
         )
