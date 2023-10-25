@@ -18,6 +18,7 @@ from pydantic import parse_file_as
 from ..config import PayloadSetting, settings
 from ..schemas.common import CEObtain, MappingStr, Region, SummonType, SvtObtain
 from ..schemas.wiki_data import (
+    CommandCodeW,
     CraftEssenceW,
     EventW,
     LimitedSummon,
@@ -211,6 +212,14 @@ class WikiParser:
         extra_pages = {v.collectionNo: v.mcLink for v in prev_data if v.mcLink}
         extra_pages |= self.payload.mc_extra_svt
 
+        no_index_ids = [
+            svt.collectionNo
+            for svt in prev_data
+            if not svt.mcLink and svt.collectionNo not in extra_pages
+        ]
+        if no_index_ids:
+            extra_pages = _mc_smw_card_list("​英灵图鉴", "序号") | extra_pages
+
         def _parse_one(svt_id: int):
             svt_add = self.wiki_data.get_svt(svt_id)
             col_no = svt_add.collectionNo
@@ -364,6 +373,13 @@ class WikiParser:
         extra_pages = {v.collectionNo: v.mcLink for v in prev_data if v.mcLink}
         extra_pages |= self.payload.mc_extra_ce
 
+        no_index_ids = [
+            ce.collectionNo
+            for ce in prev_data
+            if not ce.mcLink and ce.collectionNo not in extra_pages
+        ]
+        if no_index_ids:
+            extra_pages = _mc_smw_card_list("礼装图鉴", "礼装序号") | extra_pages
         region_campaign_ces = set(k for v in ADD_CES.values() for k in v.keys())
 
         def _parse_one(ce_id: int):
@@ -442,12 +458,26 @@ class WikiParser:
     def mc_cc(self):
         index_data = _mc_index_data("指令纹章图鉴/数据")
 
+        prev_data = parse_file_as(
+            list[CommandCodeW], settings.output_wiki / "commandCodes.json"
+        )
+        extra_pages: dict[int, str] = {}
+        no_index_ids = [
+            cc.collectionNo
+            for cc in prev_data
+            if not cc.mcLink and cc.collectionNo not in extra_pages
+        ]
+        if no_index_ids:
+            extra_pages = _mc_smw_card_list("指令纹章图鉴", "纹章序号") | extra_pages
+
         def _parse_one(cc_id: int):
             cc_add = self.wiki_data.get_cc(cc_id)
             record = index_data.get(cc_id)
             if record:
                 cc_add.mcLink = record["name_link"]
 
+            if not cc_add.mcLink and cc_id in extra_pages:
+                cc_add.mcLink = extra_pages[cc_id]
             if not cc_add.mcLink:
                 return
             cc_add.mcLink = MOONCELL.moved_pages.get(cc_add.mcLink) or cc_add.mcLink
@@ -1084,6 +1114,17 @@ def _mc_index_data(page: str) -> dict[int, dict[str, str]]:
         if idx:
             data[idx] = d
     return data
+
+
+def _mc_smw_card_list(category: str, prop: str) -> dict[int, str]:
+    query = f"https://fgo.wiki/w/特殊:询问/format%3Djson/sort%3D{prop}/order%3Ddesc/offset%3D0/limit%3D100/-5B-5B分类:{category}-5D-5D/-3F{prop}/mainlabel%3D/prettyprint%3Dtrue/unescape%3Dtrue/searchlabel%3DJSON"
+    results: dict = requests.get(query).json()["results"]
+    out: dict[int, str] = {}
+    for item in results.values():
+        col_no = int(item["printouts"][prop][0])
+        if col_no < 10000:
+            out[col_no] = item["fulltext"]
+    return out
 
 
 def _gen_summon_key(jp_url: str | None) -> Optional[str]:
