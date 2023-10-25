@@ -317,9 +317,7 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
     for cc_jp in jp_data.nice_command_code:
         cc = data.cc_id_dict.get(cc_jp.id)
         _update_mapping(mappings.cc_names, cc_jp.name, cc.name if cc else None)
-        cc_w = wiki_data.commandCodes.setdefault(
-            cc_jp.collectionNo, CommandCodeW(collectionNo=cc_jp.collectionNo)
-        )
+        cc_w = wiki_data.get_cc(cc_jp.collectionNo)
         cc_w.profile.update(Region.JP, cc_jp.comment)
         if not cc:
             continue

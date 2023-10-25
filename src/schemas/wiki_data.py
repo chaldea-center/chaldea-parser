@@ -259,41 +259,44 @@ class WikiData(BaseModelORJson):
         mms.sort(key=lambda x: x.id)
         self.mms = {mm.id: mm for mm in mms}
 
+    # read: main=True, wiki=False
+    # save: main=False, wiki=True
     def save(self, full_version: bool):
         folder = settings.output_wiki
         if full_version:
-            dump_json_beautify(
-                list(self.servants.values()), folder / "servants.json", default=_encoder
-            )
-            dump_json_beautify(
-                list(self.craftEssences.values()),
-                folder / "craftEssences.json",
-                default=_encoder,
-            )
-            dump_json_beautify(
-                list(self.commandCodes.values()),
-                folder / "commandCodes.json",
-                default=_encoder,
-            )
-            dump_json_beautify(
-                list(self.events.values()),
-                folder / "events.json",
-                default=_encoder,
-            )
-            dump_json_beautify(
-                list(self.summons.values()),
-                folder / "summons.json",
-                default=_encoder,
-            )
             dump_json(self.mcTransl, settings.output_wiki / "mcTransl.json")
             dump_json(self.fandomTransl, settings.output_wiki / "fandomTransl.json")
-            dump_json(
-                [mm.dict(exclude_defaults=True) for mm in self.mms.values()],
-                settings.output_wiki / "mms.json",
-            )
-
+        else:
+            ...
+        dump_json_beautify(
+            list(self.servants.values()), folder / "servants.json", default=_encoder
+        )
+        dump_json_beautify(
+            list(self.craftEssences.values()),
+            folder / "craftEssences.json",
+            default=_encoder,
+        )
+        dump_json_beautify(
+            list(self.commandCodes.values()),
+            folder / "commandCodes.json",
+            default=_encoder,
+        )
+        dump_json_beautify(
+            list(self.events.values()),
+            folder / "events.json",
+            default=_encoder,
+        )
+        dump_json_beautify(
+            list(self.summons.values()),
+            folder / "summons.json",
+            default=_encoder,
+        )
         dump_json_beautify(
             list(self.wars.values()), folder / "wars.json", default=_encoder
+        )
+        dump_json(
+            [mm.dict(exclude_defaults=True) for mm in self.mms.values()],
+            settings.output_wiki / "mms.json",
         )
 
         include_event_keys = set(EventWBase.__fields__.keys())
