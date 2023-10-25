@@ -540,9 +540,20 @@ class WikiParser:
                     else:
                         svt_add.aprilFoolProfile.NA = apex
 
-            images_section = text.get_sections(levels=[2], matches="Images")
-            sprites_text = find_tabber(images_section, "Sprites")
             sprites = []
+            sprites_text = ""
+
+            images_section = FANDOM.get_page_text(f"Sub:{link}/Gallery")
+            sprites_text = str(
+                mwparse(
+                    mwparse(images_section).get_sections(levels=[2], matches="Sprites")
+                )
+            )
+            sprites_text = sprites_text.strip()
+            if not sprites_text:
+                images_section = text.get_sections(levels=[2], matches="Images")
+                sprites_text = find_tabber(images_section, "Sprites")
+
             if sprites_text:
                 for line in sprites_text.split("\n"):
                     cells = [c.strip() for c in line.strip().split("|")]
