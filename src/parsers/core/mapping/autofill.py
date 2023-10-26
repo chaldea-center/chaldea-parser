@@ -21,6 +21,7 @@ def autofill_mapping(mappings: dict[str, Mapping]):
     war_names: Mapping = mappings["war_names"]
     item_names: Mapping = mappings["item_names"]
     buff_names: Mapping = mappings["buff_names"]
+    buff_detail: Mapping = mappings["buff_detail"]
     skill_names: Mapping = mappings["skill_names"]
     skill_detail: Mapping = mappings["skill_detail"]
     event_war: Mapping = event_names | war_names
@@ -136,7 +137,7 @@ def autofill_mapping(mappings: dict[str, Mapping]):
         krepls=[_repl0, _repl0],
     )
     update_k(
-        buff_names,
+        buff_detail,
         pattern=re.compile(r"^『(.+)』において与えるダメージをアップ$"),
         templates={
             "CN": "在『{0}』中造成的伤害提升",

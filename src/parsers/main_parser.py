@@ -805,12 +805,12 @@ class MainParser:
             merge_official_mappings(
                 self.jp_data, self.load_master_data(Region.KR), self.wiki_data
             )
+        self.event_field_trait()
         self._add_enum_mappings()
         self._merge_repo_mapping()
         self.jp_data.mappingData = MappingData.parse_obj(
             autofill_mapping(orjson.loads(self.jp_data.mappingData.json()))
         )
-        self.event_field_trait()
         self._post_mappings()
 
     def _post_mappings(self):
