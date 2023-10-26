@@ -50,7 +50,7 @@ from ...schemas.gamedata import MasterData, NiceBaseSkill, NiceBaseTd, NiceEquip
 
 
 _excluded_fields: dict[type, list[str]] = {
-    NiceBaseSkill: ["detail", "groupOverwrites", "skillSvts"],
+    NiceBaseSkill: ["detail", "groupOverwrites"],
     NiceSkill: [
         "name",
         "originalName",
@@ -68,7 +68,7 @@ _excluded_fields: dict[type, list[str]] = {
         "functions",
         "skillSvts",
     ],
-    NiceBaseTd: ["detail", "npSvts"],
+    NiceBaseTd: ["detail"],
     NiceTd: [
         # "card",
         "name",
