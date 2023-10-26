@@ -1,9 +1,12 @@
+from typing import Any
+
 from app.schemas.base import BaseModelORJson
 from app.schemas.raw import MstMasterMission
 from pydantic import BaseModel, NoneStr
 from pydantic.json import pydantic_encoder
 
 from ..config import settings
+from ..parsers.data import jp_chars
 from ..utils.helper import dump_json, dump_json_beautify, load_json, sort_dict
 from .common import (
     NEVER_CLOSED_TIMESTAMP,
@@ -34,6 +37,7 @@ class WikiTranslation(BaseModelORJson):
     event_names: dict[str, str] = {}
     quest_names: dict[str, str] = {}
     spot_names: dict[str, str] = {}
+
     ce_skill_des: dict[int, str] = {}
     ce_skill_des_max: dict[int, str] = {}
     cc_skill_des: dict[int, str] = {}
@@ -57,6 +61,37 @@ class WikiTranslation(BaseModelORJson):
         self.cc_skill_des = sort_dict(self.cc_skill_des)
         self.costume_names = sort_dict(self.costume_names)
         self.costume_details = sort_dict(self.costume_details)
+
+    def clean_untranslated(self):
+        def _clean(data: dict[Any, str]):
+            keys_to_remove = [k for k, v in data.items() if jp_chars.match(v)]
+            for key in keys_to_remove:
+                data.pop(key)
+
+        str_transls = [
+            self.svt_names,
+            self.skill_names,
+            self.td_names,
+            self.td_ruby,
+            self.ce_names,
+            self.cc_names,
+            self.illustrator_names,
+            self.item_names,
+            self.event_names,
+            self.quest_names,
+            self.spot_names,
+            self.costume_names,
+        ]
+        int_transls = [
+            self.ce_skill_des,
+            self.ce_skill_des_max,
+            self.cc_skill_des,
+            self.costume_details,
+        ]
+        for x in str_transls:
+            _clean(x)
+        for x in int_transls:
+            _clean(x)
 
 
 class BiliVideo(BaseModel):
@@ -254,6 +289,7 @@ class WikiData(BaseModelORJson):
         summons = list(self.summons.values())
         summons.sort(key=lambda summon: summon.startTime.JP or NEVER_CLOSED_TIMESTAMP)
         self.summons = {summon.id: summon for summon in summons}
+        self.mcTransl.clean_untranslated()
         self.mcTransl.sort()
         mms = list(self.mms.values())
         mms.sort(key=lambda x: x.id)

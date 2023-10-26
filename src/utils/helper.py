@@ -30,6 +30,7 @@ from .log import logger
 Model = TypeVar("Model", bound=BaseModel)
 
 _KT = TypeVar("_KT")
+_KV = TypeVar("_KV")
 _NUM_KV = TypeVar("_NUM_KV", bound=Union[int, float])
 
 
@@ -47,7 +48,7 @@ class NumDict(dict, Generic[_KT, _NUM_KV]):
                 self.pop(k)
 
 
-def sort_dict(d: Mapping) -> dict:
+def sort_dict(d: dict[_KT, _KV]) -> dict[_KT, _KV]:
     return dict(sorted(d.items(), key=itemgetter(0)))
 
 
