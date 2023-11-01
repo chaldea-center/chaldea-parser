@@ -144,6 +144,13 @@ EXCLUDE_REWARD_QUESTS = [
     3000540,  # Atlantis section 18
     94040905,  # Battle In NewYork 2019
     94067707,  # Battle In NewYork 2022 > 2019 rerun story
+    94087053,
+    94087054,
+    94087055,
+    94087056,
+    94087057,
+    94087058,
+    94087059,  # 【聖杯戦線 ～白天の城、黒夜の城～】night war bard
 ]
 
 FREE_EXCHANGE_SVT_EVENTS = [

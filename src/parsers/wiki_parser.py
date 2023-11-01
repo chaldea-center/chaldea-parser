@@ -234,7 +234,8 @@ class WikiParser:
             if not svt.mcLink and svt.collectionNo not in extra_pages
         ]
         if no_index_ids:
-            extra_pages = _mc_smw_card_list("​英灵图鉴", "序号") | extra_pages
+            logger.info(f'svt not in index: {no_index_ids}')
+            # extra_pages = _mc_smw_card_list("​英灵图鉴", "序号") | extra_pages
 
         def _parse_one(svt_id: int):
             svt_add = self.wiki_data.get_svt(svt_id)
@@ -394,7 +395,8 @@ class WikiParser:
             if not ce.mcLink and ce.collectionNo not in extra_pages
         ]
         if no_index_ids:
-            extra_pages = _mc_smw_card_list("礼装图鉴", "礼装序号") | extra_pages
+            logger.info(f'ce not in index: {no_index_ids}')
+            # extra_pages = _mc_smw_card_list("礼装图鉴", "礼装序号") | extra_pages
         region_campaign_ces = set(k for v in ADD_CES.values() for k in v.keys())
 
         def _parse_one(ce_id: int):
@@ -481,7 +483,8 @@ class WikiParser:
             if not cc.mcLink and cc.collectionNo not in extra_pages
         ]
         if no_index_ids:
-            extra_pages = _mc_smw_card_list("指令纹章图鉴", "纹章序号") | extra_pages
+            logger.info(f'cc not in index: {no_index_ids}')
+            # extra_pages = _mc_smw_card_list("指令纹章图鉴", "纹章序号") | extra_pages
 
         def _parse_one(cc_id: int):
             cc_add = self.wiki_data.get_cc(cc_id)
