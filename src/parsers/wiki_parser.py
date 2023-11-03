@@ -238,7 +238,7 @@ class WikiParser:
         ]
         if no_index_ids:
             logger.info(f"svt not in index: {no_index_ids}")
-            # extra_pages = _mc_smw_card_list("​英灵图鉴", "序号") | extra_pages
+            extra_pages = _mc_smw_card_list("​英灵图鉴", "序号") | extra_pages
 
         def _parse_one(svt_id: int):
             svt_add = self.wiki_data.get_svt(svt_id)
@@ -402,7 +402,7 @@ class WikiParser:
         ]
         if no_index_ids:
             logger.info(f"ce not in index: {no_index_ids}")
-            # extra_pages = _mc_smw_card_list("礼装图鉴", "礼装序号") | extra_pages
+            extra_pages = _mc_smw_card_list("礼装图鉴", "礼装序号") | extra_pages
         region_campaign_ces = set(k for v in ADD_CES.values() for k in v.keys())
 
         def _parse_one(ce_id: int):
@@ -491,7 +491,7 @@ class WikiParser:
         extra_pages |= {k: v["name_link"] for k, v in index_data.items()}
         if no_index_ids:
             logger.info(f"cc not in index: {no_index_ids}")
-            # extra_pages = _mc_smw_card_list("指令纹章图鉴", "纹章序号") | extra_pages
+            extra_pages = _mc_smw_card_list("指令纹章图鉴", "纹章序号") | extra_pages
 
         def _parse_one(cc_id: int):
             cc_add = self.wiki_data.get_cc(cc_id)
@@ -1135,15 +1135,17 @@ def _mc_index_data(page: str) -> dict[int, dict[str, str]]:
         for row in block.split("\n"):
             key, value = row.split("=", 1)
             value = value.strip()
-            if value:
-                d[key] = value.strip()
+            # if value:
+            d[key] = value
         idx = parse_int(d["id"])
-        if idx:
+        if idx and d.get("name_link"):
             data[idx] = d
     return data
 
 
 def _mc_smw_card_list(category: str, prop: str) -> dict[int, str]:
+    if 2 > 1:
+        return {}
     query = f"https://fgo.wiki/w/特殊:询问/format%3Djson/sort%3D{prop}/order%3Ddesc/offset%3D0/limit%3D100/-5B-5B分类:{category}-5D-5D/-3F{prop}/mainlabel%3D/prettyprint%3Dtrue/unescape%3Dtrue/searchlabel%3DJSON"
     results: dict = requests.get(query).json()["results"]
     out: dict[int, str] = {}
