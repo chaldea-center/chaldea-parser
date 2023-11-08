@@ -398,7 +398,9 @@ class WikiParser:
         no_index_ids = [
             ce.collectionNo
             for ce in prev_data
-            if not ce.mcLink and ce.collectionNo not in extra_pages
+            if not ce.mcLink
+            and ce.collectionNo not in extra_pages
+            and ce.collectionNo < 10000
         ]
         if no_index_ids:
             logger.info(f"ce not in index: {no_index_ids}")

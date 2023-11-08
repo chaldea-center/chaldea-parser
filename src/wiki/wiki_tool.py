@@ -493,9 +493,9 @@ class WikiTool:
                 "format": "json",
                 "list": "logevents",
                 "utf8": 1,
-                "lestart": datetime.fromtimestamp(last_timestamp).isoformat(),
+                "leend": datetime.fromtimestamp(last_timestamp).isoformat(),
                 "letype": letype,
-                "ledir": "newer",
+                "ledir": "older",
                 "lenamespace": "0",
                 "lelimit": "max",
             }
@@ -512,9 +512,10 @@ class WikiTool:
                     letype == "move"
                     and event["ns"] == event["params"]["target_ns"] == 0
                 ):
-                    self.moved_pages[self.norm_key(title)] = self.norm_key(
-                        event["params"]["target_title"]
-                    )
+                    src = self.norm_key(title)
+                    dest = self.norm_key(event["params"]["target_title"])
+                    if dest not in self.moved_pages:
+                        self.moved_pages[src] = dest
 
     def save_cache(self):
         logger.debug(
