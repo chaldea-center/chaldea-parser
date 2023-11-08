@@ -16,6 +16,7 @@ from pydantic import parse_file_as, parse_obj_as
 from scripts._dir import MAPPINGS_DIR, PROJECT_ROOT, WIKI_DIR
 from scripts._gs import get_worksheet
 from src.utils.helper import dump_json, dump_json_beautify
+from src.schemas.mappings import EnumMapping
 
 
 #%%
@@ -63,6 +64,7 @@ class Region(StrEnum):
 
 # %%
 MAPPING_FILES = [
+    "enums",
     "bgm_names",
     "buff_detail",
     "buff_names",
@@ -188,6 +190,8 @@ def upload_mapping(name: str):
         for v in event_traits.values():
             del v["eventId"]
         local_data = parse_obj_as(Mapping[Region], event_traits)
+    elif name == "enums":
+        local_data:Mapping[Region] =parse_enums(fp)
     else:
         local_data = parse_file_as(Mapping[Region], fp)
 
@@ -206,12 +210,28 @@ def upload_mapping(name: str):
         # print(f"          {name}: no change, skip uploading")
         pass
     else:
-        Path(f"temp/a.{name}.1.txt").write_text(
-            "\n".join([str(x) for x in remote_table])
-        )
-        Path(f"temp/a.{name}.2.txt").write_text("\n".join([str(x) for x in cells]))
+        # Path(f"temp/a.{name}.1.txt").write_text(
+        #     "\n".join([str(x) for x in remote_table])
+        # )
+        # Path(f"temp/a.{name}.2.txt").write_text("\n".join([str(x) for x in cells]))
         print(f"  !!! UPDATED {name}")
         sh.update(cells)
+
+def parse_enums(fp:str|Path)->Mapping:
+    enums = parse_file_as(dict[str,Mapping[str]],fp)
+    data:Mapping[str] = {}
+    for enum_type, d in enums.items():
+        for k,v in d.items():
+            data[f'{enum_type}.{k}']=v
+    return data
+
+def dump_enums(data:Mapping[str], fp:str|Path):
+    enums:dict[str,Mapping[str]]={}
+    for k,v in data.items():
+        a,b =k.split('.')
+        assert a and b, k
+        enums.setdefault(a, {})[b]=v
+    dump_json(parse_obj_as(EnumMapping, enums), fp)
 
 
 def download_mapping(name: str):
@@ -219,11 +239,15 @@ def download_mapping(name: str):
     fp = MAPPINGS_DIR / f"{name}.json"
     sh = get_worksheet(name)
     remote_data = sheet2json(sh.get_values(), str)
-    parse_obj_as(Mapping[Region], remote_data)  # validate
-    local_data = parse_file_as(Mapping[str], fp)
-
-    merged = merge_dict(local_data, remote_data, force=True)
-    dump_json(merged, fp)
+    parse_obj_as(Mapping[str], remote_data)  # validate
+    if name == 'enums':
+        local_data:Mapping[str] =parse_enums(fp)
+        merged = merge_dict(local_data, remote_data, force=True)
+        dump_enums(merged,fp)
+    else:
+        local_data = parse_file_as(Mapping[str], fp)
+        merged = merge_dict(local_data, remote_data, force=True)
+        dump_json(merged, fp)
 
 
 def extra_summon_names():
