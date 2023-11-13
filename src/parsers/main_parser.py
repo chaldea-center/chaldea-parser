@@ -36,6 +36,7 @@ from ..schemas.common import (
     MstQuestGroup,
     MstViewEnemy,
 )
+from ..schemas.data import ADD_CES, CN_REPLACE, MIN_APP
 from ..schemas.drop_data import DomusAureaData
 from ..schemas.gamedata import (
     MappingData,
@@ -76,7 +77,6 @@ from .core.mapping.official import (
 from .core.mapping.wiki import merge_atlas_na_mapping, merge_wiki_translation
 from .core.quest import parse_quest_drops
 from .core.ticket import parse_exchange_tickets
-from .data import ADD_CES, CN_REPLACE, MIN_APP
 from .domus_aurea import run_drop_rate_update
 from .helper import get_all_func_val
 from .update_mapping import run_mapping_update

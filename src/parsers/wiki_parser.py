@@ -24,6 +24,7 @@ from ..schemas.common import (
     SummonType,
     SvtObtain,
 )
+from ..schemas.data import ADD_CES, EXTRA_CAMPAIGN_CE_MC_DATA, jp_chars
 from ..schemas.wiki_data import (
     CommandCodeW,
     CraftEssenceW,
@@ -48,7 +49,6 @@ from ..wiki.template import (
 )
 from ..wiki.wiki_tool import KnownTimeZone
 from .core.aa_export import update_exported_files
-from .data import ADD_CES, EXTRA_CAMPAIGN_CE_MC_DATA, jp_chars
 from .wiki import replace_banner_url
 
 

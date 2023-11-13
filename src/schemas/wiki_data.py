@@ -6,7 +6,6 @@ from pydantic import BaseModel, NoneStr
 from pydantic.json import pydantic_encoder
 
 from ..config import settings
-from ..parsers.data import jp_chars
 from ..utils.helper import dump_json, dump_json_beautify, load_json, sort_dict
 from .common import (
     NEVER_CLOSED_TIMESTAMP,
@@ -17,6 +16,7 @@ from .common import (
     SummonType,
     SvtObtain,
 )
+from .data import jp_chars
 
 
 class WikiTranslation(BaseModelORJson):

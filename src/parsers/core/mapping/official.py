@@ -13,10 +13,10 @@ from app.schemas.gameenums import (
 from app.schemas.nice import AscensionAddEntryStr, NiceLoreComment, NiceServant
 
 from ....schemas.common import NEVER_CLOSED_TIMESTAMP, MappingBase, MappingStr
+from ....schemas.data import CN_REPLACE, STORY_UPGRADE_QUESTS, jp_chars
 from ....schemas.gamedata import MasterData
 from ....schemas.wiki_data import CommandCodeW, WikiData
 from ....utils import logger
-from ...data import CN_REPLACE, STORY_UPGRADE_QUESTS, jp_chars
 from .common import _KT, _KV, process_skill_detail, update_key_mapping
 
 

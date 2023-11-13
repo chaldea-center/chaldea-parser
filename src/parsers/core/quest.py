@@ -12,13 +12,13 @@ from app.schemas.nice import NiceQuest
 
 from ...config import PayloadSetting, settings
 from ...schemas.common import NEVER_CLOSED_TIMESTAMP
+from ...schemas.data import RANDOM_ENEMY_QUESTS
 from ...schemas.drop_data import DropData, QuestDropData
 from ...schemas.gamedata import MasterData
 from ...utils import SECS_PER_DAY, AtlasApi
 from ...utils.helper import sort_dict
 from ...utils.log import logger
 from ...utils.worker import Worker
-from ..data import RANDOM_ENEMY_QUESTS
 from ..helper import is_quest_in_expired_wars
 
 

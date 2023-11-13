@@ -6,16 +6,16 @@ from app.schemas.raw import MstBuffTypeDetail, MstFuncTypeDetail, MstSvtExp
 from pydantic import parse_obj_as
 
 from ...schemas.const_data import ConstGameData, SvtExpCurve
-from ...schemas.gamedata import MasterData
-from ...utils.helper import sort_dict
-from ...utils.url import DownUrl
-from ..data import (
+from ...schemas.data import (
     EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP,
     EXCLUDE_REWARD_QUESTS,
     FREE_EXCHANGE_SVT_EVENTS,
     LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
     RANDOM_ENEMY_QUESTS,
 )
+from ...schemas.gamedata import MasterData
+from ...utils.helper import sort_dict
+from ...utils.url import DownUrl
 
 
 def get_const_data(data: MasterData):
