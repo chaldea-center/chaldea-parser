@@ -15,8 +15,8 @@ from pydantic import parse_file_as, parse_obj_as
 
 from scripts._dir import MAPPINGS_DIR, PROJECT_ROOT, WIKI_DIR
 from scripts._gs import get_worksheet
-from src.utils.helper import dump_json, dump_json_beautify
 from src.schemas.mappings import EnumMapping
+from src.utils.helper import dump_json, dump_json_beautify
 
 
 #%%
@@ -108,6 +108,8 @@ def merge_dict(d1: Mapping[_KT], d2: Mapping[_KT], force=False):
         for kk, vv in v.items():
             if not vv:
                 continue
+            # if kk != "NA":
+            #     continue
             if force:
                 t[kk] = vv
             else:
@@ -151,7 +153,7 @@ def upload_l10n():
             if v is not None:
                 local_data[k][lang] = v
 
-    remote_data = sheet2json(sh.get_values(), ArbLang)
+    remote_data = sheet2json(sh.get_values(), ArbLang.__call__)
     unused_keys = set(remote_data.keys()).difference(local_data.keys())
     if unused_keys:
         print("  unused remote keys:", unused_keys)
@@ -168,7 +170,7 @@ def upload_l10n():
 def download_l10n():
     print("downloading l10n...")
     sh = get_worksheet("l10n")
-    remote_data = sheet2json(sh.get_values(), ArbLang)
+    remote_data = sheet2json(sh.get_values(), ArbLang.__call__)
 
     for lang in ArbLang:
         data = lang.read()
@@ -184,14 +186,14 @@ def upload_mapping(name: str):
     fp = MAPPINGS_DIR / f"{name}.json"
     sh = get_worksheet(name)
     remote_table = sh.get_values()
-    remote_data = sheet2json(remote_table, Region)
+    remote_data = sheet2json(remote_table, Region.__call__)
     if name == "event_trait":
         event_traits = parse_file_as(Mapping[str], fp)
         for v in event_traits.values():
             del v["eventId"]
         local_data = parse_obj_as(Mapping[Region], event_traits)
     elif name == "enums":
-        local_data:Mapping[Region] =parse_enums(fp)
+        local_data: Mapping[Region] = parse_enums(fp)
     else:
         local_data = parse_file_as(Mapping[Region], fp)
 
@@ -217,20 +219,22 @@ def upload_mapping(name: str):
         print(f"  !!! UPDATED {name}")
         sh.update(cells)
 
-def parse_enums(fp:str|Path)->Mapping:
-    enums = parse_file_as(dict[str,Mapping[str]],fp)
-    data:Mapping[str] = {}
+
+def parse_enums(fp: str | Path) -> Mapping:
+    enums = parse_file_as(dict[str, Mapping[str]], fp)
+    data: Mapping[str] = {}
     for enum_type, d in enums.items():
-        for k,v in d.items():
-            data[f'{enum_type}.{k}']=v
+        for k, v in d.items():
+            data[f"{enum_type}.{k}"] = v
     return data
 
-def dump_enums(data:Mapping[str], fp:str|Path):
-    enums:dict[str,Mapping[str]]={}
-    for k,v in data.items():
-        a,b =k.split('.')
+
+def dump_enums(data: Mapping[str], fp: str | Path):
+    enums: dict[str, Mapping[str]] = {}
+    for k, v in data.items():
+        a, b = k.split(".")
         assert a and b, k
-        enums.setdefault(a, {})[b]=v
+        enums.setdefault(a, {})[b] = v
     dump_json(parse_obj_as(EnumMapping, enums), fp)
 
 
@@ -240,49 +244,22 @@ def download_mapping(name: str):
     sh = get_worksheet(name)
     remote_data = sheet2json(sh.get_values(), str)
     parse_obj_as(Mapping[str], remote_data)  # validate
-    if name == 'enums':
-        local_data:Mapping[str] =parse_enums(fp)
+    if name == "enums":
+        local_data: Mapping[str] = parse_enums(fp)
         merged = merge_dict(local_data, remote_data, force=True)
-        dump_enums(merged,fp)
+        dump_enums(merged, fp)
     else:
         local_data = parse_file_as(Mapping[str], fp)
         merged = merge_dict(local_data, remote_data, force=True)
         dump_json(merged, fp)
 
 
-def extra_summon_names():
-    summons = parse_file_as(list[dict], WIKI_DIR / "summonsBase.json")
-    summon_names = {}
-    for summon in summons:
-        if summon["name"]:
-            summon_names[summon["id"]] = summon["name"]
-    dump_json(summon_names, MAPPINGS_DIR / "summon_names.json")
-
-
-def restore_summon_names():
-    summons = parse_file_as(list[dict], WIKI_DIR / "summonsBase.json")
-    summon_names = parse_file_as(Mapping[str], MAPPINGS_DIR / "summon_names.json")
-    for summon in summons:
-        transl = summon_names.get(summon["id"])
-        if not transl:
-            continue
-        summon["name"] = {k: v for k, v in transl.items() if v}
-    dump_json_beautify(summons, WIKI_DIR / "summonsBase.json")
-
-
 def upload_all_mappings():
-    extra_summon_names()
-    upload_mapping("summon_names")
-    (MAPPINGS_DIR / "summon_names.json").unlink()
     for name in MAPPING_FILES:
         upload_mapping(name)
 
 
 def download_all_mappings():
-    extra_summon_names()
-    download_mapping("summon_names")
-    restore_summon_names()
-    (MAPPINGS_DIR / "summon_names.json").unlink()
     for name in MAPPING_FILES:
         download_mapping(name)
 
