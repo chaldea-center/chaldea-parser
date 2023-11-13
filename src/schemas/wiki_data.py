@@ -43,6 +43,7 @@ class WikiTranslation(BaseModelORJson):
     cc_skill_des: dict[int, str] = {}
     costume_names: dict[str, str] = {}
     costume_details: dict[int, str] = {}
+    summon_names: dict[str, str] = {}
 
     def sort(self):
         self.svt_names = sort_dict(self.svt_names)
@@ -61,6 +62,7 @@ class WikiTranslation(BaseModelORJson):
         self.cc_skill_des = sort_dict(self.cc_skill_des)
         self.costume_names = sort_dict(self.costume_names)
         self.costume_details = sort_dict(self.costume_details)
+        self.summon_names = sort_dict(self.summon_names)
 
     def clean_untranslated(self):
         def _clean(data: dict[Any, str]):
@@ -212,6 +214,7 @@ class LimitedSummonBase(BaseModel):
 
 
 class LimitedSummon(LimitedSummonBase):
+    name_: str | None = None
     type: SummonType = SummonType.unknown
     rollCount: int = 11  # 11 or 10
     subSummons: list[SubSummon] = []

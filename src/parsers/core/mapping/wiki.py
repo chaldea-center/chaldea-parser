@@ -24,6 +24,8 @@ def merge_wiki_translation(
         m: dict[_KT, MappingBase[_KV]],
         _key: _KT,
         value: _KV | None,
+        /,
+        _region: Region | None = None,
     ):
         if value is None:
             return
@@ -32,7 +34,7 @@ def merge_wiki_translation(
         if re.findall(r"20[1-2][0-9]", str(value)) and m.get(_key, MappingBase()).CN:
             return
         return update_key_mapping(
-            region,
+            _region or region,
             key_mapping=m,
             _key=_key,
             value=value,
@@ -70,6 +72,8 @@ def merge_wiki_translation(
         _update_mapping(mappings.costume_names, name_jp, name_cn)
     for collection, name_cn in transl.costume_details.items():
         _update_mapping(mappings.costume_detail, collection, name_cn)
+    for name_jp, name_cn in transl.summon_names.items():
+        _update_mapping(mappings.summon_names, name_jp, name_cn)
 
     # ce/cc skill des
     for ce in jp_data.nice_equip_lore:

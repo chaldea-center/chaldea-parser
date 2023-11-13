@@ -915,8 +915,15 @@ class WikiParser:
                 )
             added_summons[key] = title
 
-            summon = self.wiki_data.summons.setdefault(key, LimitedSummon(id=key))
+            name_cn = params.get2("卡池名jp")
+            name_jp = params.get2("卡池名ha") or params.get2("卡池名cn") or title
+            summon = self.wiki_data.summons.setdefault(
+                key, LimitedSummon(id=key, name_=name_jp)
+            )
             summon.mcLink = title
+            summon.name_ = name_jp
+            if name_cn:
+                self.mc_transl.summon_names[name_jp] = name_cn
             summon.name.JP = params.get2("卡池名jp")
             summon.name.CN = params.get2("卡池名ha") or params.get2("卡池名cn") or title
             summon.startTime.JP = MOONCELL.get_timestamp(

@@ -180,6 +180,7 @@ class MappingData(BaseModel):
     td_ruby: dict[str, MappingStr] = {}
     td_detail: dict[str, MappingStr] = {}
     voice_line_names: dict[str, MappingStr] = {}
+    summon_names: dict[str, MappingStr] = {}  # key=summon key
 
     trait: dict[int, MappingStr] = {}  # trait.id
     # trait_redirect: dict[int, int] = {}  # event_trait -> normal trait
