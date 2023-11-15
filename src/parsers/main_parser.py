@@ -36,7 +36,7 @@ from ..schemas.common import (
     MstQuestGroup,
     MstViewEnemy,
 )
-from ..schemas.data import ADD_CES, CN_REPLACE, MIN_APP
+from ..schemas.data import ADD_CES, MIN_APP
 from ..schemas.drop_data import DomusAureaData
 from ..schemas.gamedata import (
     MappingData,
@@ -834,7 +834,6 @@ class MainParser:
             mappings.trait.pop(key, None)
         for key in mappings.field_trait.keys():
             mappings.trait.pop(key, None)
-        mappings.cn_replace = dict(CN_REPLACE)
 
     def _add_enum_mappings(self):
         mappings = self.jp_data.mappingData

@@ -75,6 +75,7 @@ class SvtExpCurve(BaseModel):
 
 
 class ConstGameData(BaseModel):
+    cnReplace: dict[str, str]
     attributeRelation: dict[Attribute, dict[Attribute, int]]
     buffActions: dict[NiceBuffAction, BuffActionDetail]
     classInfo: dict[int, MstClass]

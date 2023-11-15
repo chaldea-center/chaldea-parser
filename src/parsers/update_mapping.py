@@ -44,7 +44,6 @@ def run_mapping_update(mappings: MappingData | None = None):
             # they won't be changed by atlas parser
             trans = load_json(fp) or {}
         if key not in (
-            "cn_replace",
             "enums",
             "misc",
             "override_mappings",

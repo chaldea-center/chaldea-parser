@@ -7,6 +7,7 @@ from pydantic import parse_obj_as
 
 from ...schemas.const_data import ConstGameData, SvtExpCurve
 from ...schemas.data import (
+    CN_REPLACE,
     EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP,
     EXCLUDE_REWARD_QUESTS,
     FREE_EXCHANGE_SVT_EVENTS,
@@ -50,6 +51,7 @@ def get_const_data(data: MasterData):
     )
 
     return ConstGameData(
+        cnReplace=dict(CN_REPLACE),
         attributeRelation=data.NiceAttributeRelation,
         buffActions=data.NiceBuffList_ActionList,
         cardInfo=data.NiceCard,

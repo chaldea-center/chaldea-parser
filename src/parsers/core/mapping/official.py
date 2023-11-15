@@ -508,7 +508,6 @@ def fix_cn_transl_svt_class(data: dict, patterns: list[str]):
                 v = replace_cls(v, cls_cn)
             obj["CN"] = v
         for k, v in obj.items():
-            if k != "cn_replace":
-                _iter(v)
+            _iter(v)
 
     _iter(data)

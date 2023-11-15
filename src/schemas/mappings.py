@@ -183,7 +183,6 @@ class MappingData(BaseModel):
     summon_names: dict[str, MappingStr] = {}  # key=summon key
 
     trait: dict[int, MappingStr] = {}  # trait.id
-    # trait_redirect: dict[int, int] = {}  # event_trait -> normal trait
     event_trait: dict[int, EventTrait] = {}
     field_trait: dict[int, FieldTrait] = {}
 
@@ -207,4 +206,3 @@ class MappingData(BaseModel):
 
     enums: EnumMapping = EnumMapping()
     misc: dict[str, dict[str, MappingStr]] = {}
-    cn_replace: dict[str, str] = {}
