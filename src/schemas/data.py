@@ -144,6 +144,7 @@ EXCLUDE_REWARD_QUESTS = [
     3000540,  # Atlantis section 18
     94040905,  # Battle In NewYork 2019
     94067707,  # Battle In NewYork 2022 > 2019 rerun story
+    94077706,  # カルデア妖精騎士杯
     94087053,
     94087054,
     94087055,
