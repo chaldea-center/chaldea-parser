@@ -146,6 +146,7 @@ class CEObtain(StrEnum):
 
     @staticmethod
     def from_cn2(s: str) -> "CEObtain":
+        s = s.split(';;')[0]
         s = s.strip()
         if not s:
             return CEObtain.unknown
