@@ -285,6 +285,12 @@ class WikiData(BaseModelORJson):
         self.servants = sort_dict(self.servants)
         self.craftEssences = sort_dict(self.craftEssences)
         self.commandCodes = sort_dict(self.commandCodes)
+        for ce in self.craftEssences.values():
+            ce.characters.sort()
+            ce.unknownCharacters.sort()
+        for cc in self.commandCodes.values():
+            cc.characters.sort()
+            cc.unknownCharacters.sort()
         events = list(self.events.values())
         events.sort(key=lambda event: event.id)
         self.events = {event.id: event for event in events}
