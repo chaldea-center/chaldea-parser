@@ -540,10 +540,12 @@ class WikiParser:
         )
         worker.wait()
 
-    def _parse_chara(self, charas: str) -> tuple[list[int], list[str]]:
+    def _parse_chara(
+        self, charas: str, sep: str = ";;", add_unknown=True
+    ) -> tuple[list[int], list[str]]:
         known: list[int] = []
         unknown: list[str] = []
-        for chara in charas.split(";;"):
+        for chara in charas.split(sep):
             if "{{{" in chara:
                 match = re.search(r"\{\{\{([^|{}]+)(?:\|([^|{}]*))?\}\}\}", chara)
                 if match:
@@ -551,6 +553,8 @@ class WikiParser:
                 else:
                     raise Exception(f"chara not match template format: '{chara}'")
             chara = chara.strip()
+            if not chara:
+                continue
             if chara in self._chara_cache:
                 known.append(self._chara_cache[chara])
             else:
@@ -562,7 +566,8 @@ class WikiParser:
                     known.append(svt_no)
                 else:
                     unknown.append(chara)
-                    self.unknown_chara_mapping.setdefault(chara, MappingStr())
+                    if add_unknown:
+                        self.unknown_chara_mapping.setdefault(chara, MappingStr())
         return known, unknown
 
     def fandom_svt(self):
@@ -898,6 +903,7 @@ class WikiParser:
             return instance
 
         added_summons: dict[str, str] = {}
+        unknown_cards: set[str] = set()
 
         def _parse_one(title: str):
             wikitext = mwparse(MOONCELL.get_page_text(title))
@@ -945,6 +951,16 @@ class WikiParser:
             summon.noticeLink.JP = params.get("卡池官网链接jp")
             summon.noticeLink.CN = params.get("卡池官网链接cn")
 
+            known_svt, unknown_svt = self._parse_chara(
+                params.get2("推荐召唤从者") or "", ",", False
+            )
+            known_ce, unknown_ce = self._parse_chara(
+                params.get2("推荐召唤礼装") or "", ",", False
+            )
+            unknown_cards.add(f"{title}: " + ", ".join(unknown_svt + unknown_ce))
+            summon.puSvt = sorted(known_svt)
+            summon.puCE = sorted(known_ce)
+
             simulator_page = MOONCELL.get_page_text(f"{title}/模拟器")
             sim_params = parse_template(simulator_page, r"^{{抽卡模拟器")
             ssr_str = sim_params.get2("福袋")
@@ -972,6 +988,8 @@ class WikiParser:
         for title in sorted(titles):
             worker.add(_parse_one, title)
         worker.wait()
+        if unknown_cards:
+            discord.mc("Unknown PickUp Card", "\n".join(sorted(unknown_cards)))
 
     def mc_extra(self):
         costume_page = MOONCELL.get_page_text("灵衣一览")

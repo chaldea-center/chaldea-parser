@@ -211,6 +211,8 @@ class LimitedSummonBase(BaseModel):
     noticeLink: MappingStr = MappingStr()  # cn&tw: number
     startTime: MappingInt = MappingInt()
     endTime: MappingInt = MappingInt()
+    puSvt: list[int] = []
+    puCE: list[int] = []
 
 
 class LimitedSummon(LimitedSummonBase):
