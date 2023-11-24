@@ -239,7 +239,7 @@ class WikiParser:
         ]
         if no_index_ids:
             logger.info(f"svt not in index: {no_index_ids}")
-            extra_pages = _mc_smw_card_list("​英灵图鉴", "序号") | extra_pages
+            extra_pages = _mc_smw_card_list("英灵图鉴", "序号") | extra_pages
 
         def _parse_one(svt_id: int):
             svt_add = self.wiki_data.get_svt(svt_id)
@@ -1198,10 +1198,15 @@ def _mc_index_data(page: str) -> dict[int, dict[str, str]]:
 
 
 def _mc_smw_card_list(category: str, prop: str) -> dict[int, str]:
-    if 2 > 1:
-        return {}
     query = f"https://fgo.wiki/w/特殊:询问/format%3Djson/sort%3D{prop}/order%3Ddesc/offset%3D0/limit%3D100/-5B-5B分类:{category}-5D-5D/-3F{prop}/mainlabel%3D/prettyprint%3Dtrue/unescape%3Dtrue/searchlabel%3DJSON"
-    results: dict = requests.get(query).json()["results"]
+    print(query)
+    try:
+        resp = requests.get(query)
+        assert resp.status_code == 200, (resp, resp.text)
+    except:
+        logger.exception(f"smw failed; {category}  {prop}")
+        return {}
+    results: dict = resp.json()["results"]
     out: dict[int, str] = {}
     for item in results.values():
         col_no = int(item["printouts"][prop][0])
