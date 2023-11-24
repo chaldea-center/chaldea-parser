@@ -211,14 +211,14 @@ class LimitedSummonBase(BaseModel):
     noticeLink: MappingStr = MappingStr()  # cn&tw: number
     startTime: MappingInt = MappingInt()
     endTime: MappingInt = MappingInt()
-    puSvt: list[int] = []
-    puCE: list[int] = []
 
 
 class LimitedSummon(LimitedSummonBase):
     name_: str | None = None
     type: SummonType = SummonType.unknown
     rollCount: int = 11  # 11 or 10
+    puSvt: list[int] = []
+    puCE: list[int] = []
     subSummons: list[SubSummon] = []
 
 
