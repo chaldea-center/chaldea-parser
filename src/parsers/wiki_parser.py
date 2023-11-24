@@ -83,7 +83,8 @@ class WikiParser:
     def __init__(self):
         self.wiki_data: WikiData = WikiData()
         self.unknown_chara_mapping: dict[str, MappingStr] = {}
-        self._chara_cache: dict[str, int] = {}
+        self._svt_id_cache: dict[str, int] = {}
+        self._ce_id_cache: dict[str, int] = {}
         self._mc = _WikiTemp(Region.CN)
         self._fandom = _WikiTemp(Region.NA)
         self._jp = _WikiTemp(Region.JP)
@@ -540,12 +541,10 @@ class WikiParser:
         )
         worker.wait()
 
-    def _parse_chara(
-        self, charas: str, sep: str = ";;", add_unknown=True
-    ) -> tuple[list[int], list[str]]:
+    def _parse_chara(self, charas: str) -> tuple[list[int], list[str]]:
         known: list[int] = []
         unknown: list[str] = []
-        for chara in charas.split(sep):
+        for chara in charas.split(";;"):
             if "{{{" in chara:
                 match = re.search(r"\{\{\{([^|{}]+)(?:\|([^|{}]*))?\}\}\}", chara)
                 if match:
@@ -555,19 +554,51 @@ class WikiParser:
             chara = chara.strip()
             if not chara:
                 continue
-            if chara in self._chara_cache:
-                known.append(self._chara_cache[chara])
+            if chara in self._svt_id_cache:
+                known.append(self._svt_id_cache[chara])
             else:
                 svt_text = MOONCELL.get_page_text(chara)
                 param_svt = parse_template(svt_text, r"^{{基础数值")
                 svt_no = param_svt.get_cast("序号", cast=int)
                 if svt_no:
-                    self._chara_cache[chara] = svt_no
+                    self._svt_id_cache[chara] = svt_no
                     known.append(svt_no)
                 else:
                     unknown.append(chara)
-                    if add_unknown:
-                        self.unknown_chara_mapping.setdefault(chara, MappingStr())
+                    self.unknown_chara_mapping.setdefault(chara, MappingStr())
+        return known, unknown
+
+    def _parse_cards(self, charas: str | None, is_svt: bool):
+        known: list[int] = []
+        unknown: list[str] = []
+        if not charas:
+            return known, unknown
+        cache = self._svt_id_cache if is_svt else self._ce_id_cache
+        for chara in charas.split(","):
+            if "{{{" in chara:
+                match = re.search(r"\{\{\{([^|{}]+)(?:\|([^|{}]*))?\}\}\}", chara)
+                if match:
+                    chara = match.group(2) or match.group(1)
+                else:
+                    raise Exception(f"chara not match template format: '{chara}'")
+            chara = chara.strip()
+            if not chara:
+                continue
+            if chara in cache:
+                known.append(cache[chara])
+            else:
+                page_text = MOONCELL.get_page_text(chara)
+                if is_svt:
+                    param_svt = parse_template(page_text, r"^{{基础数值")
+                    card_id = param_svt.get_cast("序号", cast=int)
+                else:
+                    param_svt = parse_template(page_text, r"^{{概念礼装")
+                    card_id = param_svt.get_cast("礼装id", cast=int)
+                if card_id:
+                    cache[chara] = card_id
+                    known.append(card_id)
+                else:
+                    unknown.append(chara)
         return known, unknown
 
     def fandom_svt(self):
@@ -951,12 +982,8 @@ class WikiParser:
             summon.noticeLink.JP = params.get("卡池官网链接jp")
             summon.noticeLink.CN = params.get("卡池官网链接cn")
 
-            known_svt, unknown_svt = self._parse_chara(
-                params.get2("推荐召唤从者") or "", ",", False
-            )
-            known_ce, unknown_ce = self._parse_chara(
-                params.get2("推荐召唤礼装") or "", ",", False
-            )
+            known_svt, unknown_svt = self._parse_cards(params.get2("推荐召唤从者"), True)
+            known_ce, unknown_ce = self._parse_cards(params.get2("推荐召唤礼装"), False)
             unknown_cards.add(f"{title}: " + ", ".join(unknown_svt + unknown_ce))
             summon.puSvt = sorted(known_svt)
             summon.puCE = sorted(known_ce)
