@@ -5,12 +5,14 @@ from app.schemas.gameenums import NiceCondType
 from app.schemas.nice import (
     AscensionAdd,
     BasicServant,
+    BuffScript,
     EnemyDrop,
     EnemyTd,
     ExtraAssets,
     NiceBaseFunction,
     NiceBgm,
     NiceBgmEntity,
+    NiceBuff,
     NiceEquip,
     NiceEvent,
     NiceEventCooltimeReward,
@@ -50,6 +52,10 @@ from ...schemas.gamedata import MasterData, NiceBaseSkill, NiceBaseTd, NiceEquip
 
 
 _excluded_fields: dict[type, list[str]] = {
+    BuffScript: [
+        "ProgressSelfTurn",
+        "ReleaseText",
+    ],
     NiceBaseSkill: ["detail", "groupOverwrites"],
     NiceSkill: [
         "name",
@@ -156,6 +162,23 @@ _excluded_fields: dict[type, list[str]] = {
     NiceMasterMission: ["quests"],
 }
 
+_exclude_empty_fields: dict[type, list[str]] = {
+    NiceBuff: ["script"],
+    NiceSkill: ["script"],
+    NiceBaseSkill: ["script"],
+    NiceTd: ["script"],
+    NiceBaseTd: ["script"],
+    NiceServant: ["script"],
+    NiceEquip: ["script"],
+}
+
+
+def common_pydantic_encoder(obj):
+    try:
+        return pydantic_encoder(obj)
+    except TypeError:
+        return obj
+
 
 def _exclude_skill(skill: NiceSkill | NiceTd) -> set[str]:
     keys = [
@@ -216,8 +239,11 @@ class DataEncoder:
         self.jp_data = jp_data
 
     def default(self, obj):
-        excludes = {"originalName"}
+        if not isinstance(obj, BaseModel):
+            return common_pydantic_encoder(obj)
+
         _type = type(obj)
+        excludes = {"originalName"}
         type_excludes = _excluded_fields.get(_type, [])
         excludes.update(type_excludes)
 
@@ -246,6 +272,10 @@ class DataEncoder:
                 excludes.add("text")
             if not [x for x in obj.form if x != 0]:
                 excludes.add("form")
+        elif isinstance(obj, NiceBuff):
+            for key in type_excludes:
+                setattr(obj.script, key, None)
+            obj.originalScript.pop("relationOverwrite", None)
         elif isinstance(obj, NiceQuest):
             if isinstance(obj, NiceQuestPhase):
                 if len(obj.availableEnemyHashes) > 100:
@@ -268,7 +298,7 @@ class DataEncoder:
 
         if isinstance(obj, BaseModel):
             if isinstance(obj, NiceFunction):
-                map = dict(
+                data = dict(
                     obj._iter(
                         to_dict=True,
                         exclude_none=True,
@@ -276,9 +306,9 @@ class DataEncoder:
                         exclude=excludes,
                     )
                 )
-                _trim_func_vals(map)
+                _trim_func_vals(data)
             else:
-                map = dict(
+                data = dict(
                     obj._iter(
                         to_dict=False,
                         exclude_none=True,
@@ -286,10 +316,14 @@ class DataEncoder:
                         exclude=excludes,
                     )
                 )
-            return map
+            data = {k: self.default(v) for k, v in data.items()}
+            for field in _exclude_empty_fields.get(_type, []):
+                if field in data and (data[field] == {} or data[field] == []):
+                    data.pop(field)
+            return data
         elif isinstance(obj, (list, dict)):
             return obj
-        return pydantic_encoder(obj)
+        return common_pydantic_encoder(obj)
 
     def _save_basic_skill(self, excludes: set[str], skill: NiceSkill):
         if skill.id not in self.jp_data.base_skills:
