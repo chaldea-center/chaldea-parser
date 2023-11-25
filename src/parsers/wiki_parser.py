@@ -985,8 +985,8 @@ class WikiParser:
             known_svt, unknown_svt = self._parse_cards(params.get2("推荐召唤从者"), True)
             known_ce, unknown_ce = self._parse_cards(params.get2("推荐召唤礼装"), False)
             unknown_cards.add(f"{title}: " + ", ".join(unknown_svt + unknown_ce))
-            summon.puSvt = sorted(known_svt)
-            summon.puCE = sorted(known_ce)
+            summon.puSvt = known_svt
+            summon.puCE = known_ce
 
             simulator_page = MOONCELL.get_page_text(f"{title}/模拟器")
             sim_params = parse_template(simulator_page, r"^{{抽卡模拟器")
