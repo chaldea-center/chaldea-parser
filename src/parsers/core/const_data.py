@@ -5,6 +5,7 @@ from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail
 from app.schemas.raw import MstBuffTypeDetail, MstFuncTypeDetail, MstSvtExp
 from pydantic import parse_obj_as
 
+from ...schemas.common import MstConstantStr
 from ...schemas.const_data import ConstGameData, SvtExpCurve
 from ...schemas.data import (
     CN_REPLACE,
@@ -58,6 +59,7 @@ def get_const_data(data: MasterData):
         classInfo={x.id: x for x in data.mstClass},
         classRelation=class_relations,
         constants=data.NiceConstant,
+        constantStr=get_constant_str(),
         svtGrailCost=data.NiceSvtGrailCost,
         userLevel=data.NiceUserLevel,
         svtExp=svt_exps,
@@ -90,3 +92,32 @@ def get_nice_buff_type_detail(detail: MstBuffTypeDetail) -> NiceBuffTypeDetail:
         ignoreValueUp=detail.ignoreValueUp,
         script=detail.script,
     )
+
+
+def get_constant_str():
+    mst_const_str = parse_obj_as(list[MstConstantStr], DownUrl.gitaa("mstConstantStr"))
+    int_list_keys = [
+        "EXTEND_TURN_BUFF_TYPE",
+        "INVALID_SACRIFICE_INDIV",
+        "NOT_REDUCE_COUNT_WITH_NO_DAMAGE_BUFF",
+        "STAR_REFRESH_BUFF_TYPE",
+        "SUB_PT_BUFF_INDIVI",
+        "SVT_EXIT_PT_BUFF_INDIVI",
+    ]
+    int_keys = [
+        # "MATERIAL_MAIN_INTERLUDE_WAR_ID",
+    ]
+    str_keys = []
+
+    out: dict[str, list[int] | int | str] = {}
+    for item in mst_const_str:
+        key, value = item.name, item.value
+        if key in int_list_keys:
+            values = [int(v) for v in value.split(",") if v]
+            assert values, item
+            out[key] = values
+        elif key in int_keys:
+            out[key] = int(value)
+        elif key in str_keys:
+            out[key] = value
+    return out

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any
 
 from app.schemas.common import NiceTrait
 from app.schemas.enums import Attribute, SvtClass, Trait
@@ -10,7 +10,6 @@ from app.schemas.gameenums import (
     NiceSvtFrameType,
 )
 from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail, NiceGift
-from app.schemas.raw import MstSvtExp
 from pydantic import BaseModel
 
 from .common import MstClass
@@ -64,7 +63,7 @@ class MasterUserLvDetail(BaseModel):
     maxAp: int
     maxCost: int
     maxFriend: int
-    gift: Optional[NiceGift]
+    gift: NiceGift | None
 
 
 class SvtExpCurve(BaseModel):
@@ -82,6 +81,7 @@ class ConstGameData(BaseModel):
     cardInfo: dict[NiceCardType, dict[int, CardInfo]]
     classRelation: dict[int, dict[int, int]]
     constants: dict[str, int]
+    constantStr: dict[str, Any]  # list[int] | int | str | list[str] ...
     svtGrailCost: dict[int, dict[int, GrailCostDetail]]
     userLevel: dict[int, MasterUserLvDetail]
     svtExp: dict[int, SvtExpCurve]

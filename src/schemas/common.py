@@ -309,6 +309,12 @@ class MstClassRelation(BaseModel):
     # disadvIconId: int
 
 
+class MstConstantStr(BaseModel):
+    name: str
+    value: str
+    createdAt: int
+
+
 class MstQuestGroup(BaseModel):
     groupId: int
     type: int
