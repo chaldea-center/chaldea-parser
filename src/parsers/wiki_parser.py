@@ -5,7 +5,7 @@ Event: wiki_data/events.json + MC data
 Summon: wiki_data/summons.json + MC data
 """
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from typing import Optional, Type
 from urllib.parse import urlparse
 
@@ -1019,6 +1019,10 @@ class WikiParser:
         for title in sorted(titles):
             worker.add(_parse_one, title)
         worker.wait()
+        counts = Counter([summon.name_ for summon in self.wiki_data.summons.values()])
+        counts = {k: v for k, v in counts.items() if v > 1 and k != "クラス別ピックアップ召喚"}
+        if counts:
+            discord.mc("Duplicated Summon JP name", dump_json(counts))
         if unknown_cards:
             discord.mc("Unknown PickUp Card", "\n".join(sorted(unknown_cards)))
 
