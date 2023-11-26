@@ -452,6 +452,8 @@ class WikiParser:
                 known_, unknown_ = self._parse_chara(chara)
                 ce_add.characters.extend(known_)
                 ce_add.unknownCharacters.extend(unknown_)
+            ce_add.characters = sorted(set(ce_add.characters))
+            ce_add.unknownCharacters = sorted(set(ce_add.unknownCharacters))
             detail_obtain = params.get2("礼装分类")
             if ce_add.obtain == CEObtain.unknown and detail_obtain:
                 ce_add.obtain = CEObtain.from_cn2(detail_obtain)
@@ -531,6 +533,8 @@ class WikiParser:
                 known_, unknown_ = self._parse_chara(chara)
                 cc_add.characters.extend(known_)
                 cc_add.unknownCharacters.extend(unknown_)
+            cc_add.characters = sorted(set(cc_add.characters))
+            cc_add.unknownCharacters = sorted(set(cc_add.unknownCharacters))
 
         worker = Worker.from_map(
             _parse_one,
