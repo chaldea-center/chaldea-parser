@@ -26,6 +26,7 @@ def merge_wiki_translation(
         value: _KV | None,
         /,
         _region: Region | None = None,
+        skip_unknown_key=True,
     ):
         if value is None:
             return
@@ -39,7 +40,7 @@ def merge_wiki_translation(
             _key=_key,
             value=value,
             skip_exists=True,
-            skip_unknown_key=True,
+            skip_unknown_key=skip_unknown_key,
         )
 
     mappings = jp_data.mappingData
@@ -73,7 +74,7 @@ def merge_wiki_translation(
     for collection, name_cn in transl.costume_details.items():
         _update_mapping(mappings.costume_detail, collection, name_cn)
     for name_jp, name_cn in transl.summon_names.items():
-        _update_mapping(mappings.summon_names, name_jp, name_cn)
+        _update_mapping(mappings.summon_names, name_jp, name_cn, skip_unknown_key=False)
 
     # ce/cc skill des
     for ce in jp_data.nice_equip_lore:
