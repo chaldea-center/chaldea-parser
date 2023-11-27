@@ -224,9 +224,9 @@ class MasterData(BaseModelORJson):
                 d.update(svt.profile.costume)
         return d
 
-    # @cached_property
-    # def ce_dict(self) -> dict[int, NiceEquip]:
-    #     return {x.collectionNo: x for x in self.nice_equip_lore}
+    @cached_property
+    def ce_dict(self) -> dict[int, NiceEquip]:
+        return {x.collectionNo: x for x in self.nice_equip_lore}
 
     @cached_property
     def ce_id_dict(self) -> dict[int, NiceEquip]:

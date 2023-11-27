@@ -16,7 +16,7 @@ from ....schemas.common import NEVER_CLOSED_TIMESTAMP, MappingBase, MappingStr
 from ....schemas.data import CN_REPLACE, STORY_UPGRADE_QUESTS, jp_chars
 from ....schemas.gamedata import MasterData
 from ....schemas.wiki_data import CommandCodeW, WikiData
-from ....utils import logger
+from ....utils import discord, logger
 from .common import _KT, _KV, process_skill_detail, update_key_mapping
 
 
@@ -297,6 +297,14 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
                 comment = c
         return comment
 
+    ce_ids = {x.collectionNo for x in data.nice_equip_lore}
+    ce_ids = ce_ids.difference({x.collectionNo for x in jp_data.nice_equip_lore})
+    if ce_ids:
+        rows = [
+            f"- [{ce_id}-{data.ce_dict[ce_id].name}](https://apps.atlasacademy.io/db/{region}/craft-essence/{ce_id})"
+            for ce_id in ce_ids
+        ]
+        discord.text("\n".join(rows), f"**New {region} specific CES**")
     for ce_jp in jp_data.nice_equip_lore:
         ce = data.ce_id_dict.get(ce_jp.id)
         ce_w = wiki_data.get_ce(ce_jp.collectionNo)

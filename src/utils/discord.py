@@ -28,10 +28,10 @@ def get_webhook():
     )
 
 
-def text(msg: str):
+def text(msg: str, title: str | None = None):
     logger.info(msg)
     webhook = get_webhook()
-    webhook.set_content(msg)
+    webhook.add_embed(DiscordEmbed(title=title, description=msg))
     return _execute(webhook)
 
 
