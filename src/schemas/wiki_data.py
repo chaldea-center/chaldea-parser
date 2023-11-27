@@ -83,6 +83,7 @@ class WikiTranslation(BaseModelORJson):
             self.quest_names,
             self.spot_names,
             self.costume_names,
+            self.summon_names,
         ]
         int_transls = [
             self.ce_skill_des,
@@ -247,8 +248,6 @@ class WikiData(BaseModelORJson):
                 for cc in load_json(folder / "commandCodes.json", [])
             },
             "wars": {war["id"]: war for war in load_json(folder / "wars.json", [])},
-            "mcTransl": load_json(folder / "mcTransl.json", {}),
-            "fandomTransl": load_json(folder / "fandomTransl.json", {}),
             "mms": {mm["id"]: mm for mm in load_json(folder / "mms.json", [])},
         }
         if full_version:
@@ -265,6 +264,8 @@ class WikiData(BaseModelORJson):
                     summon["id"]: summon
                     for summon in load_json(folder / "summons.json") or []
                 },
+                "mcTransl": load_json(folder / "mcTransl.json", {}),
+                "fandomTransl": load_json(folder / "fandomTransl.json", {}),
             }
         else:
             data |= {

@@ -161,13 +161,6 @@ class WikiParser:
 
     def init_wiki_data(self):
         self.wiki_data = WikiData.parse_dir(full_version=False)
-        mc_transl = self.mc_transl
-        for k in list(mc_transl.svt_names.keys()):
-            mc_transl.svt_names.pop(k)
-        for k in list(mc_transl.ce_names.keys()):
-            mc_transl.ce_names.pop(k)
-        for k in list(mc_transl.cc_names.keys()):
-            mc_transl.cc_names.pop(k)
 
         chara_names: dict = (
             load_json(settings.output_mapping / "chara_names.json") or {}
