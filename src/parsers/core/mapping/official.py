@@ -299,7 +299,6 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
 
     for ce_jp in jp_data.nice_equip_lore:
         ce = data.ce_id_dict.get(ce_jp.id)
-        _update_mapping(mappings.ce_names, ce_jp.name, ce.name if ce else None)
         ce_w = wiki_data.get_ce(ce_jp.collectionNo)
         if ce_jp.profile and ce_jp.profile.comments:
             if len(ce_jp.profile.comments) > 1:
@@ -307,7 +306,12 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
                     f"{ce_jp.collectionNo}-{ce_jp.name} has {len(ce_jp.profile.comments)} lores"
                 )
             ce_w.profile.JP = _get_comment(ce_jp.profile.comments).comment
-        if not ce:
+        _update_mapping(
+            mappings.ce_names,
+            ce_jp.name,
+            ce.name if ce and ce.collectionNo < 100000 else None,
+        )
+        if not ce or ce.collectionNo > 100000:
             continue
         if region != Region.JP and ce.profile and ce.profile.comments:
             comment = _get_comment(ce.profile.comments).comment
