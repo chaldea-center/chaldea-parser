@@ -279,7 +279,8 @@ class MainParser:
                         expire_after=(7 if region == Region.JP else 31) * 24 * 3600,
                     )
                     assert ce and ce.profile
-                    ce.profile.illustrator = illustrator
+                    if illustrator:
+                        ce.profile.illustrator = illustrator
                     # ce.sortId = sort_id
                     ce.sortId = -ce.collectionNo
                     master_data.nice_equip_lore.append(ce)

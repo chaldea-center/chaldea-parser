@@ -122,6 +122,7 @@ class CEObtain(StrEnum):
     campaign = "campaign"
     bond = "bond"
     drop = "drop"
+    regionSpecific = "regionSpecific"
     unknown = "unknown"  # should not be included in db
 
     @staticmethod

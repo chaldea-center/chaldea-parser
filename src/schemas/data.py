@@ -6,14 +6,17 @@ from app.schemas.common import Region
 MIN_APP = "2.5.0"
 
 
-ADD_CES: dict[Region, dict[int, tuple[str, float]]] = {
+ADD_CES: dict[Region, dict[int, tuple[str | None, float]]] = {
     # 2017.11
     Region.KR: {
         202022: ("ダンミル", 1269.1),  # 5th 90082001
     },
     # 2017.06
     Region.NA: {
-        402023: ("Namie", 1466.2),  # 6th 90084001
+        402020: (None, 1466.1),  # 3th 90084002
+        402021: (None, 1466.2),  # 4th 90084003
+        402022: (None, 1466.3),  # 5th 90084004
+        402023: (None, 1466.4),  # 6th 90084001
     },
     # 2017.05
     Region.TW: {
