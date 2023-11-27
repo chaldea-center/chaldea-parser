@@ -303,6 +303,8 @@ class WikiData(BaseModelORJson):
         self.summons = {summon.id: summon for summon in summons}
         self.mcTransl.clean_untranslated()
         self.mcTransl.sort()
+        self.fandomTransl.clean_untranslated()
+        self.fandomTransl.sort()
         mms = list(self.mms.values())
         mms.sort(key=lambda x: x.id)
         self.mms = {mm.id: mm for mm in mms}
