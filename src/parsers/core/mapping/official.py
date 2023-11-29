@@ -304,7 +304,7 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
             f"- [{ce_id}-{data.ce_dict[ce_id].name}](https://apps.atlasacademy.io/db/{region}/craft-essence/{ce_id})"
             for ce_id in ce_ids
         ]
-        discord.text("\n".join(rows), f"**New {region} specific CES**")
+        discord.text("\n".join(rows), f"**New {region} specific CE**")
     for ce_jp in jp_data.nice_equip_lore:
         ce = data.ce_id_dict.get(ce_jp.id)
         ce_w = wiki_data.get_ce(ce_jp.collectionNo)
