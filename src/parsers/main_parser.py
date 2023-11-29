@@ -21,7 +21,14 @@ from app.schemas.nice import (
     NiceClassBoardClass,
     NiceItem,
 )
-from app.schemas.raw import MstEvent, MstMasterMission, MstQuestPhase, MstSvt, MstWar
+from app.schemas.raw import (
+    MstEvent,
+    MstItem,
+    MstMasterMission,
+    MstQuestPhase,
+    MstSvt,
+    MstWar,
+)
 from pydantic import BaseModel, parse_file_as, parse_obj_as
 from pydantic.json import pydantic_encoder
 
@@ -215,7 +222,7 @@ class MainParser:
                 continue
             added.ccs.append(cc.id)
 
-        remote_items = parse_obj_as(list[NiceItem], DownUrl.export("nice_item"))
+        remote_items = parse_obj_as(list[MstItem], DownUrl.gitaa("mstItem"))
         local_items = load_data_dict("items", "id")
         for item in remote_items:
             if item.id not in local_items:
