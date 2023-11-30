@@ -1,6 +1,7 @@
 from typing import Any
 
 from app.schemas.base import BaseModelORJson
+from app.schemas.common import Region
 from app.schemas.raw import MstMasterMission
 from pydantic import BaseModel, NoneStr
 from pydantic.json import pydantic_encoder
@@ -9,6 +10,7 @@ from ..config import settings
 from ..utils.helper import dump_json, dump_json_beautify, load_json, sort_dict
 from .common import (
     NEVER_CLOSED_TIMESTAMP,
+    BaseModelTrim,
     CEObtain,
     MappingBase,
     MappingInt,
@@ -158,6 +160,11 @@ class EventExtraFixedItems(BaseModel):
     items: dict[int, int] = {}
 
 
+class EventExtraScript(BaseModelTrim):
+    huntingId: int | None = None
+    raidLink: dict[Region, str] | None = None
+
+
 class EventWBase(BaseModel):
     id: int
     name: str
@@ -171,6 +178,7 @@ class EventWBase(BaseModel):
     huntingId: int = 0
     extraFixedItems: list[EventExtraFixedItems] = []
     extraItems: list[EventExtraItems] = []
+    script: EventExtraScript = EventExtraScript()
 
 
 class WarW(BaseModel):

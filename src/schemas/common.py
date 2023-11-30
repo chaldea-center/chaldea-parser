@@ -1,6 +1,7 @@
 from enum import StrEnum
-from typing import Generic, Optional, TypeVar, Union
+from typing import Any, Generic, Optional, TypeVar, Union
 
+import orjson
 from app.schemas.common import Region
 from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
@@ -10,6 +11,16 @@ _KT = TypeVar("_KT")
 _KV = TypeVar("_KV")
 
 NEVER_CLOSED_TIMESTAMP = 1800000000  # 1893423600
+
+
+class BaseModelTrim(BaseModel):
+    def _iter(self, **kwargs):
+        kwargs.pop("exclude_unset", None)
+        kwargs.pop("exclude_none", None)
+        kwargs.pop("exclude_defaults", None)
+        return super()._iter(
+            exclude_unset=True, exclude_none=True, exclude_defaults=True, **kwargs
+        )
 
 
 class MappingBase(GenericModel, Generic[_KV]):

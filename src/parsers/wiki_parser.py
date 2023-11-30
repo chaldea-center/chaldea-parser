@@ -878,7 +878,7 @@ class WikiParser:
         for event in self.wiki_data.events.values():
             if not event.mcLink:
                 continue
-            if event.huntingId > 0:
+            if (event.script.huntingId or 0) > 0:
                 titles.add(event.mcLink)
                 continue
             db_event = self._jp.events.get(event.id)
@@ -1098,7 +1098,7 @@ class WikiParser:
         for event in self.wiki_data.events.values():
             if not event.fandomLink:
                 continue
-            if event.huntingId > 0:
+            if (event.script.huntingId or 0) > 0:
                 _with_subs(event.fandomLink, False)
             if re.match(r"^Advanced.Quest", event.fandomLink):
                 _with_subs(event.fandomLink, True)
