@@ -408,13 +408,7 @@ def _get_encoder(exclude_default: bool):
         if isinstance(obj, MappingBase):
             return obj.dict(exclude_none=True)
         elif isinstance(obj, BaseModel):
-            return dict(
-                obj._iter(
-                    to_dict=False,
-                    exclude_defaults=exclude_default,
-                    exclude_unset=exclude_default,
-                )
-            )
+            return dict(obj._iter(to_dict=False, exclude_defaults=exclude_default))
         return pydantic_encoder(obj)
 
     return _encoder

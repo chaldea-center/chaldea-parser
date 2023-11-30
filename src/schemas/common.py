@@ -15,12 +15,9 @@ NEVER_CLOSED_TIMESTAMP = 1800000000  # 1893423600
 
 class BaseModelTrim(BaseModel):
     def _iter(self, **kwargs):
-        kwargs.pop("exclude_unset", None)
         kwargs.pop("exclude_none", None)
         kwargs.pop("exclude_defaults", None)
-        return super()._iter(
-            exclude_unset=True, exclude_none=True, exclude_defaults=True, **kwargs
-        )
+        return super()._iter(exclude_none=True, exclude_defaults=True, **kwargs)
 
 
 class MappingBase(GenericModel, Generic[_KV]):
