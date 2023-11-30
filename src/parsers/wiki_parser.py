@@ -24,7 +24,7 @@ from ..schemas.common import (
     SummonType,
     SvtObtain,
 )
-from ..schemas.data import ADD_CES, EXTRA_CAMPAIGN_CE_MC_DATA, jp_chars
+from ..schemas.data import ADD_CES, jp_chars
 from ..schemas.wiki_data import (
     CommandCodeW,
     CraftEssenceW,
@@ -379,7 +379,6 @@ class WikiParser:
 
     def mc_ce(self):
         index_data = _mc_index_data("礼装图鉴/数据")
-        index_data.update(EXTRA_CAMPAIGN_CE_MC_DATA)
 
         prev_data = self._load_list_from_dist("wiki.craftEssences", CraftEssenceW)
 
@@ -394,7 +393,7 @@ class WikiParser:
             for ce in prev_data
             if not ce.mcLink
             and ce.collectionNo not in extra_pages
-            and ce.collectionNo < 10000
+            and ce.collectionNo < 200000
         ]
         if no_index_ids:
             logger.info(f"ce not in index: {no_index_ids}")
@@ -435,8 +434,8 @@ class WikiParser:
             profile_cn = params.get2("解说")
             if profile_cn:
                 ce_add.profile.CN = profile_cn
-            ce_add.characters.clear()
-            ce_add.unknownCharacters.clear()
+            ce_add.characters = []
+            ce_add.unknownCharacters = []
             for index in range(20):
                 key = "出场角色" if index == 0 else index
                 chara = params.get2(key)
@@ -516,8 +515,8 @@ class WikiParser:
             profile_cn = params.get2("解说")
             if profile_cn:
                 cc_add.profile.CN = profile_cn
-            cc_add.characters.clear()
-            cc_add.unknownCharacters.clear()
+            cc_add.characters = []
+            cc_add.unknownCharacters = []
             for index in range(20):
                 key = "出场角色" if index == 0 else index
                 chara = params.get2(key)
