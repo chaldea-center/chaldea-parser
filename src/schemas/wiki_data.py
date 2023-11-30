@@ -321,34 +321,36 @@ class WikiData(BaseModelORJson):
     # save: main=False, wiki=True
     def save(self, full_version: bool):
         folder = settings.output_wiki
+        encoder = _get_encoder(exclude_default=True)
+        encoder_full = _get_encoder(exclude_default=False)
         if full_version:
             dump_json(self.mcTransl, settings.output_wiki / "mcTransl.json")
             dump_json(self.fandomTransl, settings.output_wiki / "fandomTransl.json")
             dump_json_beautify(
-                list(self.servants.values()), folder / "servants.json", default=_encoder
+                list(self.servants.values()), folder / "servants.json", default=encoder
             )
             dump_json_beautify(
                 list(self.craftEssences.values()),
                 folder / "craftEssences.json",
-                default=_encoder,
+                default=encoder,
             )
             dump_json_beautify(
                 list(self.commandCodes.values()),
                 folder / "commandCodes.json",
-                default=_encoder,
+                default=encoder,
             )
             dump_json_beautify(
                 list(self.events.values()),
                 folder / "events.json",
-                default=_encoder,
+                default=encoder,
             )
             dump_json_beautify(
                 list(self.summons.values()),
                 folder / "summons.json",
-                default=_encoder,
+                default=encoder,
             )
         dump_json_beautify(
-            list(self.wars.values()), folder / "wars.json", default=_encoder
+            list(self.wars.values()), folder / "wars.json", default=encoder_full
         )
         dump_json(
             [mm.dict(exclude_defaults=True) for mm in self.mms.values()],
@@ -366,14 +368,18 @@ class WikiData(BaseModelORJson):
                 "[FFFF00]開放条件緩和中！[-]",
             ]
         ]
-        dump_json_beautify(events_base, folder / "eventsBase.json", default=_encoder)
+        dump_json_beautify(
+            events_base, folder / "eventsBase.json", default=encoder_full
+        )
 
         include_summon_keys = set(LimitedSummonBase.__fields__.keys())
         summons_base = [
             dict(summon._iter(include=include_summon_keys, to_dict=False))
             for summon in self.summons.values()
         ]
-        dump_json_beautify(summons_base, folder / "summonsBase.json", default=_encoder)
+        dump_json_beautify(
+            summons_base, folder / "summonsBase.json", default=encoder_full
+        )
 
     def get_svt(self, collection_no: int):
         return self.servants.setdefault(
@@ -397,12 +403,21 @@ class WikiData(BaseModelORJson):
         return self.wars.setdefault(war_id, WarW(id=war_id))
 
 
-def _encoder(obj):
-    if isinstance(obj, MappingBase):
-        return obj.dict(exclude_none=True)
-    elif isinstance(obj, BaseModel):
-        return dict(obj._iter(to_dict=False))
-    return pydantic_encoder(obj)
+def _get_encoder(exclude_default: bool):
+    def _encoder(obj):
+        if isinstance(obj, MappingBase):
+            return obj.dict(exclude_none=True)
+        elif isinstance(obj, BaseModel):
+            return dict(
+                obj._iter(
+                    to_dict=False,
+                    exclude_defaults=exclude_default,
+                    exclude_unset=exclude_default,
+                )
+            )
+        return pydantic_encoder(obj)
+
+    return _encoder
 
 
 class AppNews(BaseModel):
