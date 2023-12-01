@@ -14,6 +14,7 @@ from ...schemas.data import (
     FREE_EXCHANGE_SVT_EVENTS,
     LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
     RANDOM_ENEMY_QUESTS,
+    SVT_FACE_LIMITS,
 )
 from ...schemas.gamedata import MasterData
 from ...utils.helper import sort_dict
@@ -76,6 +77,7 @@ def get_const_data(data: MasterData):
         excludeRewardQuests=EXCLUDE_REWARD_QUESTS,
         randomEnemyQuests=RANDOM_ENEMY_QUESTS,
         freeExchangeSvtEvents=FREE_EXCHANGE_SVT_EVENTS,
+        svtFaceLimits=SVT_FACE_LIMITS,
     )
 
 
