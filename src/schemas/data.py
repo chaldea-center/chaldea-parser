@@ -3,7 +3,7 @@ import re
 from app.schemas.common import Region
 
 
-MIN_APP = "2.5.0"
+MIN_APP = "2.5.2"
 
 
 ADD_CES: dict[Region, dict[int, tuple[str | None, float]]] = {
@@ -71,6 +71,7 @@ EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP = {
     },
 }
 
+# Update api worker too
 LAPLACE_UPLOAD_ALLOW_AI_QUESTS: list[int] = [
     *range(94065101, 94065129 + 1),  # Tunguska
     *range(94090301, 94090330 + 1),  # Gudaguda2023
