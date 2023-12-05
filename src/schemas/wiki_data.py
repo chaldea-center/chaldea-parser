@@ -175,7 +175,6 @@ class EventWBase(BaseModel):
     officialBanner: MappingBase[str] = MappingBase()
     extraBanners: MappingBase[list[str]] = MappingBase()
     noticeLink: MappingStr = MappingStr()
-    huntingId: int = 0
     extraFixedItems: list[EventExtraFixedItems] = []
     extraItems: list[EventExtraItems] = []
     script: EventExtraScript = EventExtraScript()
