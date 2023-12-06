@@ -55,6 +55,12 @@ def autofill_mapping(mappings: dict[str, Mapping]):
     def _repl0(x: str) -> _VReplacer:
         return {"CN": x, "TW": x, "NA": x, "KR": x}
 
+    def _repl_simple(names: Mapping):
+        def _repl(name_jp: str):
+            return names.get(name_jp)
+
+        return _repl
+
     update_k(
         quest_names,
         pattern=re.compile(r"^強化クエスト (.+?)( \d)?$"),
@@ -164,6 +170,12 @@ def autofill_mapping(mappings: dict[str, Mapping]):
             "KR": "{0} 획득 UP",
         },
         krepls=[_repl_item],
+    )
+    update_k(
+        skill_names,
+        pattern=re.compile(r"^(.+) ((?:A|B|C|D|E|EX)[\-+]*)$"),
+        templates={r: "{0} {1}" for r in Regions},
+        krepls=[_repl_simple(buff_names), _repl0],
     )
 
     update_kw(
