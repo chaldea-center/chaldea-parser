@@ -221,6 +221,7 @@ class WikiParser:
         prev_data = self._load_list_from_dist("wiki.servants", ServantW)
         extra_pages: dict[int, str] = {}
         extra_pages |= {k: v["name_link"] for k, v in index_data.items()}
+        extra_pages |= {v.collectionNo: v.mcLink for v in prev_data if v.mcLink}
         extra_pages |= self.payload.mc_extra_svt
 
         no_index_ids = [
@@ -382,6 +383,7 @@ class WikiParser:
 
         extra_pages: dict[int, str] = {}
         extra_pages |= {k: v["name_link"] for k, v in index_data.items()}
+        extra_pages |= {v.collectionNo: v.mcLink for v in prev_data if v.mcLink}
         extra_pages |= self.payload.mc_extra_ce
 
         no_index_ids = [
@@ -476,12 +478,13 @@ class WikiParser:
 
         prev_data = self._load_list_from_dist("wiki.commandCodes", CommandCodeW)
         extra_pages: dict[int, str] = {}
+        extra_pages |= {k: v["name_link"] for k, v in index_data.items()}
+        extra_pages |= {v.collectionNo: v.mcLink for v in prev_data if v.mcLink}
         no_index_ids = [
             cc.collectionNo
             for cc in prev_data
             if not cc.mcLink and cc.collectionNo not in extra_pages
         ]
-        extra_pages |= {k: v["name_link"] for k, v in index_data.items()}
         if no_index_ids:
             logger.info(f"cc not in index: {no_index_ids}")
             extra_pages = extra_pages | _mc_smw_card_list("指令纹章图鉴", "纹章序号")
