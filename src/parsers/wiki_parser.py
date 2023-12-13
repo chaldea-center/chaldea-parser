@@ -715,33 +715,39 @@ class WikiParser:
 
     def fandom_cc(self):
         # Category:Command Code Display Order
-        list_page_html = FANDOM.render("Command_Code_List/By_ID")
-        pages = parse_html_xpath(
-            list_page_html,
-            '//div[@class="mw-parser-output"]/table/tbody/tr/td[3]/a/@href',
+        subpages = self._get_fandom_list_page_sub(
+            "Command_Code_List/By_ID/1-100", r"Command_Code_List/By_ID/(\d+\-\d+)"
         )
-        logger.debug(f"Fandom: {len(pages)} command codes")
-        prefix = "https://fategrandorder.fandom.com/wiki/"
-        for page_link in pages:
-            page_link = str(page_link)
-            assert page_link.startswith(prefix), page_link
-            fa_link = FANDOM.norm_key(page_link[len(prefix) :])
-            wikitext = mwparse(FANDOM.get_page_text(fa_link))
-            assert fa_link and wikitext, fa_link
-            if not fa_link or not wikitext:
-                continue
-            infoboxcc = parse_template(wikitext, r"^{{Infoboxcc")
-            collection_no = infoboxcc.get_cast("id", cast=int)
-            if not collection_no or not infoboxcc:
-                continue
-            cc_add = self.wiki_data.get_cc(collection_no)
-            cc_add.fandomLink = fa_link
-            params = parse_template(wikitext, r"^{{Craftlore")
-            cc_add.profile.NA = params.get2("na") or params.get2("en")
+        subpages.insert(0, "1-100")
 
-            effect1 = infoboxcc.get2("effect1", strip=True)
-            if effect1 and effect1 != "N/A":
-                self.fandom_transl.cc_skill_des[cc_add.collectionNo] = effect1
+        for page in subpages:
+            list_page_html = FANDOM.render(f"Command_Code_List/By_ID/{page}")
+            pages = parse_html_xpath(
+                list_page_html,
+                '//div[@class="mw-parser-output"]/table/tbody/tr/td[3]/a/@href',
+            )
+            logger.debug(f"Fandom: ({page}) {len(pages)} command codes")
+            prefix = "https://fategrandorder.fandom.com/wiki/"
+            for page_link in pages:
+                page_link = str(page_link)
+                assert page_link.startswith(prefix), page_link
+                fa_link = FANDOM.norm_key(page_link[len(prefix) :])
+                wikitext = mwparse(FANDOM.get_page_text(fa_link))
+                assert fa_link and wikitext, fa_link
+                if not fa_link or not wikitext:
+                    continue
+                infoboxcc = parse_template(wikitext, r"^{{Infoboxcc")
+                collection_no = infoboxcc.get_cast("id", cast=int)
+                if not collection_no or not infoboxcc:
+                    continue
+                cc_add = self.wiki_data.get_cc(collection_no)
+                cc_add.fandomLink = fa_link
+                params = parse_template(wikitext, r"^{{Craftlore")
+                cc_add.profile.NA = params.get2("na") or params.get2("en")
+
+                effect1 = infoboxcc.get2("effect1", strip=True)
+                if effect1 and effect1 != "N/A":
+                    self.fandom_transl.cc_skill_des[cc_add.collectionNo] = effect1
 
     @staticmethod
     def _get_fandom_list_page_sub(page: str, pattern: str) -> list[str]:
