@@ -39,7 +39,7 @@ from ..schemas.wiki_data import (
     WikiTranslation,
 )
 from ..utils import Worker, count_time, discord, dump_json, load_json, logger
-from ..utils.helper import _KT, parse_html_xpath, sort_dict
+from ..utils.helper import _KT, mean, parse_html_xpath, sort_dict
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.template import (
     find_tabber,
@@ -397,16 +397,29 @@ class WikiParser:
         release_matches = re.findall(
             r";No\.(\d+) .*\n:日服：(.*)\n:国服：(.*)\n:创建：(.*)<br", release_wikitext
         )
+        release_times: dict[int, int] = {}
         for svt_id, t_jp, t_cn, t_page in release_matches:
             svt_id = int(svt_id)
-            if svt_id <= 198:
+            if svt_id < 198:
                 # 葛飾北斎, JP 2018/1/1
                 continue
             t_jp, t_cn, t_page = parse_date(t_jp), parse_date(t_cn), parse_date(t_page)
             released_at = t_jp or t_page
             if released_at:
-                svt = self.wiki_data.get_svt(int(svt_id))
-                svt.releasedAt = int(released_at)
+                release_times[svt_id] = released_at
+        # in case some pages are created before released
+        release_list = [
+            release_times.get(x, 0) for x in range(max(release_times.keys()) + 1)
+        ]
+        for index in range(198, len(release_list)):
+            prev_ts = [x for x in release_list[index - 5 : index] if x]
+            if not prev_ts:
+                continue
+            if release_list[index] < mean(prev_ts):
+                release_list[index] = 0
+        for svt_id, released_at in enumerate(release_list):
+            if released_at > 0:
+                self.wiki_data.get_svt(svt_id).releasedAt = released_at
 
     def mc_ce(self):
         index_data = _mc_index_data("礼装图鉴/数据")

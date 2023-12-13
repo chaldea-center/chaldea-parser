@@ -10,6 +10,7 @@ from typing import (
     Any,
     Callable,
     Generic,
+    Iterable,
     Mapping,
     Optional,
     Sequence,
@@ -269,3 +270,7 @@ def describe_regions(regions: list[Region]) -> str:
     if not regions:
         return ""
     return "[" + ",".join([str(r) for r in regions]) + "] "
+
+
+def mean(xs: Iterable[int | float]):
+    return sum(xs) / len(list(xs))
