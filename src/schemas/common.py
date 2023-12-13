@@ -328,3 +328,13 @@ class MstQuestGroup(BaseModel):
     groupId: int
     type: int
     questId: int
+
+
+class MstGacha(BaseModel):
+    id: int
+    name: str
+    imageId: int = 0
+    priority: int = 0
+    type: int = 1
+    openedAt: int
+    closedAt: int

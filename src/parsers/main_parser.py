@@ -40,6 +40,7 @@ from ..schemas.common import (
     MappingStr,
     MstClass,
     MstClassRelation,
+    MstGacha,
     MstQuestGroup,
     MstViewEnemy,
 )
@@ -306,12 +307,16 @@ class MainParser:
         master_data.mstEnemyMaster = parse_obj_as(
             list[dict], DownUrl.gitaa("mstEnemyMaster", region)
         )
-        master_data.mstClass = parse_obj_as(
-            list[MstClass], DownUrl.gitaa("mstClass", region)
-        )
-        master_data.mstClassRelation = parse_obj_as(
-            list[MstClassRelation], DownUrl.gitaa("mstClassRelation", region)
-        )
+        if region == Region.JP:
+            master_data.mstClass = parse_obj_as(
+                list[MstClass], DownUrl.gitaa("mstClass", region)
+            )
+            master_data.mstClassRelation = parse_obj_as(
+                list[MstClassRelation], DownUrl.gitaa("mstClassRelation", region)
+            )
+            master_data.mstGacha = parse_obj_as(
+                list[MstGacha], DownUrl.gitaa("mstGacha", region)
+            )
 
         master_data.mstConstant = {
             e["name"]: e["value"] for e in DownUrl.gitaa("mstConstant", region)
@@ -650,6 +655,7 @@ class MainParser:
             _dump_by_count(list(data.cachedQuestPhases.values()), 100, "questPhases")
         _normal_dump(data.extraMasterMission, "extraMasterMission")
         _normal_dump(data.questGroups, "questGroups")
+        _dump_by_count(data.mstGacha, 2000, "mstGacha")
 
         assert data.constData
         _normal_dump(data.constData, "constData")
