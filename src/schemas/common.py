@@ -338,3 +338,4 @@ class MstGacha(BaseModel):
     type: int = 1
     openedAt: int
     closedAt: int
+    detailUrl: str = ""
