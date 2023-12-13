@@ -6,6 +6,7 @@ Summon: wiki_data/summons.json + MC data
 """
 import re
 from collections import Counter, defaultdict
+from datetime import datetime
 from typing import Optional, Type
 from urllib.parse import urlparse
 
@@ -375,6 +376,37 @@ class WikiParser:
             name="mc_svt",
         )
         worker.wait()
+
+        release_wikitext = MOONCELL.expand_template(
+            """{{#ask:
+[[分类:英灵图鉴]][[基础ATK::+]]
+|?序号|?获取途径|?创建日期#ISO
+|format=template|template=沙盒/清玄/0/0
+|userparam=实装时间
+|sort=序号|order=desc
+|link=none|limit=1000
+}}"""
+        )
+
+        def parse_date(s: str):
+            s = s.strip()
+            if not s or s == "∅":
+                return None
+            return int(datetime.fromisoformat(s).timestamp())
+
+        release_matches = re.findall(
+            r";No\.(\d+) .*\n:日服：(.*)\n:国服：(.*)\n:创建：(.*)<br", release_wikitext
+        )
+        for svt_id, t_jp, t_cn, t_page in release_matches:
+            svt_id = int(svt_id)
+            if svt_id <= 198:
+                # 葛飾北斎, JP 2018/1/1
+                continue
+            t_jp, t_cn, t_page = parse_date(t_jp), parse_date(t_cn), parse_date(t_page)
+            released_at = t_jp or t_page
+            if released_at:
+                svt = self.wiki_data.get_svt(int(svt_id))
+                svt.releasedAt = int(released_at)
 
     def mc_ce(self):
         index_data = _mc_index_data("礼装图鉴/数据")

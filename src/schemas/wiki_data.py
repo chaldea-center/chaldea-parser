@@ -113,6 +113,7 @@ class ServantWBase(BaseModel):
 
 
 class ServantW(ServantWBase):
+    releasedAt: int | None = None
     obtains: list[SvtObtain] = []
     aprilFoolAssets: list[str] = []  # url
     aprilFoolProfile: MappingStr = MappingStr()

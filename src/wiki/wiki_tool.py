@@ -6,7 +6,7 @@ from enum import StrEnum
 from functools import cached_property
 from hashlib import md5, sha1
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, cast
 from urllib.parse import unquote
 
 import mwclient
@@ -580,3 +580,15 @@ class WikiTool:
 
     def render(self, title: str) -> str:
         return self.request(f"https://{self.host}/{self.webpath}/{title}?action=render")
+
+    def expand_template(self, text: str) -> str:
+        resp = self._api_call(
+            {
+                "action": "expandtemplates",
+                "format": "json",
+                "text": text,
+                "prop": "wikitext",
+                "utf8": 1,
+            }
+        )
+        return cast(dict, resp)["expandtemplates"]["wikitext"]
