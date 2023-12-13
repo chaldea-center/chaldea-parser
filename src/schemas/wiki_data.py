@@ -213,7 +213,6 @@ class LimitedSummonBase(BaseModel):
     id: str
     mcLink: NoneStr = None
     fandomLink: NoneStr = None
-    name: MappingStr = MappingStr()
     banner: MappingBase[str] = MappingBase()
     officialBanner: MappingBase[str] = MappingBase()
     noticeLink: MappingStr = MappingStr()  # cn&tw: number
@@ -222,7 +221,7 @@ class LimitedSummonBase(BaseModel):
 
 
 class LimitedSummon(LimitedSummonBase):
-    name_: str | None = None
+    name: str | None = None
     type: SummonType = SummonType.unknown
     rollCount: int = 11  # 11 or 10
     puSvt: list[int] = []

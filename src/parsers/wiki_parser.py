@@ -949,15 +949,11 @@ class WikiParser:
 
             name_jp = params.get2("卡池名jp")
             name_cn = params.get2("卡池名ha") or params.get2("卡池名cn") or title
-            summon = self.wiki_data.summons.setdefault(
-                key, LimitedSummon(id=key, name_=name_jp)
-            )
+            summon = self.wiki_data.summons.setdefault(key, LimitedSummon(id=key))
             summon.mcLink = title
-            summon.name_ = name_jp
+            summon.name = name_jp
             if name_cn and name_jp:
                 self.mc_transl.summon_names[name_jp] = name_cn
-            summon.name.JP = name_jp
-            summon.name.CN = name_cn
             summon.startTime.JP = MOONCELL.get_timestamp(
                 params.get("卡池开始时间jp"), KnownTimeZone.jst
             )
@@ -1010,7 +1006,7 @@ class WikiParser:
         for title in sorted(titles):
             worker.add(_parse_one, title)
         worker.wait()
-        counts = Counter([summon.name_ for summon in self.wiki_data.summons.values()])
+        counts = Counter([summon.name for summon in self.wiki_data.summons.values()])
         counts = {k: v for k, v in counts.items() if v > 1 and k != "クラス別ピックアップ召喚"}
         if counts:
             discord.mc("Duplicated Summon JP name", dump_json(counts))
