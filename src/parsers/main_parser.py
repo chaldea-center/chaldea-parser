@@ -534,7 +534,7 @@ class MainParser:
         ):
             if base_fn is None:
                 base_fn = key
-            n = len(obj) // count + 1
+            n = (len(obj) / count).__ceil__()
             for i in range(n):
                 _fn_i = f"{base_fn}.{i + 1}.json"
                 _normal_dump(obj[i * count : (i + 1) * count], key, _fn_i, encoder)
