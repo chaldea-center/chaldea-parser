@@ -126,6 +126,8 @@ class WikiParser:
         self.mc_ce()
         logger.info("[MC] parsing command code data")
         self.mc_cc()
+        logger.info("[MC] parsing mystic code data")
+        self.mc_mystic()
         logger.info("[MC] parsing event/war/quest data")
         self.mc_events()
         self.mc_wars()
@@ -580,6 +582,22 @@ class WikiParser:
             name="mc_cc",
         )
         worker.wait()
+
+    def mc_mystic(self):
+        wikitext = MOONCELL.get_page_text("御主装备")
+        wikitext = mwparse(wikitext).get_sections([2], "魔术礼装")[0]
+        transl = self.wiki_data.mcTransl
+        for params in parse_template_list(wikitext, "^{{魔术礼装"):
+            name_jp, name_cn = params.get2("日文名称"), params.get2("中文名称")
+            detail_jp, detail_cn = params.get2("日文简介"), params.get2("中文简介")
+            if name_jp and name_cn:
+                transl.mc_names[name_jp] = name_cn
+            if name_jp and detail_cn:
+                transl.mc_details[name_jp] = detail_cn
+        for params in parse_template_list(wikitext, "^{{赋予技能"):
+            skill_cn, skill_jp = params.get2(2), params.get2(3)
+            if skill_cn and skill_jp:
+                transl.skill_names.setdefault(skill_jp, skill_cn)
 
     def _parse_chara(self, charas: str) -> tuple[list[int], list[str]]:
         known: list[int] = []

@@ -45,6 +45,8 @@ class WikiTranslation(BaseModelORJson):
     cc_skill_des: dict[int, str] = {}
     costume_names: dict[str, str] = {}
     costume_details: dict[int, str] = {}
+    mc_names: dict[str, str] = {}
+    mc_details: dict[str, str] = {}  # <name_jp: detail>
     summon_names: dict[str, str] = {}
 
     def sort(self):
@@ -64,6 +66,8 @@ class WikiTranslation(BaseModelORJson):
         self.cc_skill_des = sort_dict(self.cc_skill_des)
         self.costume_names = sort_dict(self.costume_names)
         self.costume_details = sort_dict(self.costume_details)
+        self.mc_names = sort_dict(self.mc_names)
+        self.mc_details = sort_dict(self.mc_details)
         self.summon_names = sort_dict(self.summon_names)
 
     def clean_untranslated(self):
@@ -85,6 +89,8 @@ class WikiTranslation(BaseModelORJson):
             self.quest_names,
             self.spot_names,
             self.costume_names,
+            self.mc_names,
+            self.mc_details,
             self.summon_names,
         ]
         int_transls = [

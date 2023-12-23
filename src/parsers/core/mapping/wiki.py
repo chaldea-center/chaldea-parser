@@ -73,6 +73,12 @@ def merge_wiki_translation(
         _update_mapping(mappings.costume_names, name_jp, name_cn)
     for collection, name_cn in transl.costume_details.items():
         _update_mapping(mappings.costume_detail, collection, name_cn)
+    for name_jp, name_cn in transl.mc_names.items():
+        _update_mapping(mappings.mc_names, name_jp, name_cn)
+    for name_jp, detail_cn in transl.mc_details.items():
+        for mc in jp_data.nice_mystic_code:
+            if mc.name == name_jp:
+                _update_mapping(mappings.mc_detail, mc.id, detail_cn)
     for name_jp, name_cn in transl.summon_names.items():
         _update_mapping(mappings.summon_names, name_jp, name_cn, skip_unknown_key=False)
 
