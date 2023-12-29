@@ -1094,7 +1094,7 @@ class WikiParser:
                 self.mc_transl.costume_details[collection] = detail_cn
 
         # event item names
-        item_pages = ["道具一览"] + [f"道具一览/活动道具/{i}" for i in range(1, 9)]
+        item_pages = ["道具一览"] + [f"道具一览/活动道具/{i}" for i in range(1, 11)]
         for title in item_pages:
             text = MOONCELL.get_page_text(title)
             for params in parse_template_list(text, r"^{{活动道具表格"):
