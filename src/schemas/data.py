@@ -55,7 +55,8 @@ RANDOM_ENEMY_QUESTS = [
 ]
 
 
-jp_chars = re.compile(r"[\u3040-\u309f\u30a0-\u30ff]")
+# u30fb: "・"
+jp_chars = re.compile(r"[\u3040-\u309f\u30a0-\u30fa\u30fc-\u30ff]")
 
 
 # <eventId, <buffGroupId, skillNum>>
