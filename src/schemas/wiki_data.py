@@ -72,7 +72,7 @@ class WikiTranslation(BaseModelORJson):
 
     def clean_untranslated(self):
         def _clean(data: dict[Any, str]):
-            keys_to_remove = [k for k, v in data.items() if jp_chars.match(v)]
+            keys_to_remove = [k for k, v in data.items() if jp_chars.search(v)]
             for key in keys_to_remove:
                 data.pop(key)
 
