@@ -1044,7 +1044,8 @@ class WikiParser:
 
             known_svt, unknown_svt = self._parse_cards(params.get2("推荐召唤从者"), True)
             known_ce, unknown_ce = self._parse_cards(params.get2("推荐召唤礼装"), False)
-            unknown_cards.add(f"{title}: " + ", ".join(unknown_svt + unknown_ce))
+            if unknown_svt or unknown_ce:
+                unknown_cards.add(f"{title}: " + ", ".join(unknown_svt + unknown_ce))
             summon.puSvt = known_svt
             summon.puCE = known_ce
 
