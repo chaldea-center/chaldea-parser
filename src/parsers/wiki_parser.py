@@ -241,8 +241,8 @@ class WikiParser:
             col_no = svt_add.collectionNo
             record = index_data.get(svt_id)
             nicknames: set[str] = set()
+            svt_add.mcLink = extra_pages.get(svt_id) or svt_add.mcLink
             if record:
-                svt_add.mcLink = record["name_link"]
                 nicknames.update([s.strip() for s in record["name_other"].split("&")])
                 obtains: list[SvtObtain] = []
                 for m in re.split(r"<br>|&", record["method"]):
@@ -253,8 +253,6 @@ class WikiParser:
                 obtains = list(set(obtains))
                 svt_add.obtains = sorted(obtains)
 
-            if not svt_add.mcLink and svt_id in extra_pages:
-                svt_add.mcLink = extra_pages[svt_id]
             if not svt_add.mcLink:
                 return
             svt_add.mcLink = MOONCELL.moved_pages.get(svt_add.mcLink) or svt_add.mcLink
@@ -449,10 +447,10 @@ class WikiParser:
             ce_add = self.wiki_data.get_ce(ce_id)
             if ce_id in region_campaign_ces:
                 ce_add.obtain = CEObtain.campaign
+            ce_add.mcLink = extra_pages.get(ce_id) or ce_add.mcLink
 
             record = index_data.get(ce_id)
             if record:
-                ce_add.mcLink = record["name_link"]
                 ce_add.obtain = CEObtain.from_cn(record["type"])
 
                 des = record.get("des")
@@ -464,8 +462,6 @@ class WikiParser:
                     des_max = remove_tag(des_max).replace("\n", "").strip()
                     self.mc_transl.ce_skill_des_max[ce_add.collectionNo] = des_max
 
-            if not ce_add.mcLink and ce_id in extra_pages:
-                ce_add.mcLink = extra_pages[ce_id]
             if not ce_add.mcLink:
                 return
             ce_add.mcLink = MOONCELL.moved_pages.get(ce_add.mcLink) or ce_add.mcLink
@@ -538,12 +534,11 @@ class WikiParser:
 
         def _parse_one(cc_id: int):
             cc_add = self.wiki_data.get_cc(cc_id)
+            cc_add.mcLink = extra_pages.get(cc_id) or cc_add.mcLink
             record = index_data.get(cc_id)
             if record:
-                cc_add.mcLink = record["name_link"]
+                pass
 
-            if not cc_add.mcLink and cc_id in extra_pages:
-                cc_add.mcLink = extra_pages[cc_id]
             if not cc_add.mcLink:
                 return
             cc_add.mcLink = MOONCELL.moved_pages.get(cc_add.mcLink) or cc_add.mcLink
@@ -1264,7 +1259,7 @@ def _mc_index_data(page: str) -> dict[int, dict[str, str]]:
 
 def _mc_smw_card_list(category: str, prop: str) -> dict[int, str]:
     query = f"https://fgo.wiki/w/特殊:询问/format%3Djson/sort%3D{prop}/order%3Ddesc/offset%3D0/limit%3D100/-5B-5B分类:{category}-5D-5D/-3F{prop}/mainlabel%3D/prettyprint%3Dtrue/unescape%3Dtrue/searchlabel%3DJSON"
-    print(query)
+    logger.info(query)
     try:
         resp = requests.get(query)
         assert resp.status_code == 200, (resp, resp.text)
