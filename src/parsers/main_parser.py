@@ -280,7 +280,7 @@ class MainParser:
 
         if region == Region.JP:
             for add_region, ces in ADD_CES.items():
-                for collection, (illustrator, sort_id) in ces.items():
+                for collection, (illustrator,) in ces.items():
                     ce = AtlasApi.api_model(
                         f"/nice/{add_region}/equip/{collection}?lore=true",
                         NiceEquipSort,
