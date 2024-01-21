@@ -19,16 +19,8 @@ from app.schemas.nice import (
     NiceBuff,
     NiceBuffType,
     NiceClassBoardClass,
-    NiceItem,
 )
-from app.schemas.raw import (
-    MstEvent,
-    MstItem,
-    MstMasterMission,
-    MstQuestPhase,
-    MstSvt,
-    MstWar,
-)
+from app.schemas.raw import MstEvent, MstItem, MstQuestPhase, MstSvt, MstWar
 from pydantic import BaseModel, parse_file_as, parse_obj_as
 from pydantic.json import pydantic_encoder
 
@@ -83,6 +75,7 @@ from .core.mapping.official import (
     merge_official_mappings,
 )
 from .core.mapping.wiki import merge_atlas_na_mapping, merge_wiki_translation
+from .core.mm import load_mm_with_gifts
 from .core.quest import parse_quest_drops
 from .core.ticket import parse_exchange_tickets
 from .domus_aurea import run_drop_rate_update
@@ -156,9 +149,7 @@ class MainParser:
         self.jp_data.questGroups = parse_obj_as(
             list[MstQuestGroup], DownUrl.gitaa("mstQuestGroup")
         )
-        mms = parse_obj_as(list[MstMasterMission], DownUrl.gitaa("mstMasterMission"))
-        for mm in mms:
-            self.wiki_data.mms[mm.id] = mm
+        self.wiki_data.mms = load_mm_with_gifts(self.wiki_data.mms)
         self.jp_data.constData = get_const_data(self.jp_data)
         class_board_extra1 = next(
             board for board in self.jp_data.nice_class_board if board.id == 8

@@ -10,7 +10,7 @@ from typing import Generator, Type
 import requests
 import requests_cache
 from app.schemas.common import Region
-from app.schemas.nice import NiceQuestPhase
+from app.schemas.nice import NiceMasterMission, NiceQuestPhase
 from pydantic import ValidationError
 from ratelimit import limits, sleep_and_retry
 from requests import Response
@@ -219,6 +219,17 @@ class HttpApiUtil(abc.ABC):
             filter_fn,
             **kwargs,
         )
+
+    def master_mission(
+        self,
+        mm_id: int,
+        region=Region.JP,
+        expire_after: ExpirationTime = None,
+        filter_fn: FILTER_FN2 = None,
+        **kwargs,
+    ):
+        url = f"/nice/{region}/mm/{mm_id}"
+        return self.api_model(url, NiceMasterMission, expire_after, filter_fn, **kwargs)
 
     def full_url(self, _path: str):
         if _path.startswith(self.api_server):

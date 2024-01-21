@@ -2,11 +2,11 @@ from typing import Any
 
 from app.schemas.base import BaseModelORJson
 from app.schemas.common import Region
-from app.schemas.raw import MstMasterMission
 from pydantic import BaseModel, NoneStr
 from pydantic.json import pydantic_encoder
 
 from ..config import settings
+from ..schemas.common import MstMasterMissionWithGift
 from ..utils.helper import dump_json, dump_json_beautify, load_json, sort_dict
 from .common import (
     NEVER_CLOSED_TIMESTAMP,
@@ -246,7 +246,7 @@ class WikiData(BaseModelORJson):
     summons: dict[str, LimitedSummon] = {}
     mcTransl: WikiTranslation = WikiTranslation()
     fandomTransl: WikiTranslation = WikiTranslation()
-    mms: dict[int, MstMasterMission] = {}
+    mms: dict[int, MstMasterMissionWithGift] = {}
 
     @classmethod
     def parse_dir(cls, full_version: bool = False) -> "WikiData":

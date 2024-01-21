@@ -3,6 +3,7 @@ from typing import Any, Generic, Optional, TypeVar, Union
 
 import orjson
 from app.schemas.common import Region
+from app.schemas.raw import MstMasterMission
 from pydantic import BaseModel, Field
 from pydantic.generics import GenericModel
 
@@ -339,3 +340,7 @@ class MstGacha(BaseModel):
     openedAt: int
     closedAt: int
     detailUrl: str = ""
+
+
+class MstMasterMissionWithGift(MstMasterMission):
+    gifts: dict[int, int] = {}  # manually added
