@@ -288,6 +288,10 @@ class MainParser:
         for svt in master_data.nice_servant_lore:
             master_data.remainedQuestIds.update(svt.relateQuestIds)
             master_data.remainedQuestIds.update(svt.trialQuestIds)
+            if svt.collectionNo == 405:  # 宮本伊織, remove TD "???"
+                svt.noblePhantasms = [
+                    td for td in svt.noblePhantasms if td.id != 106099
+                ]
         master_data.extraMasterMission = [
             mm for mm in master_data.nice_master_mission if mm.id == 10001
         ]
