@@ -2,6 +2,8 @@ import re
 
 from app.schemas.common import Region
 
+from .common import SvtLimitHide
+
 
 MIN_APP = "2.5.2"
 
@@ -34,6 +36,61 @@ ADD_CES: dict[Region, dict[int, tuple[str | None,]]] = {
         102024: ("白浜鴎",),  # 2024 FES 90086006
     },
 }
+
+# Laplace - skip skills/tds
+SVT_LIMIT_HIDES: dict[int, list[SvtLimitHide]] = {
+    -1: [
+        SvtLimitHide(
+            limits=[-1],
+            # Valentine 2023 NP300, 巡霊の祝祭
+            addPassives=[940274, 940284, 940285, 940289, 940298, 940302, 940308],
+        )
+    ],
+    800100: [
+        SvtLimitHide(
+            limits=[0, 1, 2, 3, 4, 11, 800130, 14, 800160, 15, 800170],
+            tds=[800105, 800106],
+            activeSkills={1: [459550, 744450], 2: [460250], 3: [457000, 2162350]},
+        ),
+        SvtLimitHide(
+            limits=[12, 800140, 13, 800150],
+            # 02 not in nice data, 03 not exist
+            tds=[800100, 800101, 800104, 800102],
+            activeSkills={1: [1000, 236000], 2: [2000], 3: [133000]},
+        ),
+    ],
+    304800: [
+        SvtLimitHide(
+            limits=[0, 1, 2, 11, 304830, 12, 304840],
+            tds=[304802],
+            activeSkills={3: [888575]},
+        ),
+        SvtLimitHide(
+            limits=[3, 4, 13, 304850],
+            tds=[304801],
+            activeSkills={3: [888550]},
+        ),
+    ],
+    205000: [
+        SvtLimitHide(
+            limits=[0, 1, 2],
+            tds=[205002],
+            activeSkills={3: [2281675]},
+        ),
+        SvtLimitHide(
+            limits=[3, 4],
+            tds=[205001],
+            activeSkills={3: [2281650]},
+        ),
+    ],
+    106000: [
+        SvtLimitHide(
+            limits=[-1],
+            tds=[106099],
+        )
+    ],
+}
+
 
 # svt_no, questIds
 STORY_UPGRADE_QUESTS = {

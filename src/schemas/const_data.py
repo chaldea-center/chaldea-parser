@@ -12,7 +12,7 @@ from app.schemas.gameenums import (
 from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail, NiceGift
 from pydantic import BaseModel
 
-from .common import MstClass
+from .common import MstClass, SvtLimitHide
 
 
 class BuffActionDetail(BaseModel):
@@ -87,6 +87,7 @@ class ConstGameData(BaseModel):
     svtExp: dict[int, SvtExpCurve]
     funcTypeDetail: dict[int, NiceFuncTypeDetail]
     buffTypeDetail: dict[int, NiceBuffTypeDetail]
+    svtLimitHides: dict[int, list[SvtLimitHide]]
     eventPointBuffGroupSkillNumMap: dict[int, dict[int, int]]
     laplaceUploadAllowAiQuests: list[int]
     excludeRewardQuests: list[int]

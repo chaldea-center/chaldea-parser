@@ -344,3 +344,11 @@ class MstGacha(BaseModel):
 
 class MstMasterMissionWithGift(MstMasterMission):
     gifts: dict[int, int] = {}  # manually added
+
+
+class SvtLimitHide(BaseModel):
+    limits: list[int]
+    tds: list[int] = []
+    activeSkills: dict[int, list[int]] = {}
+    # classPassives: list[int] = []
+    addPassives: list[int] = []

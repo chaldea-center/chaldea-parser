@@ -15,6 +15,7 @@ from ...schemas.data import (
     LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
     RANDOM_ENEMY_QUESTS,
     SVT_FACE_LIMITS,
+    SVT_LIMIT_HIDES,
 )
 from ...schemas.gamedata import MasterData
 from ...utils.helper import sort_dict
@@ -72,6 +73,7 @@ def get_const_data(data: MasterData):
             detail.buffType: get_nice_buff_type_detail(detail)
             for detail in mst_buff_type_details
         },
+        svtLimitHides=SVT_LIMIT_HIDES,
         eventPointBuffGroupSkillNumMap=EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP,
         laplaceUploadAllowAiQuests=LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
         excludeRewardQuests=EXCLUDE_REWARD_QUESTS,
