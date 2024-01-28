@@ -42,8 +42,12 @@ SVT_LIMIT_HIDES: dict[int, list[SvtLimitHide]] = {
     -1: [
         SvtLimitHide(
             limits=[-1],
-            # Valentine 2023 NP300, 巡霊の祝祭
-            addPassives=[940274, 940284, 940285, 940289, 940298, 940302, 940308],
+            addPassives=[
+                # Valentine 2023 NP300, 巡霊の祝祭
+                940274, 940284, 940285, 940289, 940298, 940302, 940308, # fmt:skip
+                #  終局特異点
+                960502, 960503, 960504, 960505, 960506, 960507, # fmt:skip
+            ],
         )
     ],
     800100: [
