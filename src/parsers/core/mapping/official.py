@@ -166,9 +166,22 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
     for spot_jp in jp_data.spot_dict.values():
         spot = data.spot_dict.get(spot_jp.id)
         _update_mapping(mappings.spot_names, spot_jp.name, spot.name if spot else None)
-        for spotAdd in spot_jp.spotAdds:
-            if spotAdd.overrideType == NiceSpotOverwriteType.name_:
-                _update_mapping(mappings.spot_names, spotAdd.targetText, None)
+        for add_jp in spot_jp.spotAdds:
+            if add_jp.overrideType == NiceSpotOverwriteType.name_:
+                spot_add = next(
+                    (
+                        add
+                        for add in (spot.spotAdds if spot else [])
+                        if (add.overrideType, add.priority, add.condTargetId)
+                        == (add_jp.overrideType, add_jp.priority, add_jp.condTargetId)
+                    ),
+                    None,
+                )
+                _update_mapping(
+                    mappings.spot_names,
+                    add_jp.targetText,
+                    spot_add.targetText if spot_add else None,
+                )
 
     def __update_ascension_add(
         m: dict[str, MappingStr],
