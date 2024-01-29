@@ -1116,7 +1116,7 @@ class WikiParser:
             text = FANDOM.get_page_text(title)
             title = title.replace("_", " ")
             for x in text.replace("_", " ").split(title)[1:]:
-                for subtitle in re.findall(r"^\/([^\}\]\|]*)\}\}", x):
+                for subtitle in re.findall(r"^\/([^\}\]\|]*)(?:\}\}|\]\])", x):
                     if len(subtitle) > 100 or "\n" in subtitle:
                         continue
                     if not is_event or "quest" in str(subtitle).lower():
