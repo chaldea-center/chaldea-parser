@@ -8,6 +8,7 @@ So make sure all changes here have been token affect in distribution before `upd
 - output/wiki/summons_base
   from release/summons.json
 """
+
 from src.config import settings
 from src.schemas.common import DataVersion
 from src.schemas.gamedata import MappingData

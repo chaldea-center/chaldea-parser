@@ -1,4 +1,4 @@
-#%%
+# %%
 import re
 from pathlib import Path
 from typing import Any, Callable
@@ -22,7 +22,8 @@ api = HttpApiUtil(
     expire_after=100 * 24 * 3600,
 )
 
-#%%
+
+# %%
 def main(
     wars: list[WarW],
     events: list[EventWBase],
@@ -164,7 +165,7 @@ def try_get_jp_02(url: str) -> str:
     return url
 
 
-#%%
+# %%
 if __name__ == "__main__":
     wiki_folder = Path(settings.output_wiki)
 

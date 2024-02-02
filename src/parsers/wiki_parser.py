@@ -4,6 +4,7 @@ Event: wiki_data/events.json + MC data
   - 狩猎关卡: quests
 Summon: wiki_data/summons.json + MC data
 """
+
 import re
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -204,8 +205,7 @@ class WikiParser:
                 return True
         return False
 
-    def get_svt_obtains(self, methods: str, detail_method: str) -> list[SvtObtain]:
-        ...
+    def get_svt_obtains(self, methods: str, detail_method: str) -> list[SvtObtain]: ...
 
     @staticmethod
     def _load_list_from_dist(key: str, _type: Type[_KT]) -> list[_KT]:
@@ -260,9 +260,9 @@ class WikiParser:
             # profile
             wikitext = mwparse(MOONCELL.get_page_text(svt_add.mcLink))
             params = parse_template(wikitext, r"^{{基础数值")
-            name_cn, name_cn2 = params.get2("直译名") or params.get2("中文名"), params.get2(
-                "中文名2"
-            )
+            name_cn, name_cn2 = params.get2("直译名") or params.get2(
+                "中文名"
+            ), params.get2("中文名2")
             name_jp, name_jp2 = params.get2("日文名"), params.get2("日文名2")
             if name_cn and name_jp:
                 self.mc_transl.svt_names[name_jp] = name_cn
@@ -303,9 +303,13 @@ class WikiParser:
                     MOONCELL.get_image_url("玛修·基列莱特-卡面-y.png")
                 )
             if svt_add.collectionNo == 83:
-                svt_add.aprilFoolAssets.append(MOONCELL.get_image_url("083所罗门愚人节.png"))
+                svt_add.aprilFoolAssets.append(
+                    MOONCELL.get_image_url("083所罗门愚人节.png")
+                )
             if svt_add.collectionNo == 150:
-                svt_add.aprilFoolAssets.append(MOONCELL.get_image_url("梅林-愚人节2021.png"))
+                svt_add.aprilFoolAssets.append(
+                    MOONCELL.get_image_url("梅林-愚人节2021.png")
+                )
             # FGL - mc
             for index in range(1, 15):
                 if "Grail League" in (params.get(f"立绘{index}") or ""):
@@ -864,8 +868,12 @@ class WikiParser:
                 self.mc_transl.event_names[name_jp] = name_cn
                 self.mc_transl.event_names[name_jp.replace("･", "・")] = name_cn
 
-            event.titleBanner.CN = MOONCELL.get_image_url_null(params.get("标题图文件名cn"))
-            event.titleBanner.JP = MOONCELL.get_image_url_null(params.get("标题图文件名jp"))
+            event.titleBanner.CN = MOONCELL.get_image_url_null(
+                params.get("标题图文件名cn")
+            )
+            event.titleBanner.JP = MOONCELL.get_image_url_null(
+                params.get("标题图文件名jp")
+            )
             event.noticeLink.CN = params.get("官网链接cn")
             event.noticeLink.JP = params.get("官网链接jp")
             # summons
@@ -910,8 +918,12 @@ class WikiParser:
                 return
             params = parse_template(text, r"^{{活动信息")
 
-            war.titleBanner.CN = MOONCELL.get_image_url_null(params.get("标题图文件名cn"))
-            war.titleBanner.JP = MOONCELL.get_image_url_null(params.get("标题图文件名jp"))
+            war.titleBanner.CN = MOONCELL.get_image_url_null(
+                params.get("标题图文件名cn")
+            )
+            war.titleBanner.JP = MOONCELL.get_image_url_null(
+                params.get("标题图文件名jp")
+            )
             war.noticeLink.CN = params.get("官网链接cn")
             war.noticeLink.JP = params.get("官网链接jp")
             self.wiki_data.wars[war.id] = war
@@ -1037,7 +1049,9 @@ class WikiParser:
             summon.noticeLink.JP = params.get("卡池官网链接jp")
             summon.noticeLink.CN = params.get("卡池官网链接cn")
 
-            known_svt, unknown_svt = self._parse_cards(params.get2("推荐召唤从者"), True)
+            known_svt, unknown_svt = self._parse_cards(
+                params.get2("推荐召唤从者"), True
+            )
             known_ce, unknown_ce = self._parse_cards(params.get2("推荐召唤礼装"), False)
             if unknown_svt or unknown_ce:
                 unknown_cards.add(f"{title}: " + ", ".join(unknown_svt + unknown_ce))
@@ -1067,12 +1081,16 @@ class WikiParser:
                         summon.subSummons.append(sub_summon)
 
         worker = Worker("mc_summon")
-        titles = [answer["fulltext"] for answer in MOONCELL.ask_query("[[分类:限时召唤]]")]
+        titles = [
+            answer["fulltext"] for answer in MOONCELL.ask_query("[[分类:限时召唤]]")
+        ]
         for title in sorted(titles):
             worker.add(_parse_one, title)
         worker.wait()
         counts = Counter([summon.name for summon in self.wiki_data.summons.values()])
-        counts = {k: v for k, v in counts.items() if v > 1 and k != "クラス別ピックアップ召喚"}
+        counts = {
+            k: v for k, v in counts.items() if v > 1 and k != "クラス別ピックアップ召喚"
+        }
         if counts:
             discord.mc("Duplicated Summon JP name", dump_json(counts))
         if unknown_cards:
@@ -1099,7 +1117,9 @@ class WikiParser:
                     self.mc_transl.item_names[name_jp] = name_cn
 
         # illustrator
-        illust_text = MOONCELL.get_page_text("模块:GetIllustKey/data", allow_cache=False)
+        illust_text = MOONCELL.get_page_text(
+            "模块:GetIllustKey/data", allow_cache=False
+        )
         illustrators: list[tuple[str, str]] = re.findall(
             r"\['(.+)'\]\s*=\s*'(.+)'", illust_text
         )

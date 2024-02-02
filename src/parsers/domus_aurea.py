@@ -1,6 +1,7 @@
 """
 Drop data from fgo domus aurea
 """
+
 import csv
 import time
 from dataclasses import dataclass
@@ -97,7 +98,7 @@ def get_master_data():
     )
 
 
-#%%
+# %%
 def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
     with LocalProxy(enabled=settings.is_debug):
         csv_fp = settings.output_wiki / "domus_aurea_drop_sheet.csv"

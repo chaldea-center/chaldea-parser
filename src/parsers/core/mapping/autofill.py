@@ -89,8 +89,18 @@ def autofill_mapping(mappings: dict[str, Mapping]):
         "開位級": {"CN": "开位级", "TW": "開位級", "NA": "Cause Rank", "KR": "개위급"},
         "祭位級": {"CN": "祭位级", "TW": "祭位級", "NA": "Fes Rank", "KR": "제위급"},
         "典位級": {"CN": "典位级", "TW": "典位級", "NA": "Pride Rank", "KR": "전위급"},
-        "典位+級": {"CN": "典位+级", "TW": "典位+級", "NA": "Pride+ Rank", "KR": "전위+급"},
-        "典位++級": {"CN": "典位++级", "TW": "典位++級", "NA": "Pride++ Rank", "KR": "전위++급"},
+        "典位+級": {
+            "CN": "典位+级",
+            "TW": "典位+級",
+            "NA": "Pride+ Rank",
+            "KR": "전위+급",
+        },
+        "典位++級": {
+            "CN": "典位++级",
+            "TW": "典位++級",
+            "NA": "Pride++ Rank",
+            "KR": "전위++급",
+        },
     }
     update_kw(
         quest_names,
@@ -127,7 +137,9 @@ def autofill_mapping(mappings: dict[str, Mapping]):
     )
     update_k(
         event_names,
-        pattern=re.compile(r"^「巡霊の祝祭 第(\d+)弾」関連サーヴァント 獲得経験値(\d+)倍！$"),
+        pattern=re.compile(
+            r"^「巡霊の祝祭 第(\d+)弾」関連サーヴァント 獲得経験値(\d+)倍！$"
+        ),
         templates={
             "CN": "「巡灵的祝祭 第{0}弹」关联从者获得经验值{1}倍！",
             "TW": "「巡靈的祝祭 第{0}彈」特定從者獲得經驗值{1}倍！",
