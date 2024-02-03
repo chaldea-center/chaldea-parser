@@ -1207,7 +1207,13 @@ class WikiParser:
                         self.fandom_transl.quest_names[name_jp] = name_en
 
         # event
-        events = parse_file_as(list[EventW], settings.output_dist / "wiki.events.json")
+        events: list[EventW] = []
+        for idx in (1, 2):
+            events.extend(
+                parse_file_as(
+                    list[EventW], settings.output_dist / f"wiki.events.{idx}.json"
+                )
+            )
         for event in events:
             if event.fandomLink:
                 _with_subs(event.fandomLink, True)
