@@ -118,6 +118,10 @@ def parse_jp_top_banner(url: str):
     source = api.call_api(url).text
     source = re.sub(r"<!--\s*/?block\s*--->", "", source)
     img = _get_xpath(source, '//div[@class="article"]//img[@width="800"]/@src')
+    img2 = _get_xpath(source, '//div[@class="article"]//img/@src')
+    if img and img2 and "top_banner" in img2 and "top_banner" not in img:
+        img = img2
+
     return _join(url, img)
 
 
