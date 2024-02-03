@@ -132,6 +132,8 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
             continue
         _update_mapping(mappings.event_names, event_jp.name, event.name)
         _update_mapping(mappings.event_names, event_jp.shortName, event.shortName)
+    for campaign in wiki_data.campaigns.values():
+        _update_mapping(mappings.event_names, campaign.name, None)
 
     war_release = mappings.war_release.of(region) or []
     for war_jp in jp_data.nice_war:

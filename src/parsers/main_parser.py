@@ -651,6 +651,7 @@ class MainParser:
         _normal_dump(data.extraMasterMission, "extraMasterMission")
         _normal_dump(data.questGroups, "questGroups")
         _dump_by_count(data.mstGacha, 2000, "mstGacha")
+        _normal_dump(list(wiki_data.campaigns.values()), "campaigns")
 
         assert data.constData
         _normal_dump(data.constData, "constData")
@@ -659,7 +660,11 @@ class MainParser:
             list(wiki_data.craftEssences.values()), 500, "wiki.craftEssences"
         )
         _normal_dump(list(wiki_data.commandCodes.values()), "wiki.commandCodes")
-        _normal_dump(list(wiki_data.events.values()), "wiki.events")
+        wiki_events = list(wiki_data.events.values())
+        wiki_events_normal = [e for e in wiki_events if e.id > 0]
+        wiki_events_campaign = [e for e in wiki_events if e.id < 0]
+        _normal_dump(list(wiki_events_normal), "wiki.events", "wiki.events.1.json")
+        _normal_dump(list(wiki_events_campaign), "wiki.events", "wiki.events.2.json")
         _normal_dump(list(wiki_data.wars.values()), "wiki.wars")
         _dump_by_count(list(wiki_data.summons.values()), 100, "wiki.summons")
         _dump_file(settings.output_wiki / "webcrowMapping.json", "wiki.webcrowMapping")
@@ -706,10 +711,10 @@ class MainParser:
         chars = {"\ue000": "{jin}", "\ue001": "鯖", "\ue00b": "槌"}
         if isinstance(content, str):
             for k, v in chars.items():
-                content = content.replace(k, v)
+                content = content.replace(k, v)  # type: ignore
         elif isinstance(content, bytes):
             for k, v in chars.items():
-                content = content.replace(k.encode(), v.encode())
+                content = content.replace(k.encode(), v.encode())  # type: ignore
         return content
 
     def _patch_mappings(

@@ -29,7 +29,8 @@ jobs:
         shell: bash
 
       - uses: actions/checkout@v3
-      - uses: actions/checkout@v3
+      - name: Checkout fgo-game-data-api
+        uses: actions/checkout@v3
         with:
           repository: chaldea-center/fgo-game-data-api
           path: fgo-game-data-api
@@ -86,6 +87,7 @@ jobs:
           git add .
           git --no-pager diff --stat --staged
           git commit -m "update wiki data" || echo "Nothing to commit"
+          git push
 
       - name: Parse atlas
         run: python main.py atlas

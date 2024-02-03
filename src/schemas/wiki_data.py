@@ -236,12 +236,22 @@ class LimitedSummon(LimitedSummonBase):
     subSummons: list[SubSummon] = []
 
 
+class CampaignEvent(BaseModelORJson):
+    key: str
+    id: int
+    # type: NiceEventType
+    name: str
+    startedAt: int
+    endedAt: int
+
+
 class WikiData(BaseModelORJson):
     servants: dict[int, ServantW] = {}
     craftEssences: dict[int, CraftEssenceW] = {}
     commandCodes: dict[int, CommandCodeW] = {}
     # mysticCodes: dict[int, MysticCodeW] = {}
     events: dict[int, EventW] = {}
+    campaigns: dict[int, CampaignEvent] = {}
     wars: dict[int, WarW] = {}
     summons: dict[str, LimitedSummon] = {}
     mcTransl: WikiTranslation = WikiTranslation()
@@ -262,6 +272,10 @@ class WikiData(BaseModelORJson):
             },
             "wars": {war["id"]: war for war in load_json(folder / "wars.json", [])},
             "mms": {mm["id"]: mm for mm in load_json(folder / "mms.json", [])},
+            "campaigns": {
+                campaign["id"]: campaign
+                for campaign in load_json(folder / "campaigns.json", [])
+            },
         }
         if full_version:
             data |= {
@@ -310,6 +324,9 @@ class WikiData(BaseModelORJson):
         events = list(self.events.values())
         events.sort(key=lambda event: event.id)
         self.events = {event.id: event for event in events}
+        campaigns = list(self.campaigns.values())
+        campaigns.sort(key=lambda campaign: abs(campaign.startedAt))
+        self.campaigns = {campaign.id: campaign for campaign in campaigns}
         self.wars = sort_dict(self.wars)
         summons = list(self.summons.values())
         summons.sort(key=lambda summon: summon.startTime.JP or NEVER_CLOSED_TIMESTAMP)
@@ -356,6 +373,11 @@ class WikiData(BaseModelORJson):
             )
         dump_json_beautify(
             list(self.wars.values()), folder / "wars.json", default=encoder_full
+        )
+        dump_json_beautify(
+            list(self.campaigns.values()),
+            folder / "campaigns.json",
+            default=encoder_full,
         )
         dump_json(
             [mm.dict(exclude_defaults=True) for mm in self.mms.values()],

@@ -5,6 +5,7 @@ Event: wiki_data/events.json + MC data
 Summon: wiki_data/summons.json + MC data
 """
 
+import binascii
 import re
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -28,6 +29,7 @@ from ..schemas.common import (
 )
 from ..schemas.data import ADD_CES, jp_chars
 from ..schemas.wiki_data import (
+    CampaignEvent,
     CommandCodeW,
     CraftEssenceW,
     EventW,
@@ -129,6 +131,8 @@ class WikiParser:
         self.mc_cc()
         logger.info("[MC] parsing mystic code data")
         self.mc_mystic()
+        logger.info("[MC] parsing campaign")
+        self.mc_campaigns()
         logger.info("[MC] parsing event/war/quest data")
         self.mc_events()
         self.mc_wars()
@@ -156,7 +160,7 @@ class WikiParser:
             list(self.wiki_data.summons.values()),
             False,
         )
-        self.check_webcrow()
+        # self.check_webcrow()
 
         logger.info("Saving data...")
         MOONCELL.save_cache()
@@ -825,6 +829,47 @@ class WikiParser:
                 subpages.append(matches[0])
         return subpages
 
+    def mc_campaigns(self):
+        titles = [x["fulltext"] for x in MOONCELL.ask_query("[[EventType::Campaign]]")]
+        campaigns: list[CampaignEvent] = []
+        for title in titles:
+            text = MOONCELL.get_page_text(title)
+            params = parse_template(text, r"^{{活动信息")
+            name_jp = params.get2("名称jp")
+            start_jp, end_jp = params.get("开始时间jp"), params.get("结束时间jp")
+            if not name_jp or not start_jp or not end_jp:
+                logger.info(
+                    f"[{title}] Campaign name or time unknown: {name_jp, start_jp, end_jp}"
+                )
+                continue
+            start_time = MOONCELL.get_timestamp(start_jp, KnownTimeZone.jst)
+            end_time = MOONCELL.get_timestamp(end_jp, KnownTimeZone.jst)
+            if not start_time or not end_time:
+                logger.warning(
+                    f"[{title}] Invalid timestamp: {start_jp,start_time,end_jp,end_time}",
+                )
+                continue
+            notice_link = params.get2("官网链接jp")
+            notice_key = _gen_jp_notice_key(notice_link)
+            if not notice_key:
+                logger.warning(f"[{title}] No jp notice link: {notice_link}")
+                continue
+            campaign_id = abs(start_time - 1420070400) // 3600
+            campaign_id = campaign_id * 100 + binascii.crc32(notice_key.encode()) % 100
+            campaign_id = -campaign_id
+            campaigns.append(
+                CampaignEvent(
+                    id=campaign_id,
+                    key=notice_key,
+                    name=name_jp,
+                    startedAt=start_time,
+                    endedAt=end_time,
+                )
+            )
+            event_add = self.wiki_data.get_event(event_id=campaign_id, name=name_jp)
+            event_add.mcLink = MOONCELL.norm_key(title)
+        self.wiki_data.campaigns = {x.id: x for x in campaigns}
+
     def mc_events(self):
         def _parse_one(event: EventW):
             if event.mcLink:
@@ -876,6 +921,14 @@ class WikiParser:
             )
             event.noticeLink.CN = params.get("官网链接cn")
             event.noticeLink.JP = params.get("官网链接jp")
+            # campaign only
+            if event.id < 0:
+                event.startTime.CN = MOONCELL.get_timestamp(
+                    params.get2("开始时间cn"), KnownTimeZone.cst
+                )
+                event.endTime.CN = MOONCELL.get_timestamp(
+                    params.get2("结束时间cn"), KnownTimeZone.cst
+                )
             # summons
             summon_pages = []
             for i in range(1, 6):
@@ -891,7 +944,7 @@ class WikiParser:
                 summon_params = parse_template(
                     MOONCELL.get_page_text(summon_page), r"^{{卡池信息"
                 )
-                key = _gen_summon_key(summon_params.get("卡池官网链接jp"))
+                key = _gen_jp_notice_key(summon_params.get("卡池官网链接jp"))
                 if key:
                     event.relatedSummons.append(key)
             self.wiki_data.events[event.id] = event
@@ -1010,7 +1063,7 @@ class WikiParser:
         def _parse_one(title: str):
             wikitext = mwparse(MOONCELL.get_page_text(title))
             params = parse_template(wikitext, r"^{{卡池信息")
-            key = _gen_summon_key(params.get("卡池官网链接jp"))
+            key = _gen_jp_notice_key(params.get("卡池官网链接jp"))
             if not key:
                 return
             if key in added_summons:
@@ -1295,7 +1348,7 @@ def _mc_smw_card_list(category: str, prop: str) -> dict[int, str]:
     return out
 
 
-def _gen_summon_key(jp_url: str | None) -> Optional[str]:
+def _gen_jp_notice_key(jp_url: str | None) -> Optional[str]:
     if not jp_url:
         return None
     assert "fate-go.jp" in jp_url.lower(), jp_url

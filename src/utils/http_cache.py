@@ -144,7 +144,7 @@ class HttpApiUtil(abc.ABC):
             except Exception as e:
                 logger.error(f"error in filter_fn: {e}")
                 should_delete = True
-        if should_delete:
+        if should_delete and self.cache_storage.has_url(url):
             logger.debug(f"delete matched url:{url}")
             self.cache_storage.delete_url(url)
             resp = None

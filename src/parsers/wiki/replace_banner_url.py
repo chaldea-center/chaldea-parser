@@ -41,7 +41,7 @@ def main(
                 if official_new:
                     return official_new
             except Exception as e:
-                print(e)
+                logger.error(e)
                 return official
         return official
 
@@ -152,6 +152,7 @@ def parse_tw_top_banner(notice_id: str):
 
 
 def try_get_jp_02(url: str) -> str:
+    url = url.replace("http://", "https://")
     assert url.startswith("https://news.fate-go.jp/wp-content/uploads/"), url
     if not url.endswith("top_banner.png"):
         return url
