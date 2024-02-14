@@ -13,6 +13,7 @@ from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail, NiceGift
 from pydantic import BaseModel
 
 from .common import MstClass, SvtLimitHide
+from .data import ConstDataConfig
 
 
 class BuffActionDetail(BaseModel):
@@ -94,3 +95,4 @@ class ConstGameData(BaseModel):
     randomEnemyQuests: list[int]
     freeExchangeSvtEvents: list[int]
     svtFaceLimits: dict[int, list[int]]
+    config: ConstDataConfig

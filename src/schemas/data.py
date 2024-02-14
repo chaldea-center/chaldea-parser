@@ -1,11 +1,17 @@
 import re
 
 from app.schemas.common import Region
+from pydantic import BaseModel
 
 from .common import SvtLimitHide
 
 
 MIN_APP = "2.5.2"
+
+
+class ConstDataConfig(BaseModel):
+    autoLoginMinVerJp: str = "999.999.999"
+    autoLoginMinVerNa: str = "2.5.5"
 
 
 ADD_CES: dict[Region, dict[int, tuple[str | None,]]] = {
