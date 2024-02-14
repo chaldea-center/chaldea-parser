@@ -650,11 +650,19 @@ class WikiParser:
             else:
                 page_text = MOONCELL.get_page_text(chara)
                 if is_svt:
-                    param_svt = parse_template(page_text, r"^{{基础数值")
-                    card_id = param_svt.get_cast("序号", cast=int)
+                    match = re.match(r"^从者(\d+)$", chara)
+                    if match:
+                        card_id = int(str(match.group(1)).lstrip("0"))
+                    else:
+                        param_svt = parse_template(page_text, r"^{{基础数值")
+                        card_id = param_svt.get_cast("序号", cast=int)
                 else:
-                    param_svt = parse_template(page_text, r"^{{概念礼装")
-                    card_id = param_svt.get_cast("礼装id", cast=int)
+                    match = re.match(r"^礼装(\d+)$", chara)
+                    if match:
+                        card_id = int(str(match.group(1)).lstrip("0"))
+                    else:
+                        param_svt = parse_template(page_text, r"^{{概念礼装")
+                        card_id = param_svt.get_cast("礼装id", cast=int)
                 if card_id:
                     cache[chara] = card_id
                     known.append(card_id)
