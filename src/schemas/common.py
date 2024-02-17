@@ -122,7 +122,8 @@ class SvtObtain(StrEnum):
 
 class CEObtain(StrEnum):
     exp = "exp"
-    shop = "shop"
+    shop = "shop"  # TODO: rename to manaShop
+    manaShop = "manaShop"
     story = "story"
     permanent = "permanent"
     valentine = "valentine"
