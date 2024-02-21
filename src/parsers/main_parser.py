@@ -251,7 +251,11 @@ class MainParser:
 
         msg = f"[JP] {version.utc} " + ";".join(
             [
-                k + " " + ",".join([str(x) for x in v])
+                (
+                    k + " " + ",".join([str(x) for x in v])
+                    if len(v) < 10
+                    else f"{len(v)} {k}"
+                )
                 for k, v in added.dict(exclude_defaults=True, exclude={"time"}).items()
             ]
         )
