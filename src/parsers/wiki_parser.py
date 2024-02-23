@@ -229,8 +229,11 @@ class WikiParser:
         extra_pages: dict[int, str] = {}
         extra_pages |= {k: v["name_link"] for k, v in index_data.items()}
         extra_pages |= {v.collectionNo: v.mcLink for v in prev_data if v.mcLink}
+        extra_pages = {
+            k: MOONCELL.moved_pages.get(v, v) for k, v in extra_pages.items()
+        }
         extra_pages |= self.payload.mc_extra_svt
-
+        extra_pages = extra_pages | _mc_smw_card_list("英灵图鉴", "序号")
         no_index_ids = [
             svt.collectionNo
             for svt in prev_data
@@ -238,7 +241,6 @@ class WikiParser:
         ]
         if no_index_ids:
             logger.info(f"svt not in index: {no_index_ids}")
-        extra_pages = extra_pages | _mc_smw_card_list("英灵图鉴", "序号")
 
         def _parse_one(svt_id: int):
             svt_add = self.wiki_data.get_svt(svt_id)
@@ -437,8 +439,11 @@ class WikiParser:
         extra_pages: dict[int, str] = {}
         extra_pages |= {k: v["name_link"] for k, v in index_data.items()}
         extra_pages |= {v.collectionNo: v.mcLink for v in prev_data if v.mcLink}
+        extra_pages = {
+            k: MOONCELL.moved_pages.get(v, v) for k, v in extra_pages.items()
+        }
         extra_pages |= self.payload.mc_extra_ce
-
+        extra_pages = extra_pages | _mc_smw_card_list("礼装图鉴", "礼装序号")
         no_index_ids = [
             ce.collectionNo
             for ce in prev_data
@@ -448,7 +453,6 @@ class WikiParser:
         ]
         if no_index_ids:
             logger.info(f"ce not in index: {no_index_ids}")
-        extra_pages = extra_pages | _mc_smw_card_list("礼装图鉴", "礼装序号")
         region_campaign_ces = set(k for v in ADD_CES.values() for k in v.keys())
 
         def _parse_one(ce_id: int):
@@ -531,6 +535,10 @@ class WikiParser:
         extra_pages: dict[int, str] = {}
         extra_pages |= {k: v["name_link"] for k, v in index_data.items()}
         extra_pages |= {v.collectionNo: v.mcLink for v in prev_data if v.mcLink}
+        extra_pages = {
+            k: MOONCELL.moved_pages.get(v, v) for k, v in extra_pages.items()
+        }
+        extra_pages = extra_pages | _mc_smw_card_list("指令纹章图鉴", "纹章序号")
         no_index_ids = [
             cc.collectionNo
             for cc in prev_data
@@ -538,7 +546,6 @@ class WikiParser:
         ]
         if no_index_ids:
             logger.info(f"cc not in index: {no_index_ids}")
-        extra_pages = extra_pages | _mc_smw_card_list("指令纹章图鉴", "纹章序号")
 
         def _parse_one(cc_id: int):
             cc_add = self.wiki_data.get_cc(cc_id)
