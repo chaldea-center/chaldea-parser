@@ -16,7 +16,7 @@ jobs:
         shell: bash
 
       - name: Cache Atlas and wiki data
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ env.cache_dir }}
           fail-on-cache-miss: true
@@ -25,9 +25,9 @@ jobs:
             api-cache-${{ runner.os }}-
             api-cache-
 
-      - uses: yizhoumo/setup-ossutil@v1
+      - uses: yizhoumo/setup-ossutil@v2
         with:
-          ossutil-version: "1.7.9"
+          ossutil-version: "1.7.18"
           endpoint: ${{ secrets.OSS_ENDPOINT }}
           access-key-id: ${{ secrets.OSS_ACCESS_KEY_ID }}
           access-key-secret: ${{ secrets.OSS_ACCESS_KEY_SECRET }}

@@ -23,8 +23,8 @@ jobs:
           curl -s https://ipinfo.io/ip
         shell: bash
 
-      - uses: actions/checkout@v3
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           repository: chaldea-center/fgo-game-data-api
           path: fgo-game-data-api
@@ -41,7 +41,7 @@ jobs:
           cat payload.json
 
       - name: Cache Atlas and wiki api response
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ env.cache_dir }}
           fail-on-cache-miss: true
@@ -51,7 +51,7 @@ jobs:
             api-cache-
 
       - name: Setup Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
@@ -65,7 +65,7 @@ jobs:
           npm --location=global install js-beautify
 
       - name: Checkout data repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: chaldea-center/chaldea-data
           token: ${{ secrets.GH_PAGES_TOKEN }}
