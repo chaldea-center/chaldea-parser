@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from .common import SvtLimitHide
 
 
-MIN_APP = "2.5.6"
+MIN_APP = "2.5.7"
 
 
 class ConstDataConfig(BaseModel):
