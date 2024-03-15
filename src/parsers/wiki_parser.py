@@ -1155,12 +1155,22 @@ class WikiParser:
         for title in sorted(titles):
             worker.add(_parse_one, title)
         worker.wait()
-        counts = Counter([summon.name for summon in self.wiki_data.summons.values()])
-        counts = {
-            k: v for k, v in counts.items() if v > 1 and k != "クラス別ピックアップ召喚"
-        }
-        if counts:
-            discord.mc("Duplicated Summon JP name", dump_json(counts))
+        name_jp_counts: dict[str, set[str]] = defaultdict(set)
+        for summon in self.wiki_data.summons.values():
+            if not summon.mcLink or not summon.name:
+                continue
+            if summon.name not in (
+                "クラス別ピックアップ召喚",
+                "ホワイトデーメモリアルピックアップ召喚",
+            ):
+                name_jp_counts[summon.name].add(summon.mcLink)
+        dup_names = [
+            f"`- {name}`: " + ",".join([discord.mc_link(link) for link in links])
+            for name, links in name_jp_counts.items()
+            if len(links) > 1
+        ]
+        if dup_names:
+            discord.mc("Duplicated Summon JP name", "\n".join(dup_names))
         if unknown_cards:
             discord.mc("Unknown PickUp Card", "\n".join(sorted(unknown_cards)))
 
