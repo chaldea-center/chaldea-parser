@@ -24,6 +24,7 @@ def autofill_mapping(mappings: dict[str, Mapping]):
     buff_detail: Mapping = mappings["buff_detail"]
     skill_names: Mapping = mappings["skill_names"]
     skill_detail: Mapping = mappings["skill_detail"]
+    cv_names: Mapping = mappings["cv_names"]
     event_war: Mapping = event_names | war_names
 
     def _repl_svt(name_jp: str):
@@ -254,6 +255,8 @@ def autofill_mapping(mappings: dict[str, Mapping]):
         kwrepls=kwrepls_skill | {"count2": _repl0},
     )
 
+    _update_cvs(cv_names)
+
     return mappings
 
 
@@ -312,6 +315,31 @@ def update_kw(
                 print(f"{name_jp}: found unformatted '{value}'")
                 continue
             transl[region] = value
+
+
+def _update_cvs(cv_names: Mapping):
+    seps: dict[_Region, str] = {
+        "JP": "＆",
+        "CN": "＆",
+        "TW": "＆",
+        "NA": " & ",
+        "KR": "&",
+    }
+    for name_jp in list(cv_names.keys()):
+        persons = [s.strip() for s in name_jp.split("＆")]
+        if len(persons) <= 1:
+            continue
+        names = cv_names[name_jp]
+        for region in list(names.keys()):
+            name = names[region]
+            if name is not None or region == "JP":
+                continue
+            persons2 = [cv_names.get(p, {}).get(region) or "" for p in persons]
+            if not all(persons2):
+                continue
+            sep = seps.get(region)
+            if sep:
+                names[region] = sep.join(persons2)
 
 
 def main(folder: Path):
