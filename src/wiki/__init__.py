@@ -4,7 +4,7 @@ from .wiki_tool import WikiTool
 
 MOONCELL = WikiTool(
     "fgo.wiki",
-    img_url_prefix="https://fgo.wiki/images",
+    img_url_prefix="https://media.fgo.wiki",
     path="/",
     user=settings.mc_user,
     pwd=settings.mc_pwd,
