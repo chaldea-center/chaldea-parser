@@ -451,6 +451,9 @@ class WikiTool:
     ):
         all_updated = True
         _now = int(time.time())
+        if edit_days == -101:
+            self.cache.images.clear()
+            edit_days = None
         if not edit_days or edit_days > 0:
             self.remove_recent_changed(edit_days)
         else:

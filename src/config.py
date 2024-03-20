@@ -81,7 +81,7 @@ class PayloadSetting(BaseSettings):
     enable_wiki_threading: bool = False
     clear_cache_http: bool = False
     clear_cache_wiki: bool = False
-    clear_wiki_changed: float | None = None
+    clear_wiki_changed: float | None = None  # -101: clear all image caches
     clear_wiki_moved: float | None = None
     clear_wiki_empty: bool = False
     skip_mapping: bool = False
