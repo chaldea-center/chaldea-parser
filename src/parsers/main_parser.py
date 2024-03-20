@@ -154,15 +154,6 @@ class MainParser:
         class_board_extra1 = next(
             board for board in self.jp_data.nice_class_board if board.id == 8
         )
-        if not class_board_extra1.classes:
-            class_board_extra1.classes = [
-                NiceClassBoardClass(
-                    classId=svt_class,
-                    className=get_class_name(svt_class),
-                    condType=NiceCondType.forceFalse,
-                )
-                for svt_class in [9, 11, 23, 8]
-            ]
         self.save_data()
         print(self.stopwatch.output())
 
