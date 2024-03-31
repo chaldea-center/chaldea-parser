@@ -131,7 +131,7 @@ def autofill_mapping(mappings: dict[str, Mapping]):
         templates={
             "CN": "进阶关卡 第{0}弹",
             "TW": "進階關卡 第{0}彈",
-            "NA": "Advanced Quest Vol. {0}",
+            "NA": "Advanced Quest: Part {0}",
             "KR": "어드밴스드 퀘스트 {0}탄",
         },
         krepls=[_repl0],
@@ -180,7 +180,26 @@ def autofill_mapping(mappings: dict[str, Mapping]):
             "CN": "{0}的掉落获得数提升",
             "TW": "{0}的掉落獲得數提升",
             "NA": "Increase amount of {0} per drop",
-            "KR": "{0} 획득 UP",
+        },
+        krepls=[_repl_item],
+    )
+    update_k(
+        skill_names,
+        pattern=re.compile(r"^(.+)のドロップ獲得量アップ$"),
+        templates={
+            "CN": "{0}的掉落获得量提升",
+            "TW": "{0}的掉落獲得量提升",
+            "NA": "Increase amount of {0} per drop",
+        },
+        krepls=[_repl_item],
+    )
+    update_k(
+        skill_names,
+        pattern=re.compile(r"^(.+)獲得量アップ$"),
+        templates={
+            "CN": "{0}获得量提升",
+            "TW": "{0}獲得量提升",
+            "NA": "Increase amount of {0}",
         },
         krepls=[_repl_item],
     )

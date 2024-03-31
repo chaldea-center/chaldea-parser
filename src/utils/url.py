@@ -1,5 +1,11 @@
+import time
+
 import requests
 from app.schemas.common import Region
+
+
+def get_time():
+    return int(time.time())
 
 
 class DownUrl:
@@ -16,7 +22,9 @@ class DownUrl:
     @classmethod
     def export(cls, name: str, region: Region = Region.JP):
         name = cls._json_fn(name)
-        return cls.download(f"https://api.atlasacademy.io/export/{region}/{name}")
+        return cls.download(
+            f"https://api.atlasacademy.io/export/{region}/{name}?t={get_time()}"
+        )
 
     @classmethod
     def gitaa(
@@ -27,5 +35,5 @@ class DownUrl:
     ):
         name = cls._json_fn(name)
         return cls.download(
-            f"https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}/{folder}{name}"
+            f"https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}/{folder}{name}?t={get_time()}"
         )

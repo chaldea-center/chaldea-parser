@@ -39,8 +39,10 @@ def text(msg: str, title: str | None = None):
 def _encode_url(url: str):
     return quote(url, safe=";/?:@&=+$,")
 
-def _encode_page_title(name:str):
-    return name.replace("_","\\_")
+
+def _encode_page_title(name: str):
+    return name.replace("_", "\\_")
+
 
 def md_link(title: str, link: str):
     return f"[{_encode_page_title(title)}]({_encode_url(link)})"
