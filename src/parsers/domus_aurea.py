@@ -4,6 +4,7 @@ Drop data from fgo domus aurea
 
 import csv
 import time
+from collections import defaultdict
 from dataclasses import dataclass
 from io import StringIO
 
@@ -22,6 +23,9 @@ from src.utils.helper import LocalProxy, dump_json_beautify
 from src.utils.url import DownUrl
 
 
+LOCAL_MODE = False
+
+
 class DOMUS_URLS:
     drop_rate = "https://docs.google.com/spreadsheets/d/1H4x2FOF-9eHy0CByuRQR74x37qji2i5HqTKYpQw9oO8/export?gid=756436527&format=csv"
     ap_rate = "https://docs.google.com/spreadsheets/d/1H4x2FOF-9eHy0CByuRQR74x37qji2i5HqTKYpQw9oO8/export?gid=397765373&format=csv"
@@ -31,9 +35,9 @@ class DOMUS_URLS:
 
 @dataclass
 class _MasterData:
+    wars: dict[int, NiceWar]
     quests: dict[int, NiceQuest]
     questPhases: dict[int, MstQuestPhase]
-    spotNameQuestIdMap: dict[str, int]
 
 
 def get_master_data():
@@ -56,45 +60,45 @@ def get_master_data():
     extra_quest_ids = set(FIX_SPOT_QUEST_MAPPING.values())
     wars = parse_file_as(list[NiceWar], settings.atlas_export_dir / "JP/nice_war.json")
     valid_quests: dict[int, NiceQuest] = {}
-    spot_map: dict[str, int] = {}
+
     for war in wars:
         if war.id != 1002 and war.id >= 1000:
             continue
         for spot in war.spots:
-            frees = [
-                quest
-                for quest in spot.quests
+            for quest in spot.quests:
                 if (
                     quest.type == NiceQuestType.free
                     and quest.afterClear == NiceQuestAfterClearType.repeatLast
                     and NiceQuestFlag.dropFirstTimeOnly not in quest.flags
                     and NiceQuestFlag.forceToNoDrop not in quest.flags
-                )
-                or quest.id in extra_quest_ids
-            ]
-            valid_quests.update({x.id: x for x in frees})
-            if len(frees) == 1:
-                spot_map[spot.name] = frees[0].id
-    spot_map |= FIX_SPOT_QUEST_MAPPING
+                ) or quest.id in extra_quest_ids:
+                    valid_quests[quest.id] = quest
 
     for quest_id in extra_quest_ids:
         valid_quests[quest_id]
         assert quest_id in valid_quests, f"quest {quest_id} not found"
 
-    mst_phases = parse_obj_as(list[MstQuestPhase], DownUrl.gitaa("mstQuestPhase"))
+    if LOCAL_MODE:
+        mst_phases = parse_file_as(
+            list[MstQuestPhase],
+            "../../atlas/fgo-game-data-jp/master/mstQuestPhase.json",
+        )
+    else:
+        mst_phases = parse_obj_as(list[MstQuestPhase], DownUrl.gitaa("mstQuestPhase"))
+
+    all_quest_phases: dict[int, dict[int, MstQuestPhase]] = defaultdict(dict)
+    for quest in mst_phases:
+        if quest.questId in valid_quests:
+            all_quest_phases[quest.questId][quest.phase] = quest
     quest_phases = {
-        quest.questId: quest
-        for quest in mst_phases
-        if quest.questId in valid_quests
-        and quest.phase == valid_quests[quest.questId].phases[-1]
+        questId: phases[max(phases.keys())]
+        for questId, phases in all_quest_phases.items()
     }
-    phase_not_found = set(valid_quests).difference(quest_phases.keys())
-    assert not phase_not_found, f"quest phases not found: {phase_not_found}"
 
     return _MasterData(
+        wars={w.id: w for w in wars},
         quests=valid_quests,
         questPhases=quest_phases,
-        spotNameQuestIdMap=spot_map,
     )
 
 
@@ -102,13 +106,16 @@ def get_master_data():
 def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
     with LocalProxy(enabled=settings.is_debug):
         csv_fp = settings.output_wiki / "domus_aurea_drop_sheet.csv"
-        # csv_contents = csv_fp.read_text()
         logger.info(f"downloading sheet from {csv_url}")
-        csv_contents = requests.get(csv_url).content.decode("utf8")
+        if LOCAL_MODE:
+            csv_contents = csv_fp.read_text()
+        else:
+            csv_contents = requests.get(csv_url).content.decode("utf8")
         csv_fp.write_text(csv_contents)
     table: list[list[str]] = list(csv.reader(StringIO(csv_contents)))
 
     HEAD_ROW = 2
+    WAR_COL = 0
     SPOT_COL = 1
     RUN_COL = 3
     table = table[HEAD_ROW:]
@@ -125,11 +132,12 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
     assert not item_not_found, f"items not found: {item_id_col_map}"
 
     # <questId, row>
-    quest_id_row_map: dict[int, int] = {
-        mst_data.spotNameQuestIdMap[row_data[SPOT_COL]]: row
-        for row, row_data in enumerate(table)
-        if row_data[SPOT_COL] in mst_data.spotNameQuestIdMap
-    }
+    quest_id_row_map: dict[int, int] = {}
+    for row, row_data in enumerate(table):
+        quest_id = get_quest_id(mst_data, row_data[WAR_COL], row_data[SPOT_COL])
+        if quest_id:
+            quest_id_row_map[quest_id] = row
+
     quest_not_found = set(mst_data.quests).difference(quest_id_row_map.keys())
     assert not quest_not_found, f"quests not found: {quest_not_found}"
 
@@ -151,6 +159,47 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
                 continue
             sheet.sparseMatrix.setdefault(x, {})[y] = float(cell.replace(",", ""))
     return sheet
+
+
+def get_quest_id(mst_data: _MasterData, war_name: str, spot_name: str) -> int | None:
+    if not war_name or spot_name == "クエスト名":
+        return
+    match_wars = [
+        war
+        for war in mst_data.wars.values()
+        if war.id < 1000 and war_name in war.longName
+    ]
+    if war_name.startswith("修練場"):
+        war = mst_data.wars[1002]
+    elif len(match_wars) == 1:
+        war = match_wars[0]
+    else:
+        print(f'"{war_name}"-"{spot_name}": no war found')
+        return None
+    if spot_name in FIX_SPOT_QUEST_MAPPING:
+        return FIX_SPOT_QUEST_MAPPING[spot_name]
+
+    _fix_spot_quest_ids = list(FIX_SPOT_QUEST_MAPPING.values())
+    for spot in war.spots:
+        frees = [
+            quest
+            for quest in spot.quests
+            if (
+                quest.type == NiceQuestType.free
+                and quest.afterClear == NiceQuestAfterClearType.repeatLast
+                and NiceQuestFlag.dropFirstTimeOnly not in quest.flags
+                and NiceQuestFlag.forceToNoDrop not in quest.flags
+            )
+            or quest.id in _fix_spot_quest_ids
+        ]
+        if not frees:
+            continue
+        if spot_name == spot.name and len(frees) == 1:
+            return frees[0].id
+        for quest in frees:
+            if spot_name == quest.name or spot_name == f"{spot.name}（{quest.name}）":
+                return quest.id
+    print(f'"{war_name}"-"{spot_name}": no quest found')
 
 
 def run_drop_rate_update():
