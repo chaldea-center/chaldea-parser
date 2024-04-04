@@ -549,6 +549,7 @@ class WikiTool:
         )
         s = re.sub(r"<\s*div [^>]*>", "", s, flags=re.RegexFlag.IGNORECASE)
         s = re.sub("(<!--.*?-->)", "", s, flags=re.DOTALL)
+        s = s.replace("&nbsp;", " ")
         return s
 
     @classmethod
