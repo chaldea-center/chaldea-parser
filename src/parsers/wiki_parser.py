@@ -289,19 +289,33 @@ class WikiParser:
                     obtain = SvtObtain.from_cn2(detail_obtain)
                     svt_add.obtains.append(obtain)
 
+            BEAST_IDS = (83, 149, 151, 152, 168, 240, 333)
+            # FDS - aa
+            if 1 <= col_no <= 408 and col_no not in BEAST_IDS:
+                fds_base = "https://static.atlasacademy.io/JP/External/FDS"
+                _col_no = f"{col_no:03}"
+                for img_id in [_col_no, _col_no + "_1"] if col_no == 316 else [_col_no]:
+                    svt_add.aprilFoolAssets.extend(
+                        [
+                            f"{fds_base}/Card/card_sg_{img_id}.png",
+                            f"{fds_base}/Figure/figure_{img_id}.png",
+                        ]
+                    )
+
             # FGL - aa
-            if 1 <= col_no <= 375 and col_no not in (83, 149, 151, 152, 168, 240, 333):
+            if 1 <= col_no <= 375 and col_no not in BEAST_IDS:
+                fgl_base = "https://static.atlasacademy.io/JP/External/FGL"
                 svt_add.aprilFoolAssets.extend(
                     [
-                        f"https://static.atlasacademy.io/JP/FGL/SaintGraph/card_sg_{col_no:03}.png",
-                        f"https://static.atlasacademy.io/JP/FGL/Figure/figure_{col_no:03}.png",
+                        f"{fgl_base}/SaintGraph/card_sg_{col_no:03}.png",
+                        f"{fgl_base}/Figure/figure_{col_no:03}.png",
                     ]
                 )
             # riyo - aa
-            if 1 <= col_no <= 336 and col_no not in (83, 149, 151, 152, 168, 240, 333):
+            if 1 <= col_no <= 336 and col_no not in BEAST_IDS:
                 svt_id = self._jp.released_svts[col_no].id
                 svt_add.aprilFoolAssets.append(
-                    f"https://static.atlasacademy.io/CN/af_2023/{svt_id}c@1.png"
+                    f"https://static.atlasacademy.io/JP/External/CN_AF_2023/{svt_id}c@1.png"
                 )
             # riyo - mc
             if svt_add.collectionNo == 1:
