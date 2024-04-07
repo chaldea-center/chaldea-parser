@@ -312,11 +312,14 @@ class WikiParser:
                         f"{EXTERNAL_BASE}/CN_AF_2024/{svt_id}c@1.png",
                     ]
                 )
-            # riyo - aa
+            # riyo - CN 2023 + NA 2024
             if 1 <= col_no <= 336 and col_no not in BEAST_IDS:
                 svt_id = self._jp.released_svts[col_no].id
-                svt_add.aprilFoolAssets.append(
-                    f"{EXTERNAL_BASE}/CN_AF_2023/{svt_id}c@1.png"
+                svt_add.aprilFoolAssets.extend(
+                    [
+                        f"{EXTERNAL_BASE}/FGOPoker/{col_no:03}.png",
+                        f"{EXTERNAL_BASE}/CN_AF_2023/{svt_id}c@1.png",
+                    ]
                 )
             # riyo - mc
             if svt_add.collectionNo == 1:
