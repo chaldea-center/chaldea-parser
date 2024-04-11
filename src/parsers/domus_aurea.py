@@ -9,8 +9,13 @@ from dataclasses import dataclass
 from io import StringIO
 
 import requests
-from app.schemas.gameenums import NiceQuestAfterClearType, NiceQuestFlag, NiceQuestType
-from app.schemas.nice import NiceItem, NiceQuest, NiceWar
+from app.schemas.gameenums import (
+    NiceGiftType,
+    NiceQuestAfterClearType,
+    NiceQuestFlag,
+    NiceQuestType,
+)
+from app.schemas.nice import NiceItem, NiceQuest, NiceQuestPhase, NiceWar
 from app.schemas.raw import MstQuestPhase
 from pydantic import parse_file_as, parse_obj_as
 
@@ -102,6 +107,49 @@ def get_master_data():
     )
 
 
+def _add_item_to_table(table: list[list[str]], item_id: int, item_name: str):
+    for row in table:
+        row.insert(10, item_name)
+    for name1, (id1, name2) in ITEM_NAME_MAPPING.items():
+        if item_name == name2 or item_id == id1:
+            raise Exception(f"{item_id}-{item_name} already in table: {name1}")
+    ITEM_NAME_MAPPING[item_name] = (item_id, item_name)
+
+
+def _add_quest_to_table(
+    table: list[list[str]], quest: NiceQuest, item_id_col_map: dict[int, int]
+):
+    resp = requests.get(
+        f"https://api.atlasacademy.io/nice/JP/quest/{quest.id}/{quest.phases[-1]}"
+    )
+    quest_phase = NiceQuestPhase.parse_obj(resp.json())
+    if not quest_phase.drops:
+        raise Exception(f"Quest {quest.id} has no drop data")
+    drop_counts: dict[int, int] = {}
+    total_runs = quest_phase.drops[0].runs
+    for drop in quest_phase.drops:
+        if drop.type != NiceGiftType.item:
+            continue
+        drop_counts[drop.objectId] = (
+            drop_counts.get(drop.objectId, 0) + drop.num * drop.dropCount
+        )
+
+    new_row = ["" for _ in range(len(table[len(table) // 2]))]
+    new_row[:4] = [
+        quest.warLongName.splitlines()[-1],
+        f"{quest_phase.spotName}（{quest_phase.name}）",
+        str(quest_phase.consume),
+        str(total_runs),
+    ]
+    for item_id, count in drop_counts.items():
+        col = item_id_col_map[item_id]
+        drop_rate = "{:.4f}".format(count / total_runs * 100)
+        new_row[col] = drop_rate
+    table.append(new_row)
+
+    print(f"Inserted Quest {quest.id} {quest.name}")
+
+
 # %%
 def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
     with LocalProxy(enabled=settings.is_debug):
@@ -111,14 +159,19 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
             csv_contents = csv_fp.read_text()
         else:
             csv_contents = requests.get(csv_url).content.decode("utf8")
-        csv_fp.write_text(csv_contents)
+            csv_fp.write_text(csv_contents)
+        assert csv_contents.count(",ハワイエリア,") == 1
+        # csv_contents = csv_contents.replace(",ハワイエリア,", ",常夏の休暇,")
     table: list[list[str]] = list(csv.reader(StringIO(csv_contents)))
 
     HEAD_ROW = 2
     WAR_COL = 0
     SPOT_COL = 1
     RUN_COL = 3
-    table = table[HEAD_ROW:]
+    table = table[HEAD_ROW:][:-6]
+
+    # _add_item_to_table(table, 6557,'終の花')
+    # _add_item_to_table(table, 6558,'黄金釜')
 
     # <itemId, col>
     item_id_col_map: dict[int, int] = {
@@ -126,10 +179,14 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
         for col, name in enumerate(table[0])
         if name.strip() in ITEM_NAME_MAPPING
     }
+
     item_not_found = set(v[0] for v in ITEM_NAME_MAPPING.values()).difference(
         item_id_col_map.keys()
     )
     assert not item_not_found, f"items not found: {item_id_col_map}"
+
+    # for add_quest_id in [94095301, 94095302]:
+    #     _add_quest_to_table(table, mst_data.quests[add_quest_id], item_id_col_map)
 
     # <questId, row>
     quest_id_row_map: dict[int, int] = {}
