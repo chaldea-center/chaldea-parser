@@ -34,6 +34,5 @@ class DownUrl:
         folder: str = "master/",
     ):
         name = cls._json_fn(name)
-        return cls.download(
-            f"https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}/{folder}{name}?t={get_time()}"
-        )
+        url = f"https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}/{folder}{name}?t={get_time()}"
+        return requests.get(url, headers={"cache-control": "no-cache"}).json()
