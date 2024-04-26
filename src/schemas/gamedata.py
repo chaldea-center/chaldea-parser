@@ -189,7 +189,9 @@ class MasterData(BaseModelORJson):
         self.nice_command_code.sort(key=lambda x: x.collectionNo)
         self.nice_equip_lore.sort(key=lambda x: x.collectionNo)
         self.nice_mystic_code.sort(key=lambda x: x.id)
-        self.nice_servant_lore.sort(key=lambda x: x.collectionNo)
+        self.nice_servant_lore.sort(
+            key=lambda x: (x.collectionNo if x.collectionNo else x.id)
+        )
         self.nice_war.sort(key=lambda x: x.id)
         self.nice_event.sort(key=lambda x: x.startedAt)
         self.nice_item.sort(key=lambda x: x.priority)

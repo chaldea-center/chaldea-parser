@@ -207,7 +207,8 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
 
     for svt_jp in jp_data.nice_servant_lore:
         svt = data.svt_id_dict.get(svt_jp.id)
-        wiki_data.get_svt(svt_jp.collectionNo)
+        if svt_jp.collectionNo > 0:
+            wiki_data.get_svt(svt_jp.collectionNo)
         _update_mapping(
             mappings.svt_names,
             svt_jp.name,

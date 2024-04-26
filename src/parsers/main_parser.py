@@ -13,13 +13,8 @@ import requests
 from app.schemas.basic import BasicCommandCode, BasicEquip
 from app.schemas.common import Region
 from app.schemas.enums import OLD_TRAIT_MAPPING, SvtClass, get_class_name
-from app.schemas.gameenums import EventType, NiceCondType, SvtType
-from app.schemas.nice import (
-    NiceBaseFunction,
-    NiceBuff,
-    NiceBuffType,
-    NiceClassBoardClass,
-)
+from app.schemas.gameenums import EventType, SvtType
+from app.schemas.nice import NiceBaseFunction, NiceBuff, NiceBuffType, NiceServant
 from app.schemas.raw import MstEvent, MstItem, MstQuestPhase, MstSvt, MstWar
 from pydantic import BaseModel, parse_file_as, parse_obj_as
 from pydantic.json import pydantic_encoder
@@ -275,6 +270,13 @@ class MainParser:
                     # ce.sortId = sort_id
                     ce.sortId = -ce.collectionNo
                     master_data.nice_equip_lore.append(ce)
+            for svt_id in (600710, 2501500):
+                extra_svt = AtlasApi.api_model(
+                    f"/nice/JP/svt/{svt_id}?lore=true", NiceServant, 0
+                )
+                assert extra_svt is not None and extra_svt.profile
+                master_data.nice_servant_lore.append(extra_svt)
+
         if region == Region.NA:
             self.jp_data.all_quests_na = master_data.quest_dict
         for svt in master_data.nice_servant_lore:
@@ -580,9 +582,6 @@ class MainParser:
                     shutil.rmtree(f)
 
         servants = list(data.nice_servant_lore)
-        # hyde = AtlasApi.api_model("/nice/JP/svt/600710?lore=true", NiceServant, 0)
-        # assert hyde is not None
-        # servants.append(hyde)
 
         _normal_dump(data.nice_item, "items")
         self.encoder.item = True
