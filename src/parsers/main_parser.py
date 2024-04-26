@@ -347,8 +347,8 @@ class MainParser:
                 worker.add_default(buff, get_all_func_val(func, "CounterId"), True)
             elif buff.type in [
                 NiceBuffType.reflectionFunction,
-                NiceBuffType.attackFunction,
-                NiceBuffType.commandattackFunction,
+                NiceBuffType.attackAfterFunction,
+                NiceBuffType.commandattackAfterFunction,
                 NiceBuffType.commandattackBeforeFunction,
                 NiceBuffType.damageFunction,
                 NiceBuffType.deadFunction,
@@ -356,11 +356,13 @@ class MainParser:
                 NiceBuffType.delayFunction,
                 NiceBuffType.selfturnendFunction,
                 NiceBuffType.wavestartFunction,
-                NiceBuffType.commandcodeattackFunction,
+                NiceBuffType.commandcodeattackBeforeFunction,
                 NiceBuffType.commandcodeattackAfterFunction,
                 NiceBuffType.gutsFunction,
                 NiceBuffType.attackBeforeFunction,
                 NiceBuffType.entryFunction,
+                NiceBuffType.skillAfterFunction,
+                NiceBuffType.treasureDeviceAfterFunction,
             ]:
                 worker.add_default(buff, get_all_func_val(func, "Value"))
         for svt in master_data.nice_servant_lore:
