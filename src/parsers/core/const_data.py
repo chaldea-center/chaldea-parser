@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from app.core.utils import get_traits_list
 from app.schemas.gameenums import BUFF_TYPE_NAME, FUNC_TYPE_NAME
 from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail
 from app.schemas.raw import MstBuffTypeDetail, MstFuncTypeDetail, MstSvtExp
@@ -89,6 +90,7 @@ def get_nice_func_type_detail(detail: MstFuncTypeDetail) -> NiceFuncTypeDetail:
     return NiceFuncTypeDetail(
         funcType=FUNC_TYPE_NAME[detail.funcType],
         ignoreValueUp=detail.ignoreValueUp,
+        individuality=get_traits_list(detail.individuality or []),
     )
 
 
