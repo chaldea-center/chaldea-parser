@@ -11,7 +11,7 @@ import orjson
 import pytz
 import requests
 from app.schemas.basic import BasicCommandCode, BasicEquip
-from app.schemas.common import Region
+from app.schemas.common import Region, Trait
 from app.schemas.enums import OLD_TRAIT_MAPPING, SvtClass, get_class_name
 from app.schemas.gameenums import EventType, SvtType
 from app.schemas.nice import NiceBaseFunction, NiceBuff, NiceBuffType, NiceServant
@@ -860,7 +860,8 @@ class MainParser:
             if v in OLD_TRAIT_MAPPING:
                 continue
             m_trait = mappings.trait.setdefault(k, MappingStr())
-            m_trait.update(Region.NA, v.value, skip_exists=True)
+            if v != Trait.unknown:
+                m_trait.update(Region.NA, v.value, skip_exists=True)
 
         enums = self.jp_data.mappingData.enums
         enums.update_enums()
