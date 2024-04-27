@@ -11,7 +11,7 @@ def get_time():
 class DownUrl:
     @classmethod
     def download(cls, url: str):
-        return requests.get(url).json()
+        return requests.get(url, headers={"cache-control": "nocache"}).json()
 
     @staticmethod
     def _json_fn(name: str) -> str:
