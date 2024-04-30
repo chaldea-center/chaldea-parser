@@ -1,7 +1,12 @@
 from collections import defaultdict
 
 from app.core.utils import get_traits_list
-from app.schemas.gameenums import BUFF_TYPE_NAME, FUNC_TYPE_NAME
+from app.schemas.gameenums import (
+    BUFF_ACTION_NAME,
+    BUFF_TYPE_NAME,
+    FUNC_TYPE_NAME,
+    NiceBuffAction,
+)
 from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail
 from app.schemas.raw import MstBuffTypeDetail, MstFuncTypeDetail, MstSvtExp
 from pydantic import parse_obj_as
@@ -54,6 +59,11 @@ def get_const_data(data: MasterData):
     mst_buff_type_details = parse_obj_as(
         list[MstBuffTypeDetail], DownUrl.gitaa("mstBuffTypeDetail")
     )
+
+    BUFF_ACTION_NAME_REVERSE = {v: k for k, v in BUFF_ACTION_NAME.items()}
+    for act_info in data.NiceBuffList_ActionList.values():
+        if isinstance(act_info.plusAction, NiceBuffAction):
+            act_info.plusAction = BUFF_ACTION_NAME_REVERSE[act_info.plusAction]
 
     return ConstGameData(
         cnReplace=dict(CN_REPLACE),

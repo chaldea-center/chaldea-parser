@@ -45,7 +45,7 @@ from .common import (
     MstViewEnemy,
 )
 from .const_data import (
-    BuffActionDetail,
+    BuffActionInfo,
     CardInfo,
     ConstGameData,
     GrailCostDetail,
@@ -146,7 +146,7 @@ class MasterData(BaseModelORJson):
     nice_class_board: list[NiceClassBoard] = []
     nice_trait: dict[int, Trait] = {}
     NiceAttributeRelation: dict[Attribute, dict[Attribute, int]] = {}
-    NiceBuffList_ActionList: dict[NiceBuffAction, BuffActionDetail] = {}
+    NiceBuffList_ActionList: dict[NiceBuffAction, BuffActionInfo] = {}
     NiceCard: dict[NiceCardType, dict[int, CardInfo]] = {}
 
     # NiceClass: list[NiceClassInfo] = []

@@ -16,14 +16,14 @@ from .common import MstClass, SvtLimitHide
 from .data import ConstDataConfig
 
 
-class BuffActionDetail(BaseModel):
+class BuffActionInfo(BaseModel):
     limit: NiceBuffLimit
     plusTypes: list[NiceBuffType]
     minusTypes: list[NiceBuffType]
     baseParam: int
     baseValue: int
     isRec: bool
-    plusAction: int
+    plusAction: int | NiceBuffAction  # remove int type in 2.6.0
     maxRate: list[int]
 
 
@@ -77,7 +77,7 @@ class SvtExpCurve(BaseModel):
 class ConstGameData(BaseModel):
     cnReplace: dict[str, str]
     attributeRelation: dict[Attribute, dict[Attribute, int]]
-    buffActions: dict[NiceBuffAction, BuffActionDetail]
+    buffActions: dict[NiceBuffAction, BuffActionInfo]
     classInfo: dict[int, MstClass]
     cardInfo: dict[NiceCardType, dict[int, CardInfo]]
     classRelation: dict[int, dict[int, int]]
