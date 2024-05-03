@@ -143,9 +143,6 @@ class MainParser:
         )
         self.wiki_data.mms = load_mm_with_gifts(self.wiki_data.mms)
         self.jp_data.constData = get_const_data(self.jp_data)
-        class_board_extra1 = next(
-            board for board in self.jp_data.nice_class_board if board.id == 8
-        )
         self.save_data()
         print(self.stopwatch.output())
 
@@ -270,12 +267,12 @@ class MainParser:
                     # ce.sortId = sort_id
                     ce.sortId = -ce.collectionNo
                     master_data.nice_equip_lore.append(ce)
-            for svt_id in (600710, 2501500):
-                extra_svt = AtlasApi.api_model(
-                    f"/nice/JP/svt/{svt_id}?lore=true", NiceServant, 0
-                )
-                assert extra_svt is not None and extra_svt.profile
-                master_data.nice_servant_lore.append(extra_svt)
+            # for svt_id in (600710, 2501500):
+            #     extra_svt = AtlasApi.api_model(
+            #         f"/nice/JP/svt/{svt_id}?lore=true", NiceServant, 0
+            #     )
+            #     assert extra_svt is not None and extra_svt.profile
+            #     master_data.nice_servant_lore.append(extra_svt)
 
         if region == Region.NA:
             self.jp_data.all_quests_na = master_data.quest_dict
