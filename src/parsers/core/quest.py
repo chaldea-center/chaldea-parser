@@ -8,7 +8,7 @@ from app.schemas.gameenums import (
     NiceQuestFlag,
     NiceQuestType,
 )
-from app.schemas.nice import NiceQuest
+from app.schemas.nice import NiceQuest, NiceQuestPhase
 
 from ...config import PayloadSetting, settings
 from ...schemas.common import NEVER_CLOSED_TIMESTAMP
@@ -219,6 +219,17 @@ class _QuestParser:
                 region=Region.JP,
                 expire_after=self._get_expire(quest),
             )
+            if phase_data and has_rare_enemy(phase_data):
+                phase_data = (
+                    AtlasApi.quest_phase(
+                        quest.id,
+                        phase,
+                        region=Region.JP,
+                        enemyHash=phase_data.availableEnemyHashes[-1],
+                        expire_after=self._get_expire(quest),
+                    )
+                    or phase_data
+                )
         elif quest_na and phase in quest_na.phasesWithEnemies:
             phase_data = AtlasApi.quest_phase(
                 quest_na.id,
@@ -226,6 +237,18 @@ class _QuestParser:
                 region=Region.NA,
                 expire_after=self._get_expire(quest),
             )
+            if phase_data and has_rare_enemy(phase_data):
+                phase_data = (
+                    AtlasApi.quest_phase(
+                        quest_na.id,
+                        phase,
+                        region=Region.NA,
+                        enemyHash=phase_data.availableEnemyHashes[-1],
+                        expire_after=self._get_expire(quest),
+                    )
+                    or phase_data
+                )
+
         if not phase_data:
             return
         phase_drops: dict[int, int] = {}
@@ -285,3 +308,13 @@ def parse_quest_drops(jp_data: MasterData, payload: PayloadSetting):
 
     parser = _QuestParser(jp_data, payload, prev_data)
     parser.parse()
+
+
+def has_rare_enemy(quest: NiceQuestPhase) -> bool:
+    if len(quest.availableEnemyHashes) <= 1:
+        return False
+    for stage in quest.stages:
+        for enemy in stage.enemies:
+            if enemy.infoScript.isAddition or enemy.enemyScript.probability_type:
+                return True
+    return False
