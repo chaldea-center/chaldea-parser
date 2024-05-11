@@ -213,41 +213,13 @@ class _QuestParser:
             return
         phase_data = None
         if phase in quest.phasesWithEnemies:
-            phase_data = AtlasApi.quest_phase(
-                quest.id,
-                phase,
-                region=Region.JP,
-                expire_after=self._get_expire(quest),
+            phase_data = get_quest_phase_check_rare_enemy(
+                quest, phase, Region.JP, self._get_expire(quest)
             )
-            if phase_data and has_rare_enemy(phase_data):
-                phase_data = (
-                    AtlasApi.quest_phase(
-                        quest.id,
-                        phase,
-                        region=Region.JP,
-                        enemyHash=phase_data.availableEnemyHashes[-1],
-                        expire_after=self._get_expire(quest),
-                    )
-                    or phase_data
-                )
         elif quest_na and phase in quest_na.phasesWithEnemies:
-            phase_data = AtlasApi.quest_phase(
-                quest_na.id,
-                phase,
-                region=Region.NA,
-                expire_after=self._get_expire(quest),
+            phase_data = get_quest_phase_check_rare_enemy(
+                quest_na, phase, Region.NA, self._get_expire(quest_na)
             )
-            if phase_data and has_rare_enemy(phase_data):
-                phase_data = (
-                    AtlasApi.quest_phase(
-                        quest_na.id,
-                        phase,
-                        region=Region.NA,
-                        enemyHash=phase_data.availableEnemyHashes[-1],
-                        expire_after=self._get_expire(quest),
-                    )
-                    or phase_data
-                )
 
         if not phase_data:
             return
@@ -310,11 +282,40 @@ def parse_quest_drops(jp_data: MasterData, payload: PayloadSetting):
     parser.parse()
 
 
+def get_quest_phase_check_rare_enemy(
+    quest: NiceQuest,
+    phase: int,
+    region: Region,
+    expire_after,
+) -> NiceQuestPhase | None:
+    phase_data = AtlasApi.quest_phase(
+        quest.id,
+        phase,
+        region=region,
+        expire_after=expire_after,
+    )
+    if phase_data and has_rare_enemy(phase_data):
+        phase_data2 = AtlasApi.quest_phase(
+            quest.id,
+            phase,
+            region=region,
+            enemyHash=phase_data.availableEnemyHashes[-1],
+            expire_after=expire_after,
+        )
+        if (
+            phase_data2
+            and phase_data2.drops
+            and phase_data.drops
+            and phase_data.drops[0].runs / phase_data2.drops[0].runs < 3
+        ):
+            phase_data = phase_data2
+    return phase_data
+
+
 def has_rare_enemy(quest: NiceQuestPhase) -> bool:
-    if len(quest.availableEnemyHashes) <= 1:
-        return False
-    for stage in quest.stages:
-        for enemy in stage.enemies:
-            if enemy.infoScript.isAddition or enemy.enemyScript.probability_type:
-                return True
+    if quest.drops and 1 < len(quest.availableEnemyHashes) < 20:
+        for stage in quest.stages:
+            for enemy in stage.enemies:
+                if enemy.infoScript.isAddition or enemy.enemyScript.probability_type:
+                    return True
     return False
