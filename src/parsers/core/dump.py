@@ -29,10 +29,12 @@ from app.schemas.nice import (
     NiceHeelPortrait,
     NiceItem,
     NiceItemAmount,
+    NiceItemSelect,
     NiceLore,
     NiceMap,
     NiceMapGimmick,
     NiceMasterMission,
+    NiceMysticCode,
     NiceQuest,
     NiceQuestPhase,
     NiceServant,
@@ -56,7 +58,20 @@ _excluded_fields: dict[type, list[str]] = {
         "ProgressSelfTurn",
         "ReleaseText",
     ],
-    NiceBaseSkill: ["detail", "groupOverwrites"],
+    NiceBaseSkill: [
+        "svtId",
+        "num",
+        "strengthStatus",
+        "priority",
+        "condQuestId",
+        "condQuestPhase",
+        "condLv",
+        "condLimitCount",
+        "extraPassive",
+        "releaseConditions",
+        "detail",
+        "groupOverwrites",
+    ],
     NiceSkill: [
         "name",
         "originalName",
@@ -74,7 +89,17 @@ _excluded_fields: dict[type, list[str]] = {
         "functions",
         "skillSvts",
     ],
-    NiceBaseTd: ["detail"],
+    NiceBaseTd: [
+        "svtId",
+        "num",
+        "npNum",
+        "strengthStatus",
+        "priority",
+        "condQuestId",
+        "condQuestPhase",
+        "releaseConditions",
+        "detail",
+    ],
     NiceTd: [
         # "card",
         "name",
@@ -141,6 +166,7 @@ _excluded_fields: dict[type, list[str]] = {
         "closedMessage",
         "closedItemName",
     ],
+    NiceItemSelect: ["detail"],
     NiceServant: [
         "originalBattleName",
         "className",
@@ -160,6 +186,7 @@ _excluded_fields: dict[type, list[str]] = {
         "rarity",  # playable servants always the same except mash
     ],
     NiceMasterMission: ["quests"],
+    # NiceMysticCode: ["shortName"],
 }
 
 _exclude_empty_fields: dict[type, list[str]] = {

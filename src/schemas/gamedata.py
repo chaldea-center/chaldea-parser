@@ -72,31 +72,14 @@ class FixedDrop(BaseModel):
 
 
 class NiceBaseTd(NiceTd):
-    svtId: int = Field(0, exclude=True)
-    num: int = Field(0, exclude=True)
-    npNum: int = Field(1, exclude=True)
-    strengthStatus: int = Field(0, exclude=True)
-    priority: int = Field(0, exclude=True)
-    condQuestId: int = Field(0, exclude=True)
-    condQuestPhase: int = Field(0, exclude=True)
-    releaseConditions: list[NiceSvtSkillRelease] = Field([], exclude=True)
+    ...
     # damage
     # card: NiceCardType
     # icon: Optional[HttpUrl]
     # npDistribution: list[int]
 
 
-class NiceBaseSkill(NiceSkill):
-    svtId: int = Field(0, exclude=True)
-    num: int = Field(0, exclude=True)
-    strengthStatus: int = Field(0, exclude=True)
-    priority: int = Field(0, exclude=True)
-    condQuestId: int = Field(0, exclude=True)
-    condQuestPhase: int = Field(0, exclude=True)
-    condLv: int = Field(0, exclude=True)
-    condLimitCount: int = Field(0, exclude=True)
-    extraPassive: list[ExtraPassive] = Field([], exclude=True)
-    releaseConditions: list[NiceSvtSkillRelease] = Field([], exclude=True)
+class NiceBaseSkill(NiceSkill): ...
 
 
 class NiceEquipSort(NiceEquip):
