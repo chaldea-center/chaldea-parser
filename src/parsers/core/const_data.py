@@ -15,6 +15,7 @@ from ...schemas.common import MstConstantStr
 from ...schemas.const_data import ConstGameData, SvtExpCurve
 from ...schemas.data import (
     CN_REPLACE,
+    DESTINY_ORDER_SUMMONS,
     EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP,
     EXCLUDE_REWARD_QUESTS,
     FREE_EXCHANGE_SVT_EVENTS,
@@ -92,6 +93,7 @@ def get_const_data(data: MasterData):
         randomEnemyQuests=RANDOM_ENEMY_QUESTS,
         freeExchangeSvtEvents=FREE_EXCHANGE_SVT_EVENTS,
         svtFaceLimits=SVT_FACE_LIMITS,
+        destinyOrderSummons=DESTINY_ORDER_SUMMONS,
         config=ConstDataConfig(),
     )
 

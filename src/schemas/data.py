@@ -151,6 +151,10 @@ LAPLACE_UPLOAD_ALLOW_AI_QUESTS: list[int] = [
 ]
 
 
+DESTINY_ORDER_SUMMONS = [
+    "2023_8th_destiny",
+]
+
 CN_REPLACE = {
     "西行者": "玄奘三藏",
     "匕见": "荆轲",

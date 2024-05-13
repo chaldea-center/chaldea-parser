@@ -94,5 +94,6 @@ class ConstGameData(BaseModel):
     excludeRewardQuests: list[int]
     randomEnemyQuests: list[int]
     freeExchangeSvtEvents: list[int]
+    destinyOrderSummons: list[str]
     svtFaceLimits: dict[int, list[int]]
     config: ConstDataConfig
