@@ -31,6 +31,7 @@ ADD_CES: dict[Region, dict[int, tuple[str | None,]]] = {
     Region.TW: {
         # 6th anniversary, same id with CN 102022, put if before CN
         302023: ("リヨ",),  # 6th 90086001
+        302024: ("VOFAN",),  # 7th 90087002
     },
     # 2016.08 (2016.09)
     Region.CN: {
