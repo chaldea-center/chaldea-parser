@@ -471,7 +471,7 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
 def fix_cn_transl_qab(data: dict[str, dict[str, str | None]]):
     # QAB
     color_regexes = [
-        re.compile(r"(?<![击御威])([力技迅])(?=提升|攻击|指令卡|下降|性能|耐性|威力)"),
+        re.compile(r"(?<![击御威])([力技迅])(?=提升|攻击|指令卡|下降|性能|耐性|威力|暴击)"),
         re.compile(r"(?<=[:：])([力技迅])$"),
         re.compile(r"(?<=[〔（(])[力技迅](?=[)）〕])"),
     ]

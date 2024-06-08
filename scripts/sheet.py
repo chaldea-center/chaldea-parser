@@ -5,9 +5,9 @@ python -m scripts.sheet -um
 import argparse
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
+import datetime
 from typing import Any, Callable, TypeVar
 
 import orjson
@@ -53,6 +53,9 @@ class ArbLang(StrEnum):
             orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_APPEND_NEWLINE)
         )
 
+def get_time()->str:
+    now = datetime.datetime.now(datetime.UTC)
+    return now.strftime("%m-%d %H:%M UTC")
 
 class Region(StrEnum):
     JP = "JP"
@@ -86,6 +89,7 @@ MAPPING_FILES = [
     "skill_detail",
     "skill_names",
     "spot_names",
+    "summon_names",
     "svt_names",
     "td_detail",
     "td_names",
@@ -161,7 +165,7 @@ def upload_l10n():
     # merged = merge_dict(remote_data, local_data, force=True)
 
     cells: list[list[str]] = []
-    cells.append(["key"] + [f"{x}" for x in ArbLang])
+    cells.append([f"key ({get_time()})"] + [f"{x}" for x in ArbLang])
     for key, values in merged.items():
         cells.append([key] + [values.get(lang, "") or "" for lang in ArbLang])
     sh.update(cells)
@@ -173,6 +177,8 @@ def download_l10n():
     remote_data = sheet2json(sh.get_values(), ArbLang.__call__)
 
     for lang in ArbLang:
+        # if lang !=ArbLang.ko:
+        #     continue
         data = lang.read()
         for k, v in remote_data.items():
             vv = v.get(lang)
@@ -204,11 +210,11 @@ def upload_mapping(name: str):
     merged = merge_dict(local_data, remote_data, force=False)
 
     cells: list[list[str]] = []
-    cells.append(["key"] + [f"{x}" for x in Region])
+    cells.append([f"key ({get_time()})"] + [f"{x}" for x in Region])
     for key, values in merged.items():
         cells.append([key] + [values.get(region, "") or "" for region in Region])
 
-    if str(remote_table) == str(cells):
+    if str(remote_table[1:]) == str(cells[1:]):
         # print(f"          {name}: no change, skip uploading")
         pass
     else:
@@ -235,7 +241,8 @@ def dump_enums(data: Mapping[str], fp: str | Path):
         a, b = k.split(".")
         assert a and b, k
         enums.setdefault(a, {})[b] = v
-    dump_json(parse_obj_as(EnumMapping, enums), fp)
+    dump_json(enums, fp)
+    # dump_json(parse_obj_as(EnumMapping, enums), fp)
 
 
 def download_mapping(name: str):
@@ -266,7 +273,7 @@ def download_all_mappings():
 
 #%%
 if __name__ == "__main__":
-    print(datetime.now().isoformat())
+    print(datetime.datetime.now().isoformat())
     parser = argparse.ArgumentParser()
     parser.add_argument("-dl", help="download l10n", action="store_true")
     parser.add_argument("-ul", help="upload l10n", action="store_true")

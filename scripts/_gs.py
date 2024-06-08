@@ -1,4 +1,5 @@
 from pathlib import Path
+import time
 
 import gspread
 
@@ -22,6 +23,7 @@ def get_worksheet(name: str):
         workbook = gc.open_by_key(SPREADSHEET_ID)
 
     try:
+        time.sleep(1)
         return workbook.worksheet(name)
     except gspread.WorksheetNotFound:
         return workbook.add_worksheet(name, 1, 1)

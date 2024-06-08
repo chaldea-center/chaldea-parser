@@ -161,7 +161,7 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
             csv_contents = requests.get(csv_url).content.decode("utf8")
             csv_fp.write_text(csv_contents)
         assert csv_contents.count(",ハワイエリア,") == 1
-        # csv_contents = csv_contents.replace(",ハワイエリア,", ",常夏の休暇,")
+        csv_contents = csv_contents.replace(",ハワイエリア,", ",常夏の休暇,")
     table: list[list[str]] = list(csv.reader(StringIO(csv_contents)))
 
     HEAD_ROW = 2
@@ -185,8 +185,8 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
     )
     assert not item_not_found, f"items not found: {item_id_col_map}"
 
-    # for add_quest_id in [94095301, 94095302]:
-    #     _add_quest_to_table(table, mst_data.quests[add_quest_id], item_id_col_map)
+    for add_quest_id in [94095301, 94095302]:
+        _add_quest_to_table(table, mst_data.quests[add_quest_id], item_id_col_map)
 
     # <questId, row>
     quest_id_row_map: dict[int, int] = {}

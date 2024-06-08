@@ -6,6 +6,7 @@ from pathlib import Path
 
 from src.config import PayloadSetting, settings
 from src.parsers import MainParser, WikiParser, run_drop_rate_update, run_mapping_update
+from src.parsers.core.aa_export import update_exported_files
 from src.wiki import FANDOM, MOONCELL  # noqa
 
 
@@ -78,6 +79,8 @@ if __name__ == "__main__":
     elif task == "mapping":
         run_mapping_update()
     elif task == "domus":
+        update_exported_files([], False)
+
         run_drop_rate_update()
     else:
         arg_parser.print_help()
