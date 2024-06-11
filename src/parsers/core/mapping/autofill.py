@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 from typing import Callable, Literal
 
-from pydantic import parse_file_as
+from ....utils.helper import parse_json_file_as
 
 
 _Region = Literal["JP", "CN", "TW", "NA", "KR"]
@@ -371,7 +371,7 @@ def main(folder: Path):
         name = fp.name[:-5]
         try:
             fp.name
-            mappings[name] = parse_file_as(Mapping, fp)
+            mappings[name] = parse_json_file_as(Mapping, fp)
         except:
             print(f"unmatched mapping format, skip {fp.name}")
     autofill_mapping(mappings)

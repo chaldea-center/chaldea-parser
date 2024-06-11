@@ -1,6 +1,7 @@
 """
 python -m scripts.skill_transl
 """
+
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -60,7 +61,9 @@ class _SkillDetail:
 
 _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
     _SkillDetail(
-        pattern=re.compile(r"^(.+)のドロップ獲得数を(\d+)個増やす【『(.+)』イベント期間限定】$"),
+        pattern=re.compile(
+            r"^(.+)のドロップ獲得数を(\d+)個増やす【『(.+)』イベント期間限定】$"
+        ),
         item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得数增加{count}个【『{event}』活动限定】",
@@ -69,7 +72,9 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         },
     ),
     _SkillDetail(
-        pattern=re.compile(r"^(.+)のドロップ獲得数を(\d+)個増やす\[最大解放\]【『(.+)』イベント期間限定】$"),
+        pattern=re.compile(
+            r"^(.+)のドロップ獲得数を(\d+)個増やす\[最大解放\]【『(.+)』イベント期間限定】$"
+        ),
         item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得数增加{count}个[最大解放]【『{event}』活动限定】",
@@ -78,7 +83,9 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         },
     ),
     _SkillDetail(
-        pattern=re.compile(r"^(.+)のドロップ獲得量を(\d+)個増やす【『(.+)』イベント期間限定】$"),
+        pattern=re.compile(
+            r"^(.+)のドロップ獲得量を(\d+)個増やす【『(.+)』イベント期間限定】$"
+        ),
         item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得量增加{count}个【『{event}』活动限定】",
@@ -87,7 +94,9 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         },
     ),
     _SkillDetail(
-        pattern=re.compile(r"^(.+)のドロップ獲得量を(\d+)個増やす\[最大解放\]【『(.+)』イベント期間限定】$"),
+        pattern=re.compile(
+            r"^(.+)のドロップ獲得量を(\d+)個増やす\[最大解放\]【『(.+)』イベント期間限定】$"
+        ),
         item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得量增加{count}个[最大解放]【『{event}』活动限定】",
@@ -96,7 +105,9 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         },
     ),
     _SkillDetail(
-        pattern=re.compile(r"^(.+)のドロップ獲得量を(\d+)%増やす【『(.+)』イベント期間限定】$"),
+        pattern=re.compile(
+            r"^(.+)のドロップ獲得量を(\d+)%増やす【『(.+)』イベント期間限定】$"
+        ),
         item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得量提升{count}%【『{event}』活动限定】",
@@ -105,7 +116,9 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         },
     ),
     _SkillDetail(
-        pattern=re.compile(r"^(.+)のドロップ獲得量を(\d+)%増やす\[最大解放\]【『(.+)』イベント期間限定】$"),
+        pattern=re.compile(
+            r"^(.+)のドロップ獲得量を(\d+)%増やす\[最大解放\]【『(.+)』イベント期間限定】$"
+        ),
         item_counts_event=(0, 1, 2),
         mapping={
             "CN": "{item}的掉落获得量提升{count}%[最大解放]【『{event}』活动限定】",
@@ -114,7 +127,9 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         },
     ),
     _SkillDetail(
-        pattern=re.compile(r"^『(.+?)』において、自身の攻撃の威力を(\d+)%アップ【『(.+)』イベント期間限定】$"),
+        pattern=re.compile(
+            r"^『(.+?)』において、自身の攻撃の威力を(\d+)%アップ【『(.+)』イベント期間限定】$"
+        ),
         item_counts_event=(-1, 1, 2),
         mapping={
             "CN": "自身的攻击威力提升{count}%【『{event}』活动限定】",
@@ -123,7 +138,9 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         },
     ),
     _SkillDetail(
-        pattern=re.compile(r"^『(.+?)』において、自身の攻撃の威力を(\d+)%アップ\[最大解放\]【『(.+)』イベント期間限定】$"),
+        pattern=re.compile(
+            r"^『(.+?)』において、自身の攻撃の威力を(\d+)%アップ\[最大解放\]【『(.+)』イベント期間限定】$"
+        ),
         item_counts_event=(-1, 1, 2),
         mapping={
             "CN": "自身的攻击威力提升{count}%[最大解放]【『{event}』活动限定】",
@@ -132,7 +149,9 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         },
     ),
     _SkillDetail(
-        pattern=re.compile(r"^自身の『(.+?)』における攻撃の威力を(\d+)%アップ【『(.+)』イベント期間限定】$"),
+        pattern=re.compile(
+            r"^自身の『(.+?)』における攻撃の威力を(\d+)%アップ【『(.+)』イベント期間限定】$"
+        ),
         item_counts_event=(-1, 1, 2),
         mapping={
             "CN": "自身的攻击威力提升{count}%[最大解放]【『{event}』活动限定】",
@@ -141,7 +160,9 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         },
     ),
     _SkillDetail(
-        pattern=re.compile(r"^自身の『(.+?)』における攻撃の威力を(\d+)%アップ\[最大解放\]【『(.+)』イベント期間限定】$"),
+        pattern=re.compile(
+            r"^自身の『(.+?)』における攻撃の威力を(\d+)%アップ\[最大解放\]【『(.+)』イベント期間限定】$"
+        ),
         item_counts_event=(-1, 1, 2),
         mapping={
             "CN": "自身的攻击威力提升{count}%[最大解放]【『{event}』活动限定】",
@@ -150,7 +171,9 @@ _SKILL_DETAIL_REPLACES: list[_SkillDetail] = [
         },
     ),
     _SkillDetail(
-        pattern=re.compile(r"^自身の『(.*?)』のクエストクリア時に得られる絆を(\d+)%増やす【『(.*?)』イベント期間限定】$"),
+        pattern=re.compile(
+            r"^自身の『(.*?)』のクエストクリア時に得られる絆を(\d+)%増やす【『(.*?)』イベント期間限定】$"
+        ),
         item_counts_event=(-1, 1, 2),
         mapping={
             "CN": "自身在关卡通关时获得的牵绊值提升{count}%【『{event}』活动限定】",

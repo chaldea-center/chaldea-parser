@@ -1,25 +1,30 @@
 """
 python -m scripts.sheet -um
 """
-#%%
+
+# %%
 import argparse
+import datetime
 from collections import defaultdict
 from copy import deepcopy
 from enum import StrEnum
 from pathlib import Path
-import datetime
 from typing import Any, Callable, TypeVar
 
 import orjson
-from pydantic import parse_file_as, parse_obj_as
 
 from scripts._dir import MAPPINGS_DIR, PROJECT_ROOT, WIKI_DIR
 from scripts._gs import get_worksheet
 from src.schemas.mappings import EnumMapping
-from src.utils.helper import dump_json, dump_json_beautify
+from src.utils.helper import (
+    dump_json,
+    dump_json_beautify,
+    parse_json_file_as,
+    parse_json_obj_as,
+)
 
 
-#%%
+# %%
 
 ARB_DIR = PROJECT_ROOT / "chaldea/lib/l10n"
 
@@ -53,9 +58,11 @@ class ArbLang(StrEnum):
             orjson.dumps(data, option=orjson.OPT_INDENT_2 | orjson.OPT_APPEND_NEWLINE)
         )
 
-def get_time()->str:
+
+def get_time() -> str:
     now = datetime.datetime.now(datetime.UTC)
     return now.strftime("%m-%d %H:%M UTC")
+
 
 class Region(StrEnum):
     JP = "JP"
@@ -101,7 +108,7 @@ MAPPING_FILES = [
 ]
 
 
-#%%
+# %%
 def merge_dict(d1: Mapping[_KT], d2: Mapping[_KT], force=False):
     """Merge d2 into d1"""
     out: Mapping[_KT] = deepcopy(d1)
@@ -194,14 +201,14 @@ def upload_mapping(name: str):
     remote_table = sh.get_values()
     remote_data = sheet2json(remote_table, Region.__call__)
     if name == "event_trait":
-        event_traits = parse_file_as(Mapping[str], fp)
+        event_traits = parse_json_file_as(Mapping[str], fp)
         for v in event_traits.values():
             del v["eventId"]
-        local_data = parse_obj_as(Mapping[Region], event_traits)
+        local_data = parse_json_obj_as(Mapping[Region], event_traits)
     elif name == "enums":
         local_data: Mapping[Region] = parse_enums(fp)
     else:
-        local_data = parse_file_as(Mapping[Region], fp)
+        local_data = parse_json_file_as(Mapping[Region], fp)
 
     unused_keys = set(remote_data.keys()).difference(local_data.keys())
     if unused_keys:
@@ -227,7 +234,7 @@ def upload_mapping(name: str):
 
 
 def parse_enums(fp: str | Path) -> Mapping:
-    enums = parse_file_as(dict[str, Mapping[str]], fp)
+    enums = parse_json_file_as(dict[str, Mapping[str]], fp)
     data: Mapping[str] = {}
     for enum_type, d in enums.items():
         for k, v in d.items():
@@ -242,7 +249,7 @@ def dump_enums(data: Mapping[str], fp: str | Path):
         assert a and b, k
         enums.setdefault(a, {})[b] = v
     dump_json(enums, fp)
-    # dump_json(parse_obj_as(EnumMapping, enums), fp)
+    # dump_json(parse_json_obj_as(EnumMapping, enums), fp)
 
 
 def download_mapping(name: str):
@@ -250,13 +257,13 @@ def download_mapping(name: str):
     fp = MAPPINGS_DIR / f"{name}.json"
     sh = get_worksheet(name)
     remote_data = sheet2json(sh.get_values(), str)
-    parse_obj_as(Mapping[str], remote_data)  # validate
+    parse_json_obj_as(Mapping[str], remote_data)  # validate
     if name == "enums":
         local_data: Mapping[str] = parse_enums(fp)
         merged = merge_dict(local_data, remote_data, force=True)
         dump_enums(merged, fp)
     else:
-        local_data = parse_file_as(Mapping[str], fp)
+        local_data = parse_json_file_as(Mapping[str], fp)
         merged = merge_dict(local_data, remote_data, force=True)
         dump_json(merged, fp)
 
@@ -271,7 +278,7 @@ def download_all_mappings():
         download_mapping(name)
 
 
-#%%
+# %%
 if __name__ == "__main__":
     print(datetime.datetime.now().isoformat())
     parser = argparse.ArgumentParser()

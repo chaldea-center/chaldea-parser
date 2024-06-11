@@ -8,8 +8,8 @@ import requests
 from lxml import etree
 
 from ...config import settings
-from ...schemas.wiki_data import EventWBase, LimitedSummonBase, WarW, WikiData
-from ...utils.helper import dump_json_beautify, load_json
+from ...schemas.wiki_data import EventWBase, LimitedSummonBase, WarW
+from ...utils.helper import dump_json_beautify, load_json, parse_json_obj_as
 from ...utils.http_cache import HttpApiUtil
 from ...utils.log import logger
 
@@ -175,11 +175,14 @@ if __name__ == "__main__":
     wiki_folder = Path(settings.output_wiki)
 
     war_path = wiki_folder / "wars.json"
-    wars = [WarW.parse_obj(obj) for obj in load_json(war_path) or []]
+    wars = [parse_json_obj_as(WarW, obj) for obj in load_json(war_path) or []]
     event_path = wiki_folder / "eventsBase.json"
-    events = [EventWBase.parse_obj(obj) for obj in load_json(event_path) or []]
+    events = [parse_json_obj_as(EventWBase, obj) for obj in load_json(event_path) or []]
     summon_path = wiki_folder / "summonsBase.json"
-    summons = [LimitedSummonBase.parse_obj(obj) for obj in load_json(summon_path) or []]
+    summons = [
+        parse_json_obj_as(LimitedSummonBase, obj)
+        for obj in load_json(summon_path) or []
+    ]
 
     main(wars, events, summons, force=False)
 

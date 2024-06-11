@@ -9,7 +9,6 @@ from app.schemas.gameenums import (
 )
 from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail
 from app.schemas.raw import MstBuffTypeDetail, MstFuncTypeDetail, MstSvtExp
-from pydantic import parse_obj_as
 
 from ...schemas.common import MstConstantStr
 from ...schemas.const_data import ConstGameData, SvtExpCurve
@@ -26,7 +25,7 @@ from ...schemas.data import (
     ConstDataConfig,
 )
 from ...schemas.gamedata import MasterData
-from ...utils.helper import sort_dict
+from ...utils.helper import parse_json_obj_as, sort_dict
 from ...utils.url import DownUrl
 
 
@@ -38,7 +37,7 @@ def get_const_data(data: MasterData):
         if not isinstance(cls_info.individuality, int):
             cls_info.individuality = 0
 
-    mst_exps = parse_obj_as(list[MstSvtExp], DownUrl.gitaa("mstSvtExp"))
+    mst_exps = parse_json_obj_as(list[MstSvtExp], DownUrl.gitaa("mstSvtExp"))
     exp_dict: dict[int, list[MstSvtExp]] = defaultdict(list)
     for exp in mst_exps:
         exp_dict[exp.type].append(exp)
@@ -54,10 +53,10 @@ def get_const_data(data: MasterData):
             curve=[x.curve for x in exps],
         )
 
-    mst_func_type_details = parse_obj_as(
+    mst_func_type_details = parse_json_obj_as(
         list[MstFuncTypeDetail], DownUrl.gitaa("mstFuncTypeDetail")
     )
-    mst_buff_type_details = parse_obj_as(
+    mst_buff_type_details = parse_json_obj_as(
         list[MstBuffTypeDetail], DownUrl.gitaa("mstBuffTypeDetail")
     )
 
@@ -115,7 +114,9 @@ def get_nice_buff_type_detail(detail: MstBuffTypeDetail) -> NiceBuffTypeDetail:
 
 
 def get_constant_str():
-    mst_const_str = parse_obj_as(list[MstConstantStr], DownUrl.gitaa("mstConstantStr"))
+    mst_const_str = parse_json_obj_as(
+        list[MstConstantStr], DownUrl.gitaa("mstConstantStr")
+    )
     int_list_keys = [
         "EXTEND_TURN_BUFF_TYPE",
         "INVALID_SACRIFICE_INDIV",

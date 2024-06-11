@@ -2,12 +2,19 @@ from typing import Any
 
 from app.schemas.base import BaseModelORJson
 from app.schemas.common import Region
-from pydantic import BaseModel, NoneStr
-from pydantic.json import pydantic_encoder
+from pydantic import BaseModel
 
 from ..config import settings
 from ..schemas.common import MstMasterMissionWithGift
-from ..utils.helper import dump_json, dump_json_beautify, load_json, sort_dict
+from ..utils.helper import (
+    dump_json,
+    dump_json_beautify,
+    iter_model,
+    load_json,
+    parse_json_obj_as,
+    pydantic_encoder,
+    sort_dict,
+)
 from .common import (
     NEVER_CLOSED_TIMESTAMP,
     BaseModelTrim,
@@ -113,8 +120,8 @@ class BiliVideo(BaseModel):
 
 class ServantWBase(BaseModel):
     collectionNo: int
-    mcLink: NoneStr = None
-    fandomLink: NoneStr = None
+    mcLink: str | None = None
+    fandomLink: str | None = None
     nicknames: MappingBase[list[str]] = MappingBase()
 
 
@@ -136,8 +143,8 @@ class CraftEssenceW(BaseModel):
     profile: MappingStr = MappingStr()
     characters: list[int] = []  # convert to collectionNo
     unknownCharacters: list[str] = []
-    mcLink: NoneStr = None
-    fandomLink: NoneStr = None
+    mcLink: str | None = None
+    fandomLink: str | None = None
 
 
 class CommandCodeW(BaseModel):
@@ -145,8 +152,8 @@ class CommandCodeW(BaseModel):
     profile: MappingStr = MappingStr()
     characters: list[int] = []  # convert to collectionNo
     unknownCharacters: list[str] = []
-    mcLink: NoneStr = None
-    fandomLink: NoneStr = None
+    mcLink: str | None = None
+    fandomLink: str | None = None
 
 
 # class MysticCodeW(BaseModel):
@@ -175,8 +182,8 @@ class EventExtraScript(BaseModelTrim):
 class EventWBase(BaseModel):
     id: int
     name: str
-    mcLink: NoneStr = None
-    fandomLink: NoneStr = None
+    mcLink: str | None = None
+    fandomLink: str | None = None
     shown: bool | None = None
     titleBanner: MappingBase[str] = MappingBase()
     officialBanner: MappingBase[str] = MappingBase()
@@ -189,8 +196,8 @@ class EventWBase(BaseModel):
 
 class WarW(BaseModel):
     id: int
-    mcLink: NoneStr = None
-    fandomLink: NoneStr = None
+    mcLink: str | None = None
+    fandomLink: str | None = None
     titleBanner: MappingBase[str] = MappingBase()
     officialBanner: MappingBase[str] = MappingBase()
     extraBanners: MappingBase[list[str]] = MappingBase()
@@ -218,8 +225,8 @@ class SubSummon(BaseModel):
 
 class LimitedSummonBase(BaseModel):
     id: str
-    mcLink: NoneStr = None
-    fandomLink: NoneStr = None
+    mcLink: str | None = None
+    fandomLink: str | None = None
     banner: MappingBase[str] = MappingBase()
     officialBanner: MappingBase[str] = MappingBase()
     noticeLink: MappingStr = MappingStr()  # cn&tw: number
@@ -297,7 +304,9 @@ class WikiData(BaseModelORJson):
         else:
             data |= {
                 "servants": {
-                    svt["collectionNo"]: ServantWBase.parse_obj(svt).dict()
+                    svt["collectionNo"]: parse_json_obj_as(
+                        ServantWBase, svt
+                    ).model_dump()
                     for svt in load_json(folder / "servants.json") or []
                 },
                 "events": {
@@ -309,7 +318,7 @@ class WikiData(BaseModelORJson):
                     for summon in load_json(folder / "summonsBase.json") or []
                 },
             }
-        return WikiData.parse_obj(data)
+        return parse_json_obj_as(WikiData, data)
 
     def sort(self):
         self.servants = sort_dict(self.servants)
@@ -380,13 +389,13 @@ class WikiData(BaseModelORJson):
             default=encoder_full,
         )
         dump_json(
-            [mm.dict(exclude_defaults=True) for mm in self.mms.values()],
+            [mm.model_dump(exclude_defaults=True) for mm in self.mms.values()],
             settings.output_wiki / "mms.json",
         )
 
-        include_event_keys = set(EventWBase.__fields__.keys())
+        include_event_keys = set(EventWBase.model_fields.keys())
         events_base = [
-            dict(event._iter(include=include_event_keys, to_dict=False))
+            dict(iter_model(event, include=include_event_keys))
             for event in self.events.values()
             if (event.id // 10000)
             not in [2, 3, 7]  # combineCampaign, svtequipCombineCampaign, questCampaign
@@ -399,9 +408,9 @@ class WikiData(BaseModelORJson):
             events_base, folder / "eventsBase.json", default=encoder_full
         )
 
-        include_summon_keys = set(LimitedSummonBase.__fields__.keys())
+        include_summon_keys = set(LimitedSummonBase.model_fields.keys())
         summons_base = [
-            dict(summon._iter(include=include_summon_keys, to_dict=False))
+            dict(iter_model(summon, include=include_summon_keys))
             for summon in self.summons.values()
         ]
         dump_json_beautify(
@@ -432,10 +441,12 @@ class WikiData(BaseModelORJson):
 
 def _get_encoder(exclude_default: bool):
     def _encoder(obj):
-        if isinstance(obj, MappingBase):
-            return obj.dict(exclude_none=True)
+        if isinstance(obj, BaseModelTrim):
+            return obj.model_dump(exclude_none=True, exclude_defaults=True)
+        elif isinstance(obj, MappingBase):
+            return obj.model_dump(exclude_none=True)
         elif isinstance(obj, BaseModel):
-            return dict(obj._iter(to_dict=False, exclude_defaults=exclude_default))
+            return dict(iter_model(obj, exclude_defaults=exclude_default))
         return pydantic_encoder(obj)
 
     return _encoder

@@ -14,10 +14,9 @@ from app.schemas.basic import BasicCommandCode, BasicEquip
 from app.schemas.common import Region, Trait
 from app.schemas.enums import OLD_TRAIT_MAPPING, SvtClass, get_class_name
 from app.schemas.gameenums import EventType, SvtType
-from app.schemas.nice import NiceBaseFunction, NiceBuff, NiceBuffType, NiceServant
+from app.schemas.nice import NiceBaseFunction, NiceBuff, NiceBuffType
 from app.schemas.raw import MstEvent, MstItem, MstQuestPhase, MstSvt, MstWar
-from pydantic import BaseModel, parse_file_as, parse_obj_as
-from pydantic.json import pydantic_encoder
+from pydantic import BaseModel
 
 from ..config import PayloadSetting, settings
 from ..schemas.common import (
@@ -55,7 +54,14 @@ from ..utils import (
     logger,
     sort_dict,
 )
-from ..utils.helper import beautify_file, describe_regions
+from ..utils.helper import (
+    beautify_file,
+    describe_regions,
+    iter_model,
+    parse_json_file_as,
+    parse_json_obj_as,
+    pydantic_encoder,
+)
 from ..utils.stopwatch import Stopwatch
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.wiki_tool import KnownTimeZone
@@ -114,7 +120,9 @@ class MainParser:
             return
 
         # check news.json
-        parse_file_as(list[AppNews], Path(settings.output_dir) / "static" / "news.json")
+        parse_json_file_as(
+            list[AppNews], Path(settings.output_dir) / "static" / "news.json"
+        )
 
         if self.payload.clear_cache_http:
             logger.warning("clear all http_cache")
@@ -138,7 +146,7 @@ class MainParser:
         self.stopwatch.log(f"quests")
 
         self.jp_data.exchangeTickets = parse_exchange_tickets(self.jp_data.nice_item)
-        self.jp_data.questGroups = parse_obj_as(
+        self.jp_data.questGroups = parse_json_obj_as(
             list[MstQuestGroup], DownUrl.gitaa("mstQuestGroup")
         )
         self.wiki_data.mms = load_mm_with_gifts(self.wiki_data.mms)
@@ -150,7 +158,7 @@ class MainParser:
         added = NewAddedData(
             time=datetime.now(pytz.timezone(KnownTimeZone.jst)).isoformat()
         )
-        version = DataVersion.parse_file(settings.output_dist / "version.json")
+        version = parse_json_file_as(DataVersion, settings.output_dist / "version.json")
 
         def load_data_dict(key: str, field_key: str) -> dict[int, dict]:
             out: dict[int, dict] = {}
@@ -160,7 +168,7 @@ class MainParser:
                         out[entry[field_key]] = entry
             return out
 
-        remote_svts = parse_obj_as(list[MstSvt], DownUrl.gitaa("mstSvt"))
+        remote_svts = parse_json_obj_as(list[MstSvt], DownUrl.gitaa("mstSvt"))
         local_svts = load_data_dict("servants", "collectionNo")
         for svt in remote_svts:
             collection = svt.collectionNo
@@ -173,7 +181,7 @@ class MainParser:
                 continue
             added.svts.append(svt.id)
 
-        remote_ces = parse_obj_as(list[BasicEquip], DownUrl.export("basic_equip"))
+        remote_ces = parse_json_obj_as(list[BasicEquip], DownUrl.export("basic_equip"))
         local_ces = load_data_dict("craftEssences", "collectionNo")
         for ce in remote_ces:
             collection = ce.collectionNo
@@ -184,7 +192,7 @@ class MainParser:
         if len(added.ces) > 15:
             added.ces = []
 
-        remote_ccs = parse_obj_as(
+        remote_ccs = parse_json_obj_as(
             list[BasicCommandCode], DownUrl.export("basic_command_code")
         )
         local_ccs = load_data_dict("commandCodes", "collectionNo")
@@ -194,20 +202,20 @@ class MainParser:
                 continue
             added.ccs.append(cc.id)
 
-        remote_items = parse_obj_as(list[MstItem], DownUrl.gitaa("mstItem"))
+        remote_items = parse_json_obj_as(list[MstItem], DownUrl.gitaa("mstItem"))
         local_items = load_data_dict("items", "id")
         for item in remote_items:
             if item.id not in local_items:
                 added.items.append(item.id)
 
-        remote_events = parse_obj_as(list[MstEvent], DownUrl.gitaa("mstEvent"))
+        remote_events = parse_json_obj_as(list[MstEvent], DownUrl.gitaa("mstEvent"))
         local_events = load_data_dict("events", "id")
         for event in remote_events:
             if event.id in local_events or event.type != EventType.EVENT_QUEST:
                 continue
             added.events.append(event.id)
 
-        remote_wars = parse_obj_as(list[MstWar], DownUrl.gitaa("mstWar"))
+        remote_wars = parse_json_obj_as(list[MstWar], DownUrl.gitaa("mstWar"))
         local_wars = load_data_dict("wars", "id")
         for war in remote_wars:
             if war.id in local_wars:
@@ -220,7 +228,7 @@ class MainParser:
 
         def _encoder(obj):
             if isinstance(obj, BaseModel):
-                return obj.dict(exclude_none=True, exclude_defaults=True)
+                return obj.model_dump(exclude_none=True, exclude_defaults=True)
             return pydantic_encoder(obj)
 
         add_fv = self._normal_dump(added, "addData", encoder=_encoder)
@@ -236,7 +244,9 @@ class MainParser:
                     if len(v) < 10
                     else f"{len(v)} {k}"
                 )
-                for k, v in added.dict(exclude_defaults=True, exclude={"time"}).items()
+                for k, v in added.model_dump(
+                    exclude_defaults=True, exclude={"time"}
+                ).items()
             ]
         )
         settings.commit_msg.write_text(msg)
@@ -244,14 +254,14 @@ class MainParser:
     def load_master_data(self, region: Region, add_trigger: bool = True) -> MasterData:
         logger.info(f"loading {region} master data")
         data = {}
-        for k in MasterData.__fields__:
+        for k in MasterData.model_fields:
             fp = settings.atlas_export_dir / region.value / f"{k}.json"
             v = load_json(fp)
             if v:
                 data[k] = v
             # print(f'loading {k}: {fp}: {None if v is None else len(data[k])} items')
         data["region"] = f"{region}"
-        master_data = MasterData.parse_obj(data)
+        master_data = parse_json_obj_as(MasterData, data)
 
         if region == Region.JP:
             for add_region, ces in ADD_CES.items():
@@ -287,20 +297,20 @@ class MainParser:
             mm for mm in master_data.nice_master_mission if mm.id == 10001
         ]
         # raw
-        master_data.viewEnemy = parse_obj_as(
+        master_data.viewEnemy = parse_json_obj_as(
             list[MstViewEnemy], DownUrl.gitaa("viewEnemy", region)
         )
-        master_data.mstEnemyMaster = parse_obj_as(
+        master_data.mstEnemyMaster = parse_json_obj_as(
             list[dict], DownUrl.gitaa("mstEnemyMaster", region)
         )
         if region == Region.JP:
-            master_data.mstClass = parse_obj_as(
+            master_data.mstClass = parse_json_obj_as(
                 list[MstClass], DownUrl.gitaa("mstClass", region)
             )
-            master_data.mstClassRelation = parse_obj_as(
+            master_data.mstClassRelation = parse_json_obj_as(
                 list[MstClassRelation], DownUrl.gitaa("mstClassRelation", region)
             )
-            master_data.mstGacha = parse_obj_as(
+            master_data.mstGacha = parse_json_obj_as(
                 list[MstGacha], DownUrl.gitaa("mstGacha", region)
             )
 
@@ -421,7 +431,9 @@ class MainParser:
     def event_field_trait(self):
         # field_indiv: warId[]
         fields: dict[int, set[int]] = defaultdict(set)
-        quest_list = parse_obj_as(list[MstQuestPhase], DownUrl.gitaa("mstQuestPhase"))
+        quest_list = parse_json_obj_as(
+            list[MstQuestPhase], DownUrl.gitaa("mstQuestPhase")
+        )
         for phase in quest_list:
             quest = self.jp_data.quest_dict.get(phase.questId)
             if not quest or quest.warId == 9999:
@@ -439,7 +451,9 @@ class MainParser:
         if not settings.output_wiki.joinpath("domusAurea.json").exists():
             logger.info("domusAurea.json not exist, run domus_aurea parser")
             run_drop_rate_update()
-        domus_data = DomusAureaData.parse_file(settings.output_wiki / "domusAurea.json")
+        domus_data = parse_json_file_as(
+            DomusAureaData, settings.output_wiki / "domusAurea.json"
+        )
         self.jp_data.dropData.domusVer = domus_data.updatedAt
         self.jp_data.dropData.domusAurea = domus_data.newData
         parse_quest_drops(self.jp_data, self.payload)
@@ -513,11 +527,11 @@ class MainParser:
             files={},
         )
         try:
-            _last_version = DataVersion.parse_file(
-                settings.output_dist / "version.json"
+            _last_version = parse_json_file_as(
+                DataVersion, settings.output_dist / "version.json"
             )
         except:  # noqa
-            _last_version = cur_version.copy(deep=True)
+            _last_version = cur_version.model_copy(deep=True)
 
         def _normal_dump(
             obj,
@@ -775,13 +789,13 @@ class MainParser:
                 if v
             }
 
-        _dict = data.dict(exclude_none=True)
+        _dict = data.model_dump(exclude_none=True)
         _dict = _clean_map(_dict)
-        data = MappingData.parse_obj(_dict)
+        data = parse_json_obj_as(MappingData, _dict)
 
-        for k, v in data._iter(exclude_none=True):
+        for k, v in iter_model(data, exclude_none=True):
             if isinstance(v, MappingBase):
-                r[k] = v.dict(exclude_none=True)
+                r[k] = v.model_dump(exclude_none=True)
             elif isinstance(v, dict):
                 r[k] = sort_dict(v)
             else:
@@ -798,7 +812,9 @@ class MainParser:
             merge_wiki_translation(
                 self.jp_data,
                 Region.CN,
-                parse_file_as(WikiTranslation, settings.output_wiki / "mcTransl.json"),
+                parse_json_file_as(
+                    WikiTranslation, settings.output_wiki / "mcTransl.json"
+                ),
             )
             self._fix_cn_translation()
             # NA
@@ -809,7 +825,7 @@ class MainParser:
             merge_wiki_translation(
                 self.jp_data,
                 Region.NA,
-                parse_file_as(
+                parse_json_file_as(
                     WikiTranslation, settings.output_wiki / "fandomTransl.json"
                 ),
             )
@@ -824,8 +840,9 @@ class MainParser:
         self.event_field_trait()
         self._add_enum_mappings()
         self._merge_repo_mapping()
-        self.jp_data.mappingData = MappingData.parse_obj(
-            autofill_mapping(orjson.loads(self.jp_data.mappingData.json()))
+        self.jp_data.mappingData = parse_json_obj_as(
+            MappingData,
+            autofill_mapping(orjson.loads(self.jp_data.mappingData.model_dump_json())),
         )
         self._post_mappings()
 
@@ -873,7 +890,7 @@ class MainParser:
     def _fix_cn_translation(self):
         logger.info("fix Chinese translations")
         mappings = self.jp_data.mappingData
-        mappings_dict: dict[str, dict] = mappings.dict()
+        mappings_dict: dict[str, dict] = mappings.model_dump()
 
         for key in (
             "buff_detail",
@@ -889,16 +906,16 @@ class MainParser:
         )
         for key in ["svt_names", "entity_names"]:
             fix_cn_transl_svt_class(mappings_dict[key], ["的{0}"])
-        self.jp_data.mappingData = MappingData.parse_obj(mappings_dict)
+        self.jp_data.mappingData = parse_json_obj_as(MappingData, mappings_dict)
 
     def _merge_repo_mapping(self):
         logger.info("merging repo translations")
 
         folder = settings.output_mapping
         mappings = self.jp_data.mappingData
-        mapping_dict = orjson.loads(mappings.json())
+        mapping_dict = orjson.loads(mappings.model_dump_json())
         mappings_repo = {
-            k: load_json(folder / f"{k}.json", {}) for k in MappingData.__fields__
+            k: load_json(folder / f"{k}.json", {}) for k in MappingData.model_fields
         }
         # mapping files which should override dist one
         self._merge_json(
@@ -919,7 +936,7 @@ class MainParser:
             load_json(fp_override) or {}
         )
         self._merge_json(mappings_repo, override_data)
-        self.jp_data.mappingData = MappingData.parse_obj(mappings_repo)
+        self.jp_data.mappingData = parse_json_obj_as(MappingData, mappings_repo)
 
     @staticmethod
     def _merge_json(dest: dict, src: dict):

@@ -12,22 +12,29 @@ So make sure all changes here have been token affect in distribution before `upd
 from src.config import settings
 from src.schemas.common import DataVersion
 from src.schemas.gamedata import MappingData
-from src.utils.helper import dump_json_beautify, load_json, logger, sort_dict
+from src.utils.helper import (
+    dump_json_beautify,
+    load_json,
+    logger,
+    parse_json_file_as,
+    parse_json_obj_as,
+    sort_dict,
+)
 
 
 def run_mapping_update(mappings: MappingData | None = None):
     if mappings is None:
-        version = DataVersion.parse_file(settings.output_dist / "version.json")
+        version = parse_json_file_as(DataVersion, settings.output_dist / "version.json")
         obj = {}
         for file in version.files.values():
             if file.key == "mappingData":
                 part = load_json(settings.output_dist / file.filename)
                 assert part
                 obj.update(part)
-        mappings = MappingData.parse_obj(obj)
+        mappings = parse_json_obj_as(MappingData, obj)
     folder = settings.output_mapping
     folder.mkdir(exist_ok=True, parents=True)
-    mapping_dict = mappings.dict()
+    mapping_dict = mappings.model_dump()
     for key, trans in mapping_dict.items():
         if not settings.is_debug and key in (
             "skill_priority",

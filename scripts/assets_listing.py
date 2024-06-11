@@ -1,4 +1,4 @@
-#%%
+# %%
 import os
 import re
 import sys
@@ -13,9 +13,9 @@ if not os.getcwd().endswith("chaldea-parser"):
 
 import orjson
 from pydantic import BaseModel
-from pydantic.json import pydantic_encoder
 
 from src.utils import HttpApiUtil
+from src.utils.helper import parse_json_file_as, pydantic_encoder
 
 
 pool = ThreadPoolExecutor()
@@ -123,7 +123,7 @@ def main(root: str | None = None):
     t = datetime.now()
     date = f"{t.month:0>2}-{t.day:0>2}-{t.hour:0>2}-{t.minute:0>2}"
     fp_data = folder / f"data.json"
-    data = _Data.parse_file(fp_data)
+    data = parse_json_file_as(_Data, fp_data)
     data.success.clear()
     data.files.clear()
     _iter_dir(data, root, 10, 1)
@@ -164,7 +164,7 @@ def main(root: str | None = None):
     print("done")
 
 
-#%%
+# %%
 if __name__ == "__main__":
     main()
 

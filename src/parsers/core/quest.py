@@ -16,7 +16,7 @@ from ...schemas.data import RANDOM_ENEMY_QUESTS
 from ...schemas.drop_data import DropData, QuestDropData
 from ...schemas.gamedata import MasterData
 from ...utils import SECS_PER_DAY, AtlasApi
-from ...utils.helper import sort_dict
+from ...utils.helper import parse_json_file_as, sort_dict
 from ...utils.log import logger
 from ...utils.worker import Worker
 from ..helper import is_quest_in_expired_wars
@@ -274,7 +274,7 @@ def parse_quest_drops(jp_data: MasterData, payload: PayloadSetting):
         return
     fp = settings.output_dist / "dropData.json"
     if payload.use_prev_drops and fp.exists():
-        prev_data = DropData.parse_file(fp)
+        prev_data = parse_json_file_as(DropData, fp)
     else:
         prev_data = None
 

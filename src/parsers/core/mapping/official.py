@@ -15,7 +15,7 @@ from app.schemas.nice import AscensionAddEntryStr, NiceLoreComment, NiceServant
 from ....schemas.common import NEVER_CLOSED_TIMESTAMP, MappingBase, MappingStr
 from ....schemas.data import CN_REPLACE, STORY_UPGRADE_QUESTS, jp_chars
 from ....schemas.gamedata import MasterData
-from ....schemas.wiki_data import CommandCodeW, WikiData
+from ....schemas.wiki_data import WikiData
 from ....utils import discord, logger
 from .common import _KT, _KV, process_skill_detail, update_key_mapping
 
@@ -471,7 +471,9 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
 def fix_cn_transl_qab(data: dict[str, dict[str, str | None]]):
     # QAB
     color_regexes = [
-        re.compile(r"(?<![击御威])([力技迅])(?=提升|攻击|指令卡|下降|性能|耐性|威力|暴击)"),
+        re.compile(
+            r"(?<![击御威])([力技迅])(?=提升|攻击|指令卡|下降|性能|耐性|威力|暴击)"
+        ),
         re.compile(r"(?<=[:：])([力技迅])$"),
         re.compile(r"(?<=[〔（(])[力技迅](?=[)）〕])"),
     ]

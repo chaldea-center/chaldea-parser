@@ -3,6 +3,7 @@ python -m scripts.gacha
 
 Generate Mooncell gacha prob table from html
 """
+
 import argparse
 import sys
 from dataclasses import dataclass
@@ -11,10 +12,9 @@ from pathlib import Path
 import requests
 from app.schemas.basic import BasicServant
 from app.schemas.raw import MstSvtChange
-from pydantic import parse_file_as
 
 from src.parsers.core.aa_export import update_exported_files
-from src.utils.helper import parse_html_xpath
+from src.utils.helper import parse_html_xpath, parse_json_file_as
 
 
 STAR = "★"
@@ -72,12 +72,14 @@ def dump_result(table: list[list[str]]):
 
 
 def parse_gacha(gacha_id: int) -> str:
-    mstSvt = parse_file_as(list[BasicServant], "cache/atlas_export/JP/basic_svt.json")
-    mstSvtChange = parse_file_as(
+    mstSvt = parse_json_file_as(
+        list[BasicServant], "cache/atlas_export/JP/basic_svt.json"
+    )
+    mstSvtChange = parse_json_file_as(
         list[MstSvtChange],
         "/Users/narumi/Projects/atlas/fgo-game-data-jp/master/mstSvtChange.json",
     )
-    mstClass = parse_file_as(list[dict], "cache/atlas_export/JP/NiceClass.json")
+    mstClass = parse_json_file_as(list[dict], "cache/atlas_export/JP/NiceClass.json")
     class_map: dict[str, int] = {
         mst_cls["name"]: mst_cls["id"]
         for mst_cls in mstClass

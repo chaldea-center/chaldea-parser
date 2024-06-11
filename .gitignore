@@ -4,7 +4,6 @@
 /temp
 /cache
 /logs
-/data
 /static
 /commit-msg.txt
 /payload.json

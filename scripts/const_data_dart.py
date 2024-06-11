@@ -1,7 +1,8 @@
-from pathlib import Path
-import requests
 import re
+from pathlib import Path
+
 import pyperclip
+import requests
 
 
 def convert_varname(name: str) -> str:

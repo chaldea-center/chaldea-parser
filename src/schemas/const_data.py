@@ -29,7 +29,7 @@ class BuffActionInfo(BaseModel):
 
 class NiceClassInfo(BaseModel):
     id: int
-    className: SvtClass | None
+    className: SvtClass | None = None
     name: str
     individuality: Trait
     attackRate: int
@@ -64,7 +64,7 @@ class MasterUserLvDetail(BaseModel):
     maxAp: int
     maxCost: int
     maxFriend: int
-    gift: NiceGift | None
+    gift: NiceGift | None = None
 
 
 class SvtExpCurve(BaseModel):

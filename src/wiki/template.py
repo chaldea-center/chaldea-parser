@@ -1,5 +1,5 @@
 import re
-from typing import Any, Callable, Iterable, TypeVar, Union
+from typing import Any, Callable, Iterable, TypeVar
 
 import mwparserfromhell
 from mwparserfromhell.nodes import Tag, Template, Wikilink
@@ -9,7 +9,7 @@ from mwparserfromhell.wikicode import Wikicode
 from ..utils import logger
 
 
-Wikitext = Union[str, Wikicode, Template]
+Wikitext = str | Wikicode | Template
 kAllTags = (
     "ref",
     "br",

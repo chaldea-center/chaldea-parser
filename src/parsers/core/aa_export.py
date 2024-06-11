@@ -6,7 +6,7 @@ from app.schemas.common import Region
 from ...config import settings
 from ...schemas.common import AtlasExportFile, OpenApiInfo
 from ...utils import AtlasApi
-from ...utils.helper import dump_json, load_json
+from ...utils.helper import dump_json, load_json, parse_json_obj_as
 from ...utils.log import logger
 from ...utils.url import DownUrl
 from ...utils.worker import Worker
@@ -27,9 +27,9 @@ def update_exported_files(regions: list[Region], force_update: bool):
     openapi_remote = requests.get(AtlasApi.full_url("openapi.json")).json()
     openapi_local = load_json(fp_openapi)
 
-    api_changed = not openapi_local or OpenApiInfo.parse_obj(
-        openapi_remote["info"]
-    ) != OpenApiInfo.parse_obj(openapi_local["info"])
+    api_changed = not openapi_local or parse_json_obj_as(
+        OpenApiInfo, openapi_remote["info"]
+    ) != parse_json_obj_as(OpenApiInfo, openapi_local["info"])
     if api_changed:
         logger.info(f'API changed:\n{dict(openapi_remote["info"], description="")}')
 

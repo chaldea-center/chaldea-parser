@@ -17,14 +17,18 @@ from app.schemas.gameenums import (
 )
 from app.schemas.nice import NiceItem, NiceQuest, NiceQuestPhase, NiceWar
 from app.schemas.raw import MstQuestPhase
-from pydantic import parse_file_as, parse_obj_as
 
 from src.config import settings
 from src.parsers.core.aa_export import update_exported_files
 from src.parsers.domus_aurea_data import FIX_SPOT_QUEST_MAPPING, ITEM_NAME_MAPPING
 from src.schemas.drop_data import DomusAureaData, DropRateSheet
 from src.utils import logger
-from src.utils.helper import LocalProxy, dump_json_beautify
+from src.utils.helper import (
+    LocalProxy,
+    dump_json_beautify,
+    parse_json_file_as,
+    parse_json_obj_as,
+)
 from src.utils.url import DownUrl
 
 
@@ -47,7 +51,7 @@ class _MasterData:
 
 def get_master_data():
     # check item id and name
-    items = parse_file_as(
+    items = parse_json_file_as(
         list[NiceItem], settings.atlas_export_dir / "JP/nice_item.json"
     )
     items = {item.id: item for item in items}
@@ -63,7 +67,9 @@ def get_master_data():
 
     # wars: main story and daily(1002)
     extra_quest_ids = set(FIX_SPOT_QUEST_MAPPING.values())
-    wars = parse_file_as(list[NiceWar], settings.atlas_export_dir / "JP/nice_war.json")
+    wars = parse_json_file_as(
+        list[NiceWar], settings.atlas_export_dir / "JP/nice_war.json"
+    )
     valid_quests: dict[int, NiceQuest] = {}
 
     for war in wars:
@@ -84,12 +90,14 @@ def get_master_data():
         assert quest_id in valid_quests, f"quest {quest_id} not found"
 
     if LOCAL_MODE:
-        mst_phases = parse_file_as(
+        mst_phases = parse_json_file_as(
             list[MstQuestPhase],
             "../../atlas/fgo-game-data-jp/master/mstQuestPhase.json",
         )
     else:
-        mst_phases = parse_obj_as(list[MstQuestPhase], DownUrl.gitaa("mstQuestPhase"))
+        mst_phases = parse_json_obj_as(
+            list[MstQuestPhase], DownUrl.gitaa("mstQuestPhase")
+        )
 
     all_quest_phases: dict[int, dict[int, MstQuestPhase]] = defaultdict(dict)
     for quest in mst_phases:
@@ -122,7 +130,7 @@ def _add_quest_to_table(
     resp = requests.get(
         f"https://api.atlasacademy.io/nice/JP/quest/{quest.id}/{quest.phases[-1]}"
     )
-    quest_phase = NiceQuestPhase.parse_obj(resp.json())
+    quest_phase = parse_json_obj_as(NiceQuestPhase, resp.json())
     if not quest_phase.drops:
         raise Exception(f"Quest {quest.id} has no drop data")
     drop_counts: dict[int, int] = {}
@@ -263,7 +271,7 @@ def run_drop_rate_update():
     mst_data = get_master_data()
     fp = settings.output_wiki / "domusAurea.json"
     if fp.exists():
-        legacy_data = DomusAureaData.parse_file(fp)
+        legacy_data = parse_json_file_as(DomusAureaData, fp)
     else:
         legacy_data = None
     data = DomusAureaData(

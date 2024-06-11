@@ -1,29 +1,22 @@
+import datetime
 import os
 import platform
 import re
 import subprocess
 import threading
 import time
+from decimal import Decimal
+from enum import Enum
 from operator import itemgetter
 from pathlib import Path
-from typing import (
-    Any,
-    Callable,
-    Generic,
-    Iterable,
-    Mapping,
-    Optional,
-    Sequence,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, Generic, Iterable, Sequence, Type, TypeVar
 
 import orjson
+import pydantic_core
 from app.schemas.common import Region
 from lxml import etree
-from pydantic import BaseModel
-from pydantic.json import pydantic_encoder
+from pydantic import BaseModel, TypeAdapter
+from pydantic.main import TupleGenerator
 
 from .log import logger
 
@@ -32,7 +25,98 @@ Model = TypeVar("Model", bound=BaseModel)
 
 _KT = TypeVar("_KT")
 _KV = TypeVar("_KV")
-_NUM_KV = TypeVar("_NUM_KV", bound=Union[int, float])
+_NUM_KV = TypeVar("_NUM_KV", int, float)
+
+
+def parse_json_file_as(type: type[_KT], path: str | Path) -> _KT:
+    return TypeAdapter(type).validate_json(Path(path).read_text())
+
+
+def parse_json_obj_as(type: type[_KT], obj) -> _KT:
+    return TypeAdapter(type).validate_python(obj)
+
+
+def iter_model(
+    model: BaseModel,
+    # to_dict: bool = False,
+    # by_alias: bool = False,
+    include: set | None = None,
+    exclude: set | None = None,
+    # exclude_unset: bool = False,
+    exclude_defaults: bool = False,
+    exclude_none: bool = False,
+) -> TupleGenerator:
+    for key, value in model.__iter__():
+        if value is None and exclude_none:
+            continue
+        field_info = model.model_fields.get(key)
+        if (
+            field_info
+            and exclude_defaults
+            and value == field_info.get_default(call_default_factory=True)
+        ):
+            continue
+        if exclude and key in exclude:
+            continue
+        if include and key not in include:
+            continue
+        yield key, value
+
+
+def isoformat(o: datetime.date | datetime.time) -> str:
+    return o.isoformat()
+
+
+ENCODERS_BY_TYPE: dict[Type[Any], Callable[[Any], Any]] = {
+    bytes: lambda o: o.decode(),
+    # Color: str,
+    datetime.date: isoformat,
+    datetime.datetime: isoformat,
+    datetime.time: isoformat,
+    datetime.timedelta: lambda td: td.total_seconds(),
+    Decimal: float,
+    Enum: lambda o: o.value,
+    frozenset: list,
+    # deque: list,
+    # GeneratorType: list,
+    # IPv4Address: str,
+    # IPv4Interface: str,
+    # IPv4Network: str,
+    # IPv6Address: str,
+    # IPv6Interface: str,
+    # IPv6Network: str,
+    # NameEmail: str,
+    Path: str,
+    # Pattern: lambda o: o.pattern,
+    # SecretBytes: str,
+    # SecretStr: str,
+    set: list,
+    # UUID: str,
+    pydantic_core.Url: str,
+}
+
+
+def pydantic_encoder(obj):
+    from dataclasses import asdict, is_dataclass
+
+    from pydantic import BaseModel
+
+    if isinstance(obj, BaseModel):
+        return obj.model_dump()
+    elif is_dataclass(obj):
+        return asdict(obj)
+
+    # Check the class type and its superclasses for a matching encoder
+    for base in obj.__class__.__mro__[:-1]:
+        try:
+            encoder = ENCODERS_BY_TYPE[base]
+        except KeyError:
+            continue
+        return encoder(obj)
+    else:  # We have exited the for loop without finding a suitable encoder
+        raise TypeError(
+            f"Object of type '{obj.__class__.__name__}' is not JSON serializable"
+        )
 
 
 class NumDict(dict, Generic[_KT, _NUM_KV]):
@@ -64,12 +148,12 @@ def load_json(fp: str | Path, default=None) -> Any:
 def dump_json(
     obj,
     fp: str | Path | None = None,
-    default: Optional[Callable[[Any], Any]] = pydantic_encoder,
+    default: Callable[[Any], Any] | None = pydantic_encoder,
     indent2: bool = True,
     non_str_keys: bool = True,
     new_line: bool = True,
-    option: Optional[int] = None,
-    sort_keys: Optional[bool] = None,
+    option: int | None = None,
+    sort_keys: bool | None = None,
 ) -> str:
     if option is None:
         option = 0
@@ -94,10 +178,10 @@ def dump_json(
 def dump_json_beautify(
     obj,
     fp: str | Path,
-    default: Optional[Callable[[Any], Any]] = pydantic_encoder,
-    option: Optional[int] = None,
-    sort_keys: Optional[bool] = None,
-) -> Optional[str]:
+    default: Callable[[Any], Any] | None = pydantic_encoder,
+    option: int | None = None,
+    sort_keys: bool | None = None,
+) -> str | None:
     dump_json(
         obj,
         fp,
@@ -121,7 +205,7 @@ def beautify_file(fp: str | Path):
     result.check_returncode()
 
 
-def json_xpath(data: Union[dict, list], path: Union[str, Sequence], default=None):
+def json_xpath(data: dict | list, path: str | Sequence, default=None):
     if isinstance(path, str):
         path = path.split("/")
     assert path, f"Invalid key: {path}"
@@ -138,11 +222,11 @@ def json_xpath(data: Union[dict, list], path: Union[str, Sequence], default=None
 
 
 def deepcopy_model_list(items: list[Model]) -> list[Model]:
-    return [x.copy(deep=True) for x in items]
+    return [x.model_copy(deep=True) for x in items]
 
 
 def parse_model_list(objs: list, base_cls: Type[Model]) -> list[Model]:
-    return [base_cls.parse_obj(obj) for obj in objs]
+    return [parse_json_obj_as(base_cls, obj) for obj in objs]
 
 
 FULL2HALF = dict((i + 0xFEE0, i) for i in range(0x20, 0x7F))
@@ -228,7 +312,7 @@ class LocalProxy:
     keys = (_HTTP_PROXY, _HTTPS_PROXY, _ALL_PROXY)
 
     def __init__(self, enabled: bool = True):
-        self._cached_values: dict[str, Optional[str]] = {}
+        self._cached_values: dict[str, str | None] = {}
         self._enabled: bool = enabled
 
     def _cache(self):

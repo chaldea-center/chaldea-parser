@@ -3,7 +3,8 @@ python -m scripts.enemy_skill_td
 
 Add enemy skill/td translations from raw data, usually called after new main story released
 """
-#%%
+
+# %%
 import re
 
 import httpx
@@ -13,14 +14,14 @@ from app.schemas.raw import MstSkill, MstTreasureDevice
 from src.config import settings
 from src.parsers.core.mapping.official import fix_cn_transl_qab, fix_cn_transl_svt_class
 from src.schemas.common import MappingStr
-from src.utils.helper import dump_json, load_json, sort_dict
+from src.utils.helper import dump_json, load_json, parse_json_obj_as, sort_dict
 
 
 def _mstFile(region: Region, name: str):
     url = f"https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}/master/{name}"
     print(f"reading: {url}")
     return httpx.get(url).json()
-    # return parse_file_as(
+    # return parse_json_file_as(
     #     list[dict],
     #     f"FOLDER/fgo-game-data-{region.value.lower()}/master/{name}",
     # )
@@ -36,14 +37,16 @@ jp_chars = re.compile(r"[\u3040-\u309f\u30a0-\u30ff]")
 
 
 def _fix_cn(data: dict[str, MappingStr]) -> dict[str, dict]:
-    data2 = {k: v.dict() for k, v in data.items()}
+    data2 = {k: v.model_dump() for k, v in data.items()}
     fix_cn_transl_qab(data2)
     fix_cn_transl_svt_class(data2, ["对{0}", "({0})", "（{0}）", "〔{0}〕", "{0}职阶"])
     return data2
 
 
 def _load_mapping(fp) -> dict[str, MappingStr]:
-    return {k: MappingStr.parse_obj(v) for k, v in (load_json(fp) or {}).items()}
+    return {
+        k: parse_json_obj_as(MappingStr, v) for k, v in (load_json(fp) or {}).items()
+    }
 
 
 def _add_enemy_skill_trans():
@@ -66,7 +69,7 @@ def _add_enemy_skill_trans():
         if region == Region.JP:
             continue
         skills_r: dict[int, MstSkill] = {
-            skill["id"]: MstSkill.parse_obj(skill)
+            skill["id"]: parse_json_obj_as(MstSkill, skill)
             for skill in _mstFile(region, "mstSkill.json")
         }
         for skill_jp in skills_jp:
@@ -105,7 +108,7 @@ def _add_enemy_td_trans():
         if region == Region.JP:
             continue
         tds_r: dict[int, MstTreasureDevice] = {
-            td["id"]: MstTreasureDevice.parse_obj(td)
+            td["id"]: parse_json_obj_as(MstTreasureDevice, td)
             for td in _mstFile(region, "mstTreasureDevice.json")
         }
         for td_jp in tds_jp:
@@ -150,7 +153,7 @@ def _add_enemy_td_trans():
     dump_json(sort_dict(_fix_cn(td_details)), folder / "td_detail.json")
 
 
-#%%
+# %%
 if __name__ == "__main__":
     add_enemy_skill_td_trans()
 

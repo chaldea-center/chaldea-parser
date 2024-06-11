@@ -7,16 +7,15 @@ Summon: wiki_data/summons.json + MC data
 
 import binascii
 import re
-from collections import Counter, defaultdict
+from collections import defaultdict
 from datetime import datetime
-from typing import Optional, Type
+from typing import Type
 from urllib.parse import urlparse
 
 import requests
 import wikitextparser
 from app.schemas.gameenums import NiceEventType
 from app.schemas.nice import NiceEvent, NiceLoreComment, NiceServant
-from pydantic import parse_file_as
 
 from ..config import PayloadSetting, settings
 from ..schemas.common import (
@@ -42,7 +41,14 @@ from ..schemas.wiki_data import (
     WikiTranslation,
 )
 from ..utils import Worker, count_time, discord, dump_json, load_json, logger
-from ..utils.helper import _KT, mean, parse_html_xpath, sort_dict
+from ..utils.helper import (
+    _KT,
+    mean,
+    parse_html_xpath,
+    parse_json_file_as,
+    parse_json_obj_as,
+    sort_dict,
+)
 from ..wiki import FANDOM, MOONCELL
 from ..wiki.template import (
     find_tabber,
@@ -69,14 +75,14 @@ class _WikiTemp:
             self._load_events()
 
     def _load_svts(self):
-        servants = parse_file_as(
+        servants = parse_json_file_as(
             list[NiceServant],
             f"{settings.atlas_export_dir}/{self.region}/nice_servant_lore.json",
         )
         self.released_svts = {e.collectionNo: e for e in servants}
 
     def _load_events(self):
-        events = parse_file_as(
+        events = parse_json_file_as(
             list[NiceEvent],
             f"{settings.atlas_export_dir}/{self.region}/nice_event.json",
         )
@@ -174,7 +180,7 @@ class WikiParser:
             load_json(settings.output_mapping / "chara_names.json") or {}
         )
         self.unknown_chara_mapping = {
-            k: MappingStr.parse_obj(v) for k, v in chara_names.items()
+            k: parse_json_obj_as(MappingStr, v) for k, v in chara_names.items()
         }
 
     def _need_wiki_profile(self, region: Region, collectionNo: int) -> bool:
@@ -214,11 +220,15 @@ class WikiParser:
     @staticmethod
     def _load_list_from_dist(key: str, _type: Type[_KT]) -> list[_KT]:
         out: list[_KT] = []
-        versions = parse_file_as(DataVersion, settings.output_dist / "version.json")
+        versions = parse_json_file_as(
+            DataVersion, settings.output_dist / "version.json"
+        )
         for file in versions.files.values():
             if file.key == key:
                 out.extend(
-                    parse_file_as(list[_type], settings.output_dist / file.filename)
+                    parse_json_file_as(
+                        list[_type], settings.output_dist / file.filename
+                    )
                 )
         return out
 
@@ -1253,7 +1263,7 @@ class WikiParser:
         events: list[EventW] = []
         for idx in (1, 2):
             events.extend(
-                parse_file_as(
+                parse_json_file_as(
                     list[EventW], settings.output_dist / f"wiki.events.{idx}.json"
                 )
             )
@@ -1326,7 +1336,7 @@ class WikiParser:
             discord.wiki_links(self._mc.invalid_links, self._fandom.invalid_links)
 
     def check_webcrow(self):
-        webcrow_mappings = parse_file_as(
+        webcrow_mappings = parse_json_file_as(
             dict[int, int], settings.output_wiki / "webcrowMapping.json"
         )
         try:
@@ -1397,7 +1407,7 @@ def _mc_smw_card_list(category: str, prop: str) -> dict[int, str]:
     return out
 
 
-def _gen_jp_notice_key(jp_url: str | None) -> Optional[str]:
+def _gen_jp_notice_key(jp_url: str | None) -> str | None:
     if not jp_url:
         return None
     assert "fate-go.jp" in jp_url.lower(), jp_url

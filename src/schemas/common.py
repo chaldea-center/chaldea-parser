@@ -1,11 +1,9 @@
 from enum import StrEnum
-from typing import Any, Generic, Optional, TypeVar, Union
+from typing import Generic, TypeVar, override
 
-import orjson
 from app.schemas.common import Region
 from app.schemas.raw import MstMasterMission
-from pydantic import BaseModel, Field
-from pydantic.generics import GenericModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 _KT = TypeVar("_KT")
@@ -15,18 +13,15 @@ NEVER_CLOSED_TIMESTAMP = 1800000000  # 1893423600
 
 
 class BaseModelTrim(BaseModel):
-    def _iter(self, **kwargs):
-        kwargs.pop("exclude_none", None)
-        kwargs.pop("exclude_defaults", None)
-        return super()._iter(exclude_none=True, exclude_defaults=True, **kwargs)
+    """exclude_none and exclude_defaults"""
 
 
-class MappingBase(GenericModel, Generic[_KV]):
-    JP: Optional[_KV] = None
-    CN: Optional[_KV] = None
-    TW: Optional[_KV] = None
-    NA: Optional[_KV] = None
-    KR: Optional[_KV] = None
+class MappingBase(BaseModel, Generic[_KV]):
+    JP: _KV | None = None
+    CN: _KV | None = None
+    TW: _KV | None = None
+    NA: _KV | None = None
+    KR: _KV | None = None
 
     def update(self, region: Region, value: _KV | None, skip_exists=False):
         def _resolve_value(region_v):
@@ -77,7 +72,7 @@ MappingInt = MappingBase[int]
 
 
 class MappingExtend(MappingBase[str]):
-    ES: Optional[str] = None  # Spanish
+    ES: str | None = None  # Spanish
 
 
 class SvtObtain(StrEnum):
@@ -214,9 +209,7 @@ class OpenApiInfo(BaseModel):
     version: str
     x_server_commit_hash: str = Field(..., alias="x-server-commit-hash")
     x_server_commit_timestamp: int = Field(..., alias="x-server-commit-timestamp")
-
-    class Config:
-        allow_population_by_field_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class AtlasExportFile(StrEnum):
@@ -249,7 +242,7 @@ class AtlasExportFile(StrEnum):
     nice_user_level = "NiceUserLevel"
     nice_svt_grail_cost = "NiceSvtGrailCost"
 
-    def resolve_link(self, region: Union[str, Region]):
+    def resolve_link(self, region: str | Region):
         fn = (
             "NiceBuffList.ActionList"
             if self == AtlasExportFile.nice_buff_list_action_list
@@ -257,7 +250,7 @@ class AtlasExportFile(StrEnum):
         )
         return f"https://api.atlasacademy.io/export/{region}/{fn}.json"
 
-    def cache_path(self, region: Union[str, Region] = Region.JP):
+    def cache_path(self, region: str | Region = Region.JP):
         from ..config import settings
 
         return settings.atlas_export_dir / f"{region}" / f"{self.value}.json"
@@ -293,14 +286,14 @@ class MstViewEnemy(BaseModel):
     iconId: int
     displayType: int
     # missionIds: list[int]
-    npcSvtId: int | None
+    npcSvtId: int | None = None
 
 
 class MstClass(BaseModel):
     id: int
     attri: int
     name: str
-    individuality: int | list | None  # CN use empty list
+    individuality: int | list | None = None  # CN use empty list
     attackRate: int
     imageId: int
     iconImageId: int

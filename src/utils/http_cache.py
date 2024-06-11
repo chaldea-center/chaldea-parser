@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from datetime import timedelta
 from typing import Generator, Type
 
+import orjson
 import requests
 import requests_cache
 from app.schemas.common import Region
@@ -18,6 +19,8 @@ from requests_cache import CachedSession
 from requests_cache.backends.sqlite import SQLiteCache
 from requests_cache.cache_control import ExpirationTime
 from requests_cache.models.response import CachedResponse
+
+from .helper import parse_json_obj_as
 
 
 __all__ = ["HttpApiUtil"]
@@ -178,7 +181,7 @@ class HttpApiUtil(abc.ABC):
         def _parse_model(_response: Response, retry=False):
             if _response.status_code == 200:
                 try:
-                    return model.parse_raw(_response.content)
+                    return parse_json_obj_as(model, orjson.loads(_response.content))
                 except ValidationError as e:
                     print(e)
                     if not retry:

@@ -1,16 +1,14 @@
-import json
 from pathlib import Path
 
 from app.schemas.common import Region
-from pydantic import BaseSettings, NoneStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 __all__ = ["Settings", "settings"]
 
 
 class Settings(BaseSettings):
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file=".env", extra="allow")
 
     output_dir: str = "data/"
     cache_dir: str = "cache/"
@@ -27,9 +25,9 @@ class Settings(BaseSettings):
     discord_webhook: str = ""
 
     # proxy, for development
-    x_http_proxy: NoneStr = None
-    x_https_proxy: NoneStr = None
-    x_all_proxy: NoneStr = None
+    x_http_proxy: str | None = None
+    x_https_proxy: str | None = None
+    x_all_proxy: str | None = None
 
     tmp_vars: dict = {}
 
@@ -97,23 +95,6 @@ class PayloadSetting(BaseSettings):
     mc_extra_ce: dict[int, str] = {}
     extra: dict = {}
 
-    class Config:
-        @classmethod
-        def customise_sources(
-            cls,
-            init_settings,
-            env_settings,
-            file_secret_settings,
-        ):
-            def json_config_settings_source(settings: BaseSettings) -> dict:
-                fp = Path("payload.json")
-                if fp.exists():
-                    return json.loads(fp.read_text())
-                return {}
-
-            return (
-                init_settings,
-                json_config_settings_source,
-                env_settings,
-                file_secret_settings,
-            )
+    model_config = SettingsConfigDict(
+        json_file="payload.json", json_file_encoding="utf-8", extra="allow"
+    )

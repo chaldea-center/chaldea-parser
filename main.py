@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 def should_run_wiki_parser(payload: PayloadSetting):
-    print("Payload:", payload.json(exclude_unset=True, indent=2), flush=True)
+    print("Payload:", payload.model_dump_json(exclude_unset=True, indent=2), flush=True)
     output_dir = Path(settings.output_dir).resolve()
     authors = subprocess.check_output(
         "git log -2 --pretty=format:'%an'",

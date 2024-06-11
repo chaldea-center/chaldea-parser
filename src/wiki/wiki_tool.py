@@ -4,9 +4,9 @@ import time
 from datetime import datetime
 from enum import StrEnum
 from functools import cached_property
-from hashlib import md5, sha1
+from hashlib import md5
 from pathlib import Path
-from typing import Any, Callable, Optional, cast
+from typing import Any, Callable, cast
 from urllib.parse import unquote
 
 import mwclient
@@ -14,14 +14,13 @@ import mwclient.page
 import mwparserfromhell
 import orjson
 import pytz
-import pywikibot
 import requests
 from ratelimit import limits, sleep_and_retry
 
 from ..config import settings
 from ..schemas.wiki_cache import WikiCache, WikiImageInfo, WikiPageInfo
 from ..utils import dump_json, logger
-from ..utils.helper import load_json, retry_decorator
+from ..utils.helper import load_json, parse_json_obj_as, retry_decorator
 
 
 class KnownTimeZone(StrEnum):
@@ -41,7 +40,7 @@ class WikiTool:
         self.user = user
         self.pwd = pwd
         # self.site: mwclient.Site = mwclient.Site(host=host, path=path)
-        self.site2 = pywikibot.Site(url=f"https://{host}/api.php")
+        # self.site2 = pywikibot.Site(url=f"https://{host}/api.php")
         self._fp = Path(settings.cache_wiki) / f"{norm_host}.json"
         _now = int(time.time())
         self.cache = WikiCache(host=norm_host, created=_now, updated=_now)
@@ -60,7 +59,7 @@ class WikiTool:
         if self._fp.exists():
             try:
                 data = load_json(self._fp)
-                self.cache = WikiCache.parse_obj(data)
+                self.cache = parse_json_obj_as(WikiCache, data)
                 if clear_empty:
                     empty_count = 0
                     for key in list(self.cache.pages.keys()):
@@ -128,29 +127,29 @@ class WikiTool:
             )
             return info, info2
 
-    def _call_page_site2(self, name: str) -> tuple[WikiPageInfo, WikiPageInfo | None]:
-        name_json = f'"{name}"({len(name)})'
-        now = int(time.time())
-        page = pywikibot.Page(self.site2, name)
-        text = page.text
-        if not page.exists() or not text:
-            logger.debug(f"{self.host}: {name_json} not exists")
-        redirect = page
-        if text:
-            while redirect.isRedirectPage():
-                redirect = redirect.getRedirectTarget()
-        if redirect == page:
-            info = WikiPageInfo(name=page.title(), text=page.text, updated=now)
-            return info, None
-        else:
-            info = WikiPageInfo(
-                name=page.title(),
-                redirect=redirect.title(),
-                text=page.text,
-                updated=now,
-            )
-            info2 = WikiPageInfo(name=redirect.title(), text=redirect.text, updated=now)
-            return info, info2
+    # def _call_page_site2(self, name: str) -> tuple[WikiPageInfo, WikiPageInfo | None]:
+    #     name_json = f'"{name}"({len(name)})'
+    #     now = int(time.time())
+    #     page = pywikibot.Page(self.site2, name)
+    #     text = page.text
+    #     if not page.exists() or not text:
+    #         logger.debug(f"{self.host}: {name_json} not exists")
+    #     redirect = page
+    #     if text:
+    #         while redirect.isRedirectPage():
+    #             redirect = redirect.getRedirectTarget()
+    #     if redirect == page:
+    #         info = WikiPageInfo(name=page.title(), text=page.text, updated=now)
+    #         return info, None
+    #     else:
+    #         info = WikiPageInfo(
+    #             name=page.title(),
+    #             redirect=redirect.title(),
+    #             text=page.text,
+    #             updated=now,
+    #         )
+    #         info2 = WikiPageInfo(name=redirect.title(), text=redirect.text, updated=now)
+    #         return info, info2
 
     @sleep_and_retry
     @limits(3, 4)
@@ -341,7 +340,7 @@ class WikiTool:
         logger.info(f"Download image {filepath} from {url}")
 
     @staticmethod
-    def get_timestamp(s: str | None, tz: KnownTimeZone) -> Optional[int]:
+    def get_timestamp(s: str | None, tz: KnownTimeZone) -> int | None:
         if not s:
             return None
         m = re.match(r"^(\d+)-(\d+)-(\d+)\s+(\d+):(\d+)", s)

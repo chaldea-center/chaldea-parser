@@ -1,5 +1,4 @@
 from functools import cached_property
-from typing import Optional
 
 from app.schemas.base import BaseModelORJson
 from app.schemas.basic import BasicServant
@@ -7,7 +6,6 @@ from app.schemas.common import Region
 from app.schemas.enums import Attribute, NiceSkillType, Trait
 from app.schemas.gameenums import NiceBuffAction, NiceCardType
 from app.schemas.nice import (
-    ExtraPassive,
     NiceBaseFunction,
     NiceBgmEntity,
     NiceBuff,
@@ -27,12 +25,11 @@ from app.schemas.nice import (
     NiceServant,
     NiceSkill,
     NiceSpot,
-    NiceSvtSkillRelease,
     NiceTd,
     NiceWar,
 )
 from app.schemas.raw import MstCv, MstIllustrator
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict
 
 from ..utils import sort_dict
 from .common import (
@@ -75,7 +72,7 @@ class NiceBaseTd(NiceTd):
     ...
     # damage
     # card: NiceCardType
-    # icon: Optional[HttpUrl]
+    # icon: HttpUrl|None=None
     # npDistribution: list[int]
 
 
@@ -150,7 +147,7 @@ class MasterData(BaseModelORJson):
     # extra
     # all_quests: dict[int, NiceQuest] = {}
     all_quests_na: dict[int, NiceQuest] = {}  # only saved in jp_data
-    cachedQuestPhases: dict[int, Optional[NiceQuestPhase]] = {}
+    cachedQuestPhases: dict[int, NiceQuestPhase | None] = {}
     fixedDrops: dict[int, FixedDrop] = {}
     dropData: DropData = DropData()
     mappingData: MappingData = MappingData()
@@ -164,9 +161,7 @@ class MasterData(BaseModelORJson):
     base_tds: dict[int, NiceBaseTd] = {}
     base_skills: dict[int, NiceBaseSkill] = {}
     base_functions: dict[int, NiceBaseFunction] = {}
-
-    class Config:
-        keep_untouched = (cached_property,)
+    model_config = ConfigDict(ignored_types=(cached_property,))
 
     def sort(self):
         self.nice_command_code.sort(key=lambda x: x.collectionNo)

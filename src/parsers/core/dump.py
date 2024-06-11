@@ -48,9 +48,9 @@ from app.schemas.nice import (
     QuestEnemy,
 )
 from pydantic import BaseModel
-from pydantic.json import pydantic_encoder
 
 from ...schemas.gamedata import MasterData, NiceBaseSkill, NiceBaseTd, NiceEquipSort
+from ...utils.helper import iter_model, parse_json_obj_as, pydantic_encoder
 
 
 _excluded_fields: dict[type, list[str]] = {
@@ -275,10 +275,10 @@ class DataEncoder:
         excludes.update(type_excludes)
 
         if _type in (NiceBgm, NiceBgmEntity) and self.bgm:
-            excludes.update(NiceBgmEntity.__fields__.keys())
+            excludes.update(NiceBgmEntity.model_fields.keys())
             excludes.discard("id")
         elif _type == NiceItem and self.item:
-            excludes.update(NiceItem.__fields__.keys())
+            excludes.update(NiceItem.model_fields.keys())
             excludes.discard("id")
 
         if isinstance(obj, (NiceSkill, NiceTd)):
@@ -292,7 +292,9 @@ class DataEncoder:
         elif isinstance(obj, NiceItemAmount):
             return {"itemId": obj.item.id, "amount": obj.amount}
         elif isinstance(obj, (ExtraAssets, AscensionAdd)):
-            obj = obj.dict(exclude_none=True, exclude_defaults=True, exclude=excludes)
+            obj = obj.model_dump(
+                exclude_none=True, exclude_defaults=True, exclude=excludes
+            )
             _clean_dict_empty(obj)
         elif isinstance(obj, NiceVoiceLine):
             if not "".join(obj.text):
@@ -325,19 +327,17 @@ class DataEncoder:
 
         if isinstance(obj, BaseModel):
             if isinstance(obj, NiceFunction):
-                data = dict(
-                    obj._iter(
-                        to_dict=True,
-                        exclude_none=True,
-                        exclude_defaults=True,
-                        exclude=excludes,
-                    )
+                data = obj.model_dump(
+                    exclude_none=True,
+                    exclude_defaults=True,
+                    exclude=excludes,
                 )
+
                 _trim_func_vals(data)
             else:
                 data = dict(
-                    obj._iter(
-                        to_dict=False,
+                    iter_model(
+                        obj,
                         exclude_none=True,
                         exclude_defaults=True,
                         exclude=excludes,
@@ -354,14 +354,16 @@ class DataEncoder:
 
     def _save_basic_skill(self, excludes: set[str], skill: NiceSkill):
         if skill.id not in self.jp_data.base_skills:
-            skill = NiceBaseSkill.parse_obj(skill.dict(exclude_none=True))
+            skill = parse_json_obj_as(
+                NiceBaseSkill, skill.model_dump(exclude_none=True)
+            )
             self.jp_data.base_skills[skill.id] = skill
         if skill.ruby in ("", "-"):
             excludes.add("ruby")
 
     def _save_basic_td(self, excludes: set[str], skill: NiceTd):
         if skill.id not in self.jp_data.base_tds:
-            td = NiceBaseTd.parse_obj(skill.dict(exclude_none=True))
+            td = parse_json_obj_as(NiceBaseTd, skill.model_dump(exclude_none=True))
             self.jp_data.base_tds[skill.id] = td
         base_td = self.jp_data.base_tds[skill.id]
         for key in ["card", "icon", "npDistribution"]:
@@ -372,10 +374,10 @@ class DataEncoder:
 
     def _save_basic_func(self, excludes: set[str], func: NiceFunction):
         if func.funcId not in self.jp_data.base_functions:
-            self.jp_data.base_functions[func.funcId] = NiceBaseFunction.parse_obj(
-                func.dict()
+            self.jp_data.base_functions[func.funcId] = parse_json_obj_as(
+                NiceBaseFunction, func.model_dump()
             )
-        excludes.update(NiceBaseFunction.__fields__.keys())
+        excludes.update(NiceBaseFunction.model_fields.keys())
         excludes.remove("funcId")
 
     def _save_basic_svt(self, excludes: set[str], svt: BasicServant):
@@ -384,7 +386,7 @@ class DataEncoder:
         db_svt = self.jp_data.basic_svt_dict.get(svt.id)
         if not db_svt:
             return
-        excludes.update(BasicServant.__fields__.keys())
+        excludes.update(BasicServant.model_fields.keys())
         excludes.remove("id")
         # atkMax, hpMax
         for key in ("classId", "attribute", "face", "rarity"):

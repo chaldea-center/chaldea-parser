@@ -3,6 +3,7 @@ python -m scripts.gacha_cn
 
 Manually added CN gacha info before 2019
 """
+
 from pydantic import BaseModel
 
 from scripts._dir import STATIC_DIR

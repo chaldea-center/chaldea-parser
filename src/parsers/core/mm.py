@@ -1,10 +1,10 @@
 import time
 
 from app.schemas.gameenums import NiceGiftType, NiceMissionType
-from pydantic import parse_obj_as
 
 from ...schemas.common import MstMasterMissionWithGift
 from ...utils import AtlasApi
+from ...utils.helper import parse_json_obj_as
 from ...utils.url import DownUrl
 
 
@@ -29,7 +29,7 @@ def load_mm_with_gifts(
 ) -> dict[int, MstMasterMissionWithGift]:
     mms: dict[int, MstMasterMissionWithGift] = dict(mms_cache)
 
-    for mm in parse_obj_as(
+    for mm in parse_json_obj_as(
         list[MstMasterMissionWithGift], DownUrl.gitaa("mstMasterMission")
     ):
         mms[mm.id] = mm
