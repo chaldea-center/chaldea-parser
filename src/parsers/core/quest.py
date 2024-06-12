@@ -12,7 +12,7 @@ from app.schemas.nice import NiceQuest, NiceQuestPhase
 
 from ...config import PayloadSetting, settings
 from ...schemas.common import NEVER_CLOSED_TIMESTAMP
-from ...schemas.data import RANDOM_ENEMY_QUESTS
+from ...schemas.data import GUARANTEED_RARE_COPY_ENEMY_WARS, RANDOM_ENEMY_QUESTS
 from ...schemas.drop_data import DropData, QuestDropData
 from ...schemas.gamedata import MasterData
 from ...utils import SECS_PER_DAY, AtlasApi
@@ -294,7 +294,7 @@ def get_quest_phase_check_rare_enemy(
         region=region,
         expire_after=expire_after,
     )
-    if phase_data and has_rare_enemy(phase_data):
+    if phase_data and has_guaranteed_rare_enemy(phase_data):
         phase_data2 = AtlasApi.quest_phase(
             quest.id,
             phase,
@@ -312,7 +312,9 @@ def get_quest_phase_check_rare_enemy(
     return phase_data
 
 
-def has_rare_enemy(quest: NiceQuestPhase) -> bool:
+def has_guaranteed_rare_enemy(quest: NiceQuestPhase) -> bool:
+    if quest.warId not in GUARANTEED_RARE_COPY_ENEMY_WARS:
+        return False
     if quest.drops and 1 < len(quest.availableEnemyHashes) < 20:
         for stage in quest.stages:
             for enemy in stage.enemies:
