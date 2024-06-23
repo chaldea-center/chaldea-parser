@@ -77,7 +77,7 @@ from .core.mapping.official import (
 )
 from .core.mapping.wiki import merge_atlas_na_mapping, merge_wiki_translation
 from .core.mm import load_mm_with_gifts
-from .core.quest import parse_quest_drops
+from .core.quest import get_quest_phase_basic, parse_quest_drops
 from .core.ticket import parse_exchange_tickets
 from .domus_aurea import run_drop_rate_update
 from .helper import get_all_func_val
@@ -150,6 +150,11 @@ class MainParser:
             list[MstQuestGroup], DownUrl.gitaa("mstQuestGroup")
         )
         self.wiki_data.mms = load_mm_with_gifts(self.wiki_data.mms)
+        self.jp_data.questPhaseDetails = get_quest_phase_basic(
+            self.jp_data.quest_dict,
+            self.jp_data.mstQuestPhase,
+            self.jp_data.mstQuestPhaseDetail,
+        )
         self.jp_data.constData = get_const_data(self.jp_data)
         self.save_data()
         print(self.stopwatch.output())
@@ -312,6 +317,9 @@ class MainParser:
             )
             master_data.mstGacha = parse_json_obj_as(
                 list[MstGacha], DownUrl.gitaa("mstGacha", region)
+            )
+            master_data.mstQuestPhase = parse_json_obj_as(
+                list[MstQuestPhase], DownUrl.gitaa("mstQuestPhase", region)
             )
 
         master_data.mstConstant = {
@@ -666,6 +674,11 @@ class MainParser:
             _dump_by_count(list(data.cachedQuestPhases.values()), 100, "questPhases")
         _normal_dump(data.extraMasterMission, "extraMasterMission")
         _normal_dump(data.questGroups, "questGroups")
+        for index, phases in enumerate(data.questPhaseDetails):
+            _normal_dump(
+                phases, "questPhaseDetails", f"questPhaseDetails.{index+1}.json"
+            )
+
         _dump_by_count(data.mstGacha, 2000, "mstGacha")
         _normal_dump(list(wiki_data.campaigns.values()), "campaigns")
 

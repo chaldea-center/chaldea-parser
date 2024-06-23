@@ -28,7 +28,7 @@ from app.schemas.nice import (
     NiceTd,
     NiceWar,
 )
-from app.schemas.raw import MstCv, MstIllustrator
+from app.schemas.raw import MstCv, MstIllustrator, MstQuestPhase, MstQuestPhaseDetail
 from pydantic import BaseModel, ConfigDict
 
 from ..utils import sort_dict
@@ -39,6 +39,7 @@ from .common import (
     MstClassRelation,
     MstGacha,
     MstQuestGroup,
+    MstQuestPhaseBasic,
     MstViewEnemy,
 )
 from .const_data import (
@@ -143,6 +144,8 @@ class MasterData(BaseModelORJson):
     mstConstant: dict[str, int] = {}
     mstEnemyMaster: list[dict] = []
     mstGacha: list[MstGacha] = []
+    mstQuestPhase: list[MstQuestPhase] = []
+    mstQuestPhaseDetail: list[MstQuestPhaseDetail] = []
 
     # extra
     # all_quests: dict[int, NiceQuest] = {}
@@ -155,6 +158,7 @@ class MasterData(BaseModelORJson):
     remainedQuestIds: set[int] = set()
     extraMasterMission: list[NiceMasterMission] = []
     questGroups: list[MstQuestGroup] = []
+    questPhaseDetails: list[list[MstQuestPhaseBasic]] = []  # divided by year
     constData: ConstGameData | None = None
 
     # base

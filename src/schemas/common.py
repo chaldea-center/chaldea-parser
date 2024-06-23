@@ -2,6 +2,7 @@ from enum import StrEnum
 from typing import Generic, TypeVar, override
 
 from app.schemas.common import Region
+from app.schemas.nice import NiceGift
 from app.schemas.raw import MstMasterMission
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -346,3 +347,25 @@ class SvtLimitHide(BaseModel):
     activeSkills: dict[int, list[int]] = {}
     # classPassives: list[int] = []
     addPassives: list[int] = []
+
+
+class MstQuestPhaseBasic(BaseModel):
+    questId: int
+    phase: int
+    classIds: list[int] = []
+    # individuality: [94000052],
+    # script: {},
+    # questSelect: null,
+    # isNpcOnly: false,
+    # battleBgId: 19000,
+    # battleBgType: 0,
+    qp: int | None = 0
+    exp: int | None = 0
+    bond: int | None = 0
+    giftId: int = 0
+    gifts: list[NiceGift] = []
+    #
+    spotId: int | None = None
+    consumeType: int | None = None
+    actConsume: int | None = None
+    recommendLv: str | None = None

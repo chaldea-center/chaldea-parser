@@ -5,7 +5,7 @@ import re
 import time
 from contextlib import contextmanager
 from datetime import timedelta
-from typing import Generator, Type
+from typing import Generator, Type, TypeVar
 
 import orjson
 import requests
@@ -30,6 +30,8 @@ from requests_cache.session import FILTER_FN
 from .helper import Model
 from .log import logger
 
+
+_T = TypeVar("_T")
 
 FILTER_FN2 = FILTER_FN | bool | None
 
@@ -170,11 +172,11 @@ class HttpApiUtil(abc.ABC):
     def api_model(
         self,
         url,
-        model: Type[Model],
+        model: Type[_T],
         expire_after: ExpirationTime = None,
         filter_fn: FILTER_FN2 = None,
         **kwargs,
-    ) -> Model | None:
+    ) -> _T | None:
         url = self.full_url(url)
         response = self.call_api(url, expire_after, filter_fn, **kwargs)
 

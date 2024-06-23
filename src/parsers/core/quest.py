@@ -1,17 +1,22 @@
 import time
+from collections import defaultdict
 from dataclasses import dataclass
+from datetime import datetime
 
+import pytz
 from app.schemas.common import Region
 from app.schemas.gameenums import (
+    QUEST_CONSUME_TYPE_NAME,
     NiceGiftType,
     NiceQuestAfterClearType,
     NiceQuestFlag,
     NiceQuestType,
 )
-from app.schemas.nice import NiceQuest, NiceQuestPhase
+from app.schemas.nice import NiceGift, NiceQuest, NiceQuestPhase
+from app.schemas.raw import MstQuestPhase, MstQuestPhaseDetail
 
 from ...config import PayloadSetting, settings
-from ...schemas.common import NEVER_CLOSED_TIMESTAMP
+from ...schemas.common import NEVER_CLOSED_TIMESTAMP, MstQuestPhaseBasic
 from ...schemas.data import GUARANTEED_RARE_COPY_ENEMY_WARS, RANDOM_ENEMY_QUESTS
 from ...schemas.drop_data import DropData, QuestDropData
 from ...schemas.gamedata import MasterData
@@ -19,6 +24,7 @@ from ...utils import SECS_PER_DAY, AtlasApi
 from ...utils.helper import parse_json_file_as, sort_dict
 from ...utils.log import logger
 from ...utils.worker import Worker
+from ...wiki.wiki_tool import KnownTimeZone
 from ..helper import is_quest_in_expired_wars
 
 
@@ -321,3 +327,74 @@ def has_guaranteed_rare_enemy(quest: NiceQuestPhase) -> bool:
                 if enemy.infoScript.isAddition or enemy.enemyScript.probability_type:
                     return True
     return False
+
+
+def get_quest_phase_basic(
+    quests: dict[int, NiceQuest],
+    quest_phase_list: list[MstQuestPhase],
+    phase_detail_list: list[MstQuestPhaseDetail],
+) -> list[list[MstQuestPhaseBasic]]:
+    detail_dict = {
+        detail.questId * 100 + detail.phase: detail for detail in phase_detail_list
+    }
+
+    def _get_basic(
+        quest_phase: MstQuestPhase,
+        quest: NiceQuest,
+        detail: MstQuestPhaseDetail | None,
+    ):
+        return MstQuestPhaseBasic(
+            questId=quest_phase.questId,
+            phase=quest_phase.phase,
+            classIds=quest_phase.classIds,
+            qp=quest_phase.qp,
+            exp=quest_phase.playerExp,
+            bond=quest_phase.friendshipExp,
+            giftId=quest_phase.giftId,
+            gifts=(
+                []
+                if quest_phase.giftId in (0, 448)
+                else AtlasApi.api_model(
+                    f"/nice/gift/{quest_phase.giftId}", list[NiceGift]
+                )
+                or []
+            ),
+            spotId=(
+                detail.spotId if detail and detail.spotId != quest.spotId else None
+            ),
+            consumeType=(
+                detail.consumeType
+                if detail
+                and QUEST_CONSUME_TYPE_NAME[detail.consumeType] != quest.consumeType
+                else None
+            ),
+            actConsume=(
+                detail.actConsume
+                if detail and detail.actConsume != quest.consume
+                else None
+            ),
+            recommendLv=(
+                detail.recommendLv
+                if detail and detail.recommendLv != quest.recommendLv
+                else None
+            ),
+        )
+
+    groups: dict[int, list[MstQuestPhaseBasic]] = defaultdict(list)
+    quest_phase_list = [v for v in quest_phase_list if v.questId in quests]
+    quest_phase_list.sort(key=lambda v: quests[v.questId].openedAt)
+    for quest_phase in quest_phase_list:
+        quest = quests[quest_phase.questId]
+        openAt = datetime.fromtimestamp(
+            quest.openedAt, pytz.timezone(KnownTimeZone.jst)
+        )
+        # 2015-2018, 2019-2022, 2023-2026
+        group_key = (openAt.year + 1) // 4
+        groups[group_key].append(
+            _get_basic(
+                quest_phase,
+                quest,
+                detail_dict.get(quest_phase.questId * 100 + quest_phase.phase),
+            )
+        )
+    return list(groups.values())
