@@ -389,3 +389,9 @@ class MasterData(BaseModelORJson):
         return {
             recipe.id: recipe for event in self.nice_event for recipe in event.recipes
         }
+
+    @cached_property
+    def event_trades(self):
+        return {
+            trade.id: trade for event in self.nice_event for trade in event.tradeGoods
+        }

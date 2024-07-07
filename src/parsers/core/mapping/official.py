@@ -95,6 +95,7 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
 
     tower_names = mappings.misc.setdefault("TowerName", {})
     recipe_names = mappings.misc.setdefault("RecipeName", {})
+    trade_goods_names = mappings.misc.setdefault("TradeGoodsName", {})
     for event_jp in jp_data.nice_event:
         event_extra = wiki_data.get_event(event_jp.id, event_jp.name)
         event_extra.startTime.JP = event_jp.startedAt
@@ -119,6 +120,12 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
             recipe = data.event_recipes.get(recipe_jp.id)
             _update_mapping(
                 recipe_names, recipe_jp.name, recipe.name if recipe else None
+            )
+        # TradeGoodsName
+        for trade_jp in event_jp.tradeGoods:
+            trade = data.event_trades.get(trade_jp.id)
+            _update_mapping(
+                trade_goods_names, trade_jp.name, trade.name if trade else None
             )
 
         event = data.event_dict.get(event_jp.id)

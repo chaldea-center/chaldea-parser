@@ -401,8 +401,8 @@ class DataEncoder:
         for limit in svt.limits:
             if limit.rarity == svt.rarity:
                 limit.rarity = None
-            if limit.lvMax == svt.lvMax:
-                limit.lvMax = None
+            # if limit.lvMax == svt.lvMax:
+            #     limit.lvMax = None
             if limit.hpBase == svt.hpBase:
                 limit.hpBase = None
             if limit.hpMax == svt.hpMax:
