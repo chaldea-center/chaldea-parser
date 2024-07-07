@@ -26,6 +26,7 @@ ADD_CES: dict[Region, dict[int, tuple[str | None,]]] = {
         402021: (None,),  # 4th 90084003
         402022: (None,),  # 5th 90084004
         402023: (None,),  # 6th 90084001
+        402024: (None,),  # 7th 90084005
     },
     # 2017.05
     Region.TW: {

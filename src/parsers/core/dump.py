@@ -414,7 +414,7 @@ class DataEncoder:
             if limit.criticalWeight == svt.starAbsorb:
                 limit.criticalWeight = None
             if limit.strength == stats.strength:
-                limit.hpBase = None
+                limit.strength = None
             if limit.endurance == stats.endurance:
                 limit.endurance = None
             if limit.agility == stats.agility:
