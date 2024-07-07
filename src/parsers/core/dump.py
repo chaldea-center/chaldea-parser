@@ -324,6 +324,8 @@ class DataEncoder:
                     ]
         elif isinstance(obj, BasicServant):
             self._save_basic_svt(excludes, obj)
+        elif isinstance(obj, NiceServant):
+            self._trim_nice_svt(obj)
 
         if isinstance(obj, BaseModel):
             if isinstance(obj, NiceFunction):
@@ -392,3 +394,40 @@ class DataEncoder:
         for key in ("classId", "attribute", "face", "rarity"):
             if getattr(db_svt, key) != getattr(svt, key):
                 excludes.discard(key)
+
+    def _trim_nice_svt(self, svt: NiceServant):
+        assert svt.profile and svt.profile.stats
+        stats = svt.profile.stats
+        for limit in svt.limits:
+            if limit.rarity == svt.rarity:
+                limit.rarity = None
+            if limit.lvMax == svt.lvMax:
+                limit.lvMax = None
+            if limit.hpBase == svt.hpBase:
+                limit.hpBase = None
+            if limit.hpMax == svt.hpMax:
+                limit.hpMax = None
+            if limit.atkBase == svt.atkBase:
+                limit.atkBase = None
+            if limit.atkMax == svt.atkMax:
+                limit.atkMax = None
+            if limit.criticalWeight == svt.starAbsorb:
+                limit.criticalWeight = None
+            if limit.strength == stats.strength:
+                limit.hpBase = None
+            if limit.endurance == stats.endurance:
+                limit.endurance = None
+            if limit.agility == stats.agility:
+                limit.agility = None
+            if limit.magic == stats.magic:
+                limit.magic = None
+            if limit.luck == stats.luck:
+                limit.luck = None
+            if limit.np == stats.np:
+                limit.np = None
+            if limit.deity == stats.deity:
+                limit.deity = None
+            if limit.policy == stats.policy:
+                limit.policy = None
+            if limit.personality == stats.personality:
+                limit.personality = None
