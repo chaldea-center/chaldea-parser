@@ -395,3 +395,7 @@ class MasterData(BaseModelORJson):
         return {
             trade.id: trade for event in self.nice_event for trade in event.tradeGoods
         }
+
+    @cached_property
+    def mm_dict(self):
+        return {mm.id: mm for mm in self.nice_master_mission}

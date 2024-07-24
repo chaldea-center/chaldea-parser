@@ -978,11 +978,13 @@ class MainParser:
                 "region": "JP",
                 "gameServer": "game.fate-go.jp",
                 "bundle": "com.aniplex.fategrandorder",
+                "unityVer": "2022.3.28f1",
             },
             "NA": {
                 "region": "NA",
                 "gameServer": "game.fate-go.us",
                 "bundle": "com.aniplex.fategrandorder.en",
+                "unityVer": None,
             },
         }
         for region in ["JP", "NA"]:

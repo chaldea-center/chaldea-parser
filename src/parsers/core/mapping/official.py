@@ -141,6 +141,14 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
         _update_mapping(mappings.event_names, event_jp.shortName, event.shortName)
     for campaign in wiki_data.campaigns.values():
         _update_mapping(mappings.event_names, campaign.name, None)
+    for mm_jp in jp_data.nice_master_mission:
+        mm = data.mm_dict.get(mm_jp.id)
+        if mm_jp.script.missionIconDetailText:
+            _update_mapping(
+                mappings.event_names,
+                mm_jp.script.missionIconDetailText,
+                mm.script.missionIconDetailText if mm else None,
+            )
 
     war_release = mappings.war_release.of(region) or []
     for war_jp in jp_data.nice_war:
