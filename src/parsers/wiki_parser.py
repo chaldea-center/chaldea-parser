@@ -1190,6 +1190,7 @@ class WikiParser:
             if summon.name not in (
                 "クラス別ピックアップ召喚",
                 "ホワイトデーメモリアルピックアップ召喚",
+                "デスティニーオーダー召喚",
             ):
                 name_jp_counts[summon.name].add(summon.mcLink)
         dup_names = [
