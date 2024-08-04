@@ -362,7 +362,7 @@ class MainParser:
             elif buff.type == NiceBuffType.counterFunction:
                 # this is TD
                 worker.add_default(buff, get_all_func_val(func, "CounterId"), True)
-            elif buff.type in [
+            elif buff.type in {
                 NiceBuffType.delayFunction,
                 NiceBuffType.deadFunction,
                 NiceBuffType.battlestartFunction,
@@ -392,7 +392,13 @@ class MainParser:
                 NiceBuffType.skillAfterFunctionMainOnly,
                 NiceBuffType.treasureDeviceAfterFunctionMainOnly,
                 NiceBuffType.continueFunction,
-            ]:
+                NiceBuffType.confirmCommandFunction,
+                NiceBuffType.skillBeforeFunction,
+                NiceBuffType.skillTargetedBeforeFunction,
+                NiceBuffType.fieldIndividualityChangedFunction,
+                NiceBuffType.treasureDeviceBeforeFunction,
+                NiceBuffType.startTacticalBeforeFunction,
+            }:
                 worker.add_default(buff, get_all_func_val(func, "Value"))
         for svt in master_data.nice_servant_lore:
             for skills in (svt.script.SkillRankUp or {}).values():

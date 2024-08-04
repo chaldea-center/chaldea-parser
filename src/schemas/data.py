@@ -157,6 +157,7 @@ LAPLACE_UPLOAD_ALLOW_AI_QUESTS: list[int] = [
 DESTINY_ORDER_SUMMONS = [
     "2023_8th_destiny",
     "50021851",
+    "2024_9th_destiny"
 ]
 
 CN_REPLACE = {
