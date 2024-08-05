@@ -397,7 +397,7 @@ class MainParser:
                 NiceBuffType.skillTargetedBeforeFunction,
                 NiceBuffType.fieldIndividualityChangedFunction,
                 NiceBuffType.treasureDeviceBeforeFunction,
-                NiceBuffType.startTacticalBeforeFunction,
+                NiceBuffType.stepInAfterFunction,
             }:
                 worker.add_default(buff, get_all_func_val(func, "Value"))
         for svt in master_data.nice_servant_lore:
