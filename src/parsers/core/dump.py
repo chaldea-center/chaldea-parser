@@ -175,6 +175,7 @@ _excluded_fields: dict[type, list[str]] = {
         "expGrowth",
         "expFeed",
         "hitsDistribution",
+        "charaScripts",
     ],
     BasicServant: ["originalOverwriteName", "className"],
     NiceEquip: ["expFeed", "expGrowth", "atkGrowth", "hpGrowth"],
