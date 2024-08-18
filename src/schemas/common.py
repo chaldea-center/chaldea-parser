@@ -25,7 +25,7 @@ class MappingBase(BaseModel, Generic[_KV]):
     KR: _KV | None = None
 
     def update(self, region: Region, value: _KV | None, skip_exists=False):
-        def _resolve_value(region_v):
+        def _resolve_value(region_v: _KV | None):
             v = region_v or value if skip_exists else value or region_v
             if v:
                 return v
