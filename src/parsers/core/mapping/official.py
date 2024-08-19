@@ -7,6 +7,7 @@ from typing import AnyStr
 from app.schemas.common import Region
 from app.schemas.gameenums import (
     NiceEventOverwriteType,
+    NiceFuncType,
     NiceSpotOverwriteType,
     NiceWarOverwriteType,
 )
@@ -427,6 +428,9 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
             func_jp.funcPopupText,
             func.funcPopupText if func else None,
         )
+    for func_type in NiceFuncType:
+        if func_type.value.startswith("damageNp"):
+            _update_mapping(mappings.func_popuptext, func_type.value, None)
     for quest_jp in jp_data.quest_dict.values():
         quest = data.quest_dict.get(quest_jp.id)
         _update_mapping(
