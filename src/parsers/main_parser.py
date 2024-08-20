@@ -611,7 +611,7 @@ class MainParser:
         # delete files after old mappings read
         if not settings.is_debug:
             for f in settings.output_dist.glob("**/*"):
-                if f.name in ("addData.json",):
+                if f.name in ("addData.json", "gametop.json"):
                     continue
                 elif f.is_file():
                     f.unlink()
@@ -992,6 +992,12 @@ class MainParser:
                 "bundle": "com.aniplex.fategrandorder.en",
                 "unityVer": None,
             },
+            "CN": {
+                "region": "CN",
+                "gameServer": "",
+                "bundle": "com.bilibili.fatego",
+                "unityVer": "2022.3.18f1",
+            },
         }
         for region in ["JP", "NA"]:
             top = DownUrl.gitaa("gamedatatop", Region(region), "")
@@ -1012,4 +1018,15 @@ class MainParser:
                 "assetbundle": top["assetbundle"],
                 "assetbundleFolder": assetbundle["folderName"],
             }
+
+        # CN
+        cn_top = DownUrl.gitaa("gamedatatop", Region.CN, "")
+        cn_top = cn_top["response"][0]["success"]
+        cn_config = requests.get("https://static.biligame.com/config/fgo.config.js")
+        data["CN"] |= {
+            "appVer": re.findall(r"FateGO_(\d+\.\d+\.\d+)_", cn_config.text)[0],
+            "verCode": "",
+            "dataVer": cn_top["version"],
+            "dateVer": 0,
+        }
         dump_json(data, fp)
