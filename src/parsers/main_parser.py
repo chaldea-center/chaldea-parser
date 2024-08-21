@@ -1028,5 +1028,7 @@ class MainParser:
             "verCode": "",
             "dataVer": cn_top["version"],
             "dateVer": 0,
+            "assetbundle": "",
+            "assetbundleFolder": "",
         }
         dump_json(data, fp)
