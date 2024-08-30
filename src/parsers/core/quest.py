@@ -73,7 +73,7 @@ class _QuestParser:
                     and NiceQuestFlag.dropFirstTimeOnly not in _quest.flags
                 ):
                     worker.add(self._save_main_free, _quest)
-                    continue
+                    # continue
                 # 宝物庫の扉を開け 初級&極級
                 if _quest.warId == 1002:
                     if _quest.id in (94061636, 94061640):
