@@ -71,6 +71,7 @@ class EnumMapping(BaseModel):
     shop_type: dict[NiceShopType, MappingStr] = {}
     purchase_type: dict[NicePurchaseType, MappingStr] = {}
     restriction_type: dict[NiceRestrictionType, MappingStr] = {}
+    present_from_type: dict[int, MappingStr] = {}
     # ai
     ai_act_num: dict[int, MappingStr] = {}
     ai_timing: dict[int, MappingStr] = {}
