@@ -389,6 +389,24 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
             _update_mapping(
                 mappings.skill_names, skill_jp.name, skill.name if skill else None
             )
+
+        select_add_mappings = mappings.misc.setdefault("SelectAddInfo", {})
+        for index, add_jp in enumerate(skill_jp.script.SelectAddInfo or []):
+            add = (
+                skill.script.SelectAddInfo[index]
+                if skill
+                and skill.script.SelectAddInfo
+                and index < len(skill.script.SelectAddInfo)
+                else None
+            )
+            _update_mapping(
+                select_add_mappings, add_jp.title, add.title if add else None
+            )
+            for btn_index, btn_jp in enumerate(add_jp.btn):
+                btn = add.btn[btn_index] if add and btn_index < len(add.btn) else None
+                _update_mapping(
+                    select_add_mappings, btn_jp.name, btn.name if btn else None
+                )
         detail_jp = process_skill_detail(skill_jp.unmodifiedDetail)
         if not detail_jp:
             continue
