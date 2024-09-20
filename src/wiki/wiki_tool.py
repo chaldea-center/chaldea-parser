@@ -514,8 +514,10 @@ class WikiTool:
                     letype == "move"
                     and event["ns"] == event["params"]["target_ns"] == 0
                 ):
+                    target_page = event["params"]["target_title"]
+                    self.remove_page_cache(target_page)
                     src = self.norm_key(title)
-                    dest = self.norm_key(event["params"]["target_title"])
+                    dest = self.norm_key(target_page)
                     if dest not in self.moved_pages:
                         self.moved_pages[src] = dest
 

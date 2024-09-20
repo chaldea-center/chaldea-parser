@@ -398,6 +398,7 @@ class MainParser:
                 NiceBuffType.fieldIndividualityChangedFunction,
                 NiceBuffType.treasureDeviceBeforeFunction,
                 NiceBuffType.stepInAfterFunction,
+                NiceBuffType.functionedFunction,
             }:
                 worker.add_default(buff, get_all_func_val(func, "Value"))
         for svt in master_data.nice_servant_lore:
