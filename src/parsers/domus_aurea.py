@@ -115,9 +115,13 @@ def get_master_data():
     )
 
 
-def _add_item_to_table(table: list[list[str]], item_id: int, item_name: str):
-    for row in table:
-        row.insert(10, item_name)
+def _add_item_to_table(
+    table: list[list[str]], item_id: int, item_name: str, insert_after_item: str
+):
+    insert_index = table[0].index(insert_after_item, 4) + 1
+    table[0].insert(insert_index, item_name)
+    for row in table[1:]:
+        row.insert(insert_index, "")
     for name1, (id1, name2) in ITEM_NAME_MAPPING.items():
         if item_name == name2 or item_id == id1:
             raise Exception(f"{item_id}-{item_name} already in table: {name1}")
@@ -178,8 +182,8 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
     RUN_COL = 3
     table = table[HEAD_ROW:][:-6]
 
-    # _add_item_to_table(table, 6557,'終の花')
-    # _add_item_to_table(table, 6558,'黄金釜')
+    # _add_item_to_table(table, 6559, "ユニバーサルキューブ", "花")
+    # _add_item_to_table(table, 6560, "月光核", "釜")
 
     # <itemId, col>
     item_id_col_map: dict[int, int] = {
@@ -193,7 +197,16 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
     )
     assert not item_not_found, f"items not found: {item_id_col_map}"
 
-    for add_quest_id in [94095301, 94095302]:
+    for add_quest_id in [
+        94086601,
+        94093201,
+        94095301,
+        94095302,
+        94100502,
+        94100501,
+        94137201,
+        94137202,
+    ]:
         _add_quest_to_table(table, mst_data.quests[add_quest_id], item_id_col_map)
 
     # <questId, row>
