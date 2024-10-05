@@ -37,7 +37,7 @@ def mwparse(value, context=0, skip_style_tags=False) -> Wikicode:
 
 
 class Params(dict[Any, str]):
-    def get(self, k, default=None, tags=None, nullable=True) -> str | None:
+    def get(self, k, default=None, tags=None, nullable=True) -> str | None:  # type: ignore
         """
         :param k: dict key.
         :param default: default value if key not in dict.

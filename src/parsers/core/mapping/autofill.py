@@ -2,8 +2,6 @@ import re
 from pathlib import Path
 from typing import Callable, Literal
 
-from ....utils.helper import parse_json_file_as
-
 
 _Region = Literal["JP", "CN", "TW", "NA", "KR"]
 Regions: list[_Region] = ["JP", "CN", "TW", "NA", "KR"]
@@ -56,6 +54,9 @@ def autofill_mapping(mappings: dict[str, Mapping]):
     def _repl0(x: str) -> _VReplacer:
         return {"CN": x, "TW": x, "NA": x, "KR": x}
 
+    def _repl0_null(x: str | None) -> _VReplacer:
+        return _repl0(x or "")
+
     def _repl_simple(names: Mapping):
         def _repl(name_jp: str):
             return names.get(name_jp)
@@ -71,7 +72,7 @@ def autofill_mapping(mappings: dict[str, Mapping]):
             "NA": "Rank Up Quest: {0}{1}",
             "KR": "강화 퀘스트 {0}{1}",
         },
-        krepls=[_repl_svt, _repl0],
+        krepls=[_repl_svt, _repl0_null],
     )
     for names in [quest_names, event_names]:
         update_k(
@@ -292,7 +293,7 @@ def update_k(
         repls = [repl_func(match.group(i + 1)) for i, repl_func in enumerate(krepls)]
 
         for region in list(transl.keys()):
-            if transl[region] is not None or not region in templates:
+            if transl[region] is not None or region not in templates:
                 continue
             tmpl = templates[region]
             kargs = [r.get(region) if r else None for r in repls]
@@ -362,7 +363,7 @@ def _update_cvs(cv_names: Mapping):
 
 
 def main(folder: Path):
-    from src.utils.helper import dump_json
+    from src.utils.helper import dump_json, parse_json_file_as
 
     mappings: dict[str, Mapping] = {}
     for fp in folder.iterdir():
@@ -370,10 +371,10 @@ def main(folder: Path):
             continue
         name = fp.name[:-5]
         try:
-            fp.name
             mappings[name] = parse_json_file_as(Mapping, fp)
         except:
             print(f"unmatched mapping format, skip {fp.name}")
+            pass
     autofill_mapping(mappings)
     for k, v in mappings.items():
         dump_json(v, folder / f"{k}.json")
@@ -382,4 +383,5 @@ def main(folder: Path):
 if __name__ == "__main__":
     import sys
 
+    sys.path.insert(0, str(Path(__file__).parents[4]))
     main(Path(sys.argv[1]))
