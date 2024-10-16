@@ -125,6 +125,7 @@ def get_constant_str():
         "SUB_PT_BUFF_INDIVI",
         "SVT_EXIT_PT_BUFF_INDIVI",
         "PLAYABLE_BEAST_CLASS_IDS",
+        "ENABLE_OVERWRITE_CLASS_IDS",
     ]
     int_keys = [
         # "MATERIAL_MAIN_INTERLUDE_WAR_ID",
