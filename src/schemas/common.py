@@ -304,6 +304,7 @@ class MstClass(BaseModel):
     relationId: int
     supportGroup: int
     autoSelSupportType: int
+    relationSvtIndividuality: list[int] = []
 
 
 class MstClassRelation(BaseModel):
@@ -369,3 +370,11 @@ class MstQuestPhaseBasic(BaseModel):
     consumeType: int | None = None
     actConsume: int | None = None
     recommendLv: str | None = None
+
+
+class EventRaidData(BaseModel):
+    eventId: int
+    day: int
+    questIds: list[int]
+    svtIds: list[int]
+    enemyNames: list[str]
