@@ -15,7 +15,14 @@ from app.schemas.common import Region, Trait
 from app.schemas.enums import OLD_TRAIT_MAPPING, SvtClass, get_class_name
 from app.schemas.gameenums import EventType, SvtType
 from app.schemas.nice import NiceBaseFunction, NiceBuff, NiceBuffType
-from app.schemas.raw import MstEvent, MstItem, MstQuestPhase, MstSvt, MstWar
+from app.schemas.raw import (
+    MstEvent,
+    MstItem,
+    MstQuestPhase,
+    MstQuestPhaseIndividuality,
+    MstSvt,
+    MstWar,
+)
 from pydantic import BaseModel
 
 from ..config import PayloadSetting, settings
@@ -449,7 +456,18 @@ class MainParser:
         quest_list = parse_json_obj_as(
             list[MstQuestPhase], DownUrl.gitaa("mstQuestPhase")
         )
+        phase_indiv_list = parse_json_obj_as(
+            list[MstQuestPhaseIndividuality],
+            DownUrl.gitaa("mstQuestPhaseIndividuality"),
+        )
         for phase in quest_list:
+            quest = self.jp_data.quest_dict.get(phase.questId)
+            if not quest or quest.warId == 9999:
+                continue
+            for indiv in phase.individuality:
+                if indiv >= 94000000:
+                    fields[indiv].add(quest.warId)
+        for phase in phase_indiv_list:
             quest = self.jp_data.quest_dict.get(phase.questId)
             if not quest or quest.warId == 9999:
                 continue
