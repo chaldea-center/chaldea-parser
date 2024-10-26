@@ -354,10 +354,13 @@ def get_quest_phase_basic(
             gifts=(
                 []
                 if quest_phase.giftId in (0, 448)
-                else AtlasApi.api_model(
-                    f"/nice/gift/{quest_phase.giftId}", list[NiceGift]
+                else (
+                    AtlasApi.api_model(
+                        f"/nice/JP/gift/{quest_phase.giftId}", list[NiceGift],
+                        expire_after=3600,
+                    )
+                    or []
                 )
-                or []
             ),
             spotId=(
                 detail.spotId if detail and detail.spotId != quest.spotId else None
