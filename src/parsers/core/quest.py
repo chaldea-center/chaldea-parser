@@ -356,7 +356,8 @@ def get_quest_phase_basic(
                 if quest_phase.giftId in (0, 448)
                 else (
                     AtlasApi.api_model(
-                        f"/nice/JP/gift/{quest_phase.giftId}", list[NiceGift],
+                        f"/nice/JP/gift/{quest_phase.giftId}",
+                        list[NiceGift],
                         expire_after=3600,
                     )
                     or []

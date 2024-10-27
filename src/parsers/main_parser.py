@@ -40,6 +40,7 @@ from ..schemas.common import (
 from ..schemas.data import ADD_CES, MIN_APP
 from ..schemas.drop_data import DomusAureaData
 from ..schemas.gamedata import (
+    BasicServant,
     MappingData,
     MasterData,
     NewAddedData,
@@ -276,6 +277,7 @@ class MainParser:
         master_data = parse_json_obj_as(MasterData, data)
 
         if region == Region.JP:
+            entity_ids = {x.id for x in master_data.basic_svt}
             for add_region, ces in ADD_CES.items():
                 for collection, (illustrator,) in ces.items():
                     ce = AtlasApi.api_model(
@@ -289,6 +291,15 @@ class MainParser:
                     # ce.sortId = sort_id
                     ce.sortId = -ce.collectionNo
                     master_data.nice_equip_lore.append(ce)
+                    if ce.id not in entity_ids:
+                        entity = AtlasApi.api_model(
+                            f"/basic/{add_region}/svt/{ce.id}",
+                            BasicServant,
+                            expire_after=7 * 24 * 3600,
+                        )
+                        assert entity
+                        master_data.basic_svt.append(entity)
+                        entity_ids.add(entity.id)
             # for svt_id in (600710, 2501500):
             #     extra_svt = AtlasApi.api_model(
             #         f"/nice/JP/svt/{svt_id}?lore=true", NiceServant, 0
