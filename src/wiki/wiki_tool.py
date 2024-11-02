@@ -317,6 +317,7 @@ class WikiTool:
         if not image:
             return self.hash_image_url(name)
         url = unquote(image.url)
+        url = url.split(";;")[0].strip()
         if self.img_url_prefix.startswith("https://") and url.startswith("http://"):
             url = url.replace("http://", "https://", 1)
         return url
