@@ -23,6 +23,7 @@ from app.schemas.nice import (
     NiceEventPointBuff,
     NiceEventReward,
     NiceEventTowerReward,
+    NiceEventTradeGoods,
     NiceEventTreasureBox,
     NiceFunction,
     NiceGift,
@@ -34,7 +35,6 @@ from app.schemas.nice import (
     NiceMap,
     NiceMapGimmick,
     NiceMasterMission,
-    NiceMysticCode,
     NiceQuest,
     NiceQuestPhase,
     NiceServant,
@@ -327,6 +327,23 @@ class DataEncoder:
             self._save_basic_svt(excludes, obj)
         elif isinstance(obj, NiceServant):
             self._trim_nice_svt(obj)
+        elif isinstance(obj, NiceEventTradeGoods):
+            if not obj.eventPointItem:
+                obj.eventPointItem = NiceItem.model_validate(
+                    {
+                        "id": 5,
+                        "name": "",
+                        "originalName": "",
+                        "type": "qp",
+                        "detail": "",
+                        "icon": "https://static.atlasacademy.io/JP/Items/0.png",
+                        "background": "zero",
+                        "priority": 0,
+                        "dropPriority": 0,
+                        "startedAt": 0,
+                        "endedAt": 0,
+                    }
+                )
 
         if isinstance(obj, BaseModel):
             if isinstance(obj, NiceFunction):
