@@ -102,6 +102,7 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
         event_extra.startTime.JP = event_jp.startedAt
         event_extra.endTime.JP = event_jp.endedAt
         _set_key(mappings.event_names, event_jp.name)
+        _set_key(mappings.event_names, event_jp.shortName)
         for event_add in event_jp.eventAdds:
             if event_add.overwriteType == NiceEventOverwriteType.name_:
                 _set_key(mappings.event_names, event_add.overwriteText)
