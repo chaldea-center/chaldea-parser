@@ -19,6 +19,7 @@ ADD_CES: dict[Region, dict[int, tuple[str | None,]]] = {
     Region.KR: {
         202022: ("ダンミル",),  # 5th 90082001
         202023: ("リヨ",),  # 6th 90082002
+        202024: (None,),  # 7th 90082003
     },
     # 2017.06
     Region.NA: {
