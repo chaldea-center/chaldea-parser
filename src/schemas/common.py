@@ -192,6 +192,7 @@ class ItemCategory(StrEnum):
     event = "event"
     coin = "coin"
     other = "other"
+    itemSelectMonth = "itemSelectMonth"
 
 
 class CustomMissionType(StrEnum):
