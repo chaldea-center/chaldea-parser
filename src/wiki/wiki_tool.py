@@ -572,6 +572,12 @@ class WikiTool:
 
     @staticmethod
     def norm_img_key(name: str):
+        names = [x.strip() for x in name.splitlines() if x.strip()]
+        if names:
+            name = names[0]
+        names = [x.strip() for x in name.split(";;") if x.strip()]
+        if names:
+            name = names[0]
         if not name:
             return name
         if ":" in name:
