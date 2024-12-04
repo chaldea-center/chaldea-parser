@@ -241,7 +241,7 @@ class WikiTool:
                     )
                     self.active_requests.discard(name)
                     raise
-                logger.error(f"api failed: {type(e)}: {e}")
+                logger.error(f"api failed ({name}): {type(e)}: {e}")
                 time.sleep(min(5 * retry_n, 30))
 
     def get_page_cache(self, name: str) -> WikiPageInfo | None:
