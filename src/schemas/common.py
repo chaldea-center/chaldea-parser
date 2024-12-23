@@ -361,7 +361,7 @@ class MstQuestPhaseBasic(BaseModel):
     # isNpcOnly: false,
     # battleBgId: 19000,
     # battleBgType: 0,
-    qp: int = 0
+    qp: int | None = 0
     exp: int = 0
     bond: int = 0
     giftId: int = 0

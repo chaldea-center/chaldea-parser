@@ -13,7 +13,7 @@ import requests
 from app.schemas.basic import BasicCommandCode, BasicEquip
 from app.schemas.common import Region, Trait
 from app.schemas.enums import OLD_TRAIT_MAPPING, SvtClass, get_class_name
-from app.schemas.gameenums import EventType, SvtType
+from app.schemas.gameenums import EventType, NiceItemType, SvtType
 from app.schemas.nice import NiceBaseFunction, NiceBuff, NiceBuffType
 from app.schemas.raw import (
     MstEvent,
@@ -417,6 +417,8 @@ class MainParser:
                 NiceBuffType.treasureDeviceBeforeFunction,
                 NiceBuffType.stepInAfterFunction,
                 NiceBuffType.functionedFunction,
+                NiceBuffType.comboStartFunction,
+                NiceBuffType.comboEndFunction,
             }:
                 worker.add_default(buff, get_all_func_val(func, "Value"))
         for svt in master_data.nice_servant_lore:
@@ -429,6 +431,16 @@ class MainParser:
         logger.info(
             f"{region}: loaded {len(master_data.base_skills)} trigger skills, {len(master_data.base_tds)} trigger TD"
         )
+
+        if region != Region.JP:
+            jp_item_ids = set(item.id for item in self.jp_data.nice_item)
+            for item in master_data.nice_item:
+                if (
+                    item.type in (NiceItemType.friendshipUpItem,)
+                    and item.id not in jp_item_ids
+                ):
+                    self.jp_data.nice_item.append(item)
+
         self.stopwatch.log(f"master data [{region}]")
         return master_data
 
