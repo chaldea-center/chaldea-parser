@@ -13,7 +13,7 @@ import requests
 from app.schemas.basic import BasicCommandCode, BasicEquip
 from app.schemas.common import Region, Trait
 from app.schemas.enums import OLD_TRAIT_MAPPING, SvtClass, get_class_name
-from app.schemas.gameenums import EventType, NiceItemType, SvtType
+from app.schemas.gameenums import EventType, NiceCardType, NiceItemType, SvtType
 from app.schemas.nice import NiceBaseFunction, NiceBuff, NiceBuffType
 from app.schemas.raw import (
     MstEvent,
@@ -440,6 +440,10 @@ class MainParser:
                     and item.id not in jp_item_ids
                 ):
                     self.jp_data.nice_item.append(item)
+
+        # temp fix
+        for svt in master_data.nice_servant_lore:
+            svt.cardDetails.pop(NiceCardType.addattack2, None)
 
         self.stopwatch.log(f"master data [{region}]")
         return master_data
