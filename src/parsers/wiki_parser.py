@@ -1091,10 +1091,12 @@ class WikiParser:
         unknown_cards: set[str] = set()
 
         def _parse_one(title: str):
+            logger.info(f"[summon] parsing \"{title}\"...")
             wikitext = mwparse(MOONCELL.get_page_text(title))
             params = parse_template(wikitext, r"^{{卡池信息")
             key = _gen_jp_notice_key(params.get("公告链接jp"))
             if not key:
+                logger.info(f"[summon] [{title}] invalid, {len(str(wikitext))} chars, params={params}")
                 return
             if key in added_summons:
                 discord.mc(
@@ -1181,6 +1183,7 @@ class WikiParser:
         titles = [
             answer["fulltext"] for answer in MOONCELL.ask_query("[[分类:限时召唤]]")
         ]
+        logger.info(f"fetched {len(titles)} summons")
         for title in sorted(titles):
             worker.add(_parse_one, title)
         worker.wait()
