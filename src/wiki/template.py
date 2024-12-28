@@ -60,7 +60,7 @@ class Params(dict[Any, str]):
         return v
 
     def get2(self, k, default=None, nullable=True, strip=False):
-        v = self.get(k, default, True, nullable)
+        v = self.get(k, default=default, tags=True, nullable=nullable)
         if v and strip:
             v = v.strip()
         return v
@@ -77,6 +77,13 @@ class Params(dict[Any, str]):
                 return cast(v)
             except:  # noqas
                 return default
+
+    def get2s(self, *kargs, default=None):
+        for key in kargs:
+            v = self.get2(key)
+            if v:
+                return v
+        return default
 
 
 def remove_tag(string: str, tags: Iterable[str] = kAllTags, console=False):

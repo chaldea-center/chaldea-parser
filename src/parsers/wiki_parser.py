@@ -892,7 +892,7 @@ class WikiParser:
                     f"[{title}] Invalid timestamp: {start_jp,start_time,end_jp,end_time}",
                 )
                 continue
-            notice_link = params.get2("官网链接jp")
+            notice_link = params.get2s("公告链接jp", "官网链接jp")
             notice_key = _gen_jp_notice_key(notice_link)
             if not notice_key:
                 logger.warning(f"[{title}] No jp notice link: {notice_link}")
@@ -951,7 +951,7 @@ class WikiParser:
                 return
             params = parse_template(text, r"^{{活动信息")
             name_jp = params.get2("名称jp")
-            name_cn = params.get2("名称ha") or params.get2("名称cn")
+            name_cn = params.get2s("名称cn", "名称ha")
             if name_jp and name_cn:
                 self.mc_transl.event_names[name_jp] = name_cn
                 self.mc_transl.event_names[name_jp.replace("･", "・")] = name_cn
@@ -962,8 +962,10 @@ class WikiParser:
             event.titleBanner.JP = MOONCELL.get_image_url_null(
                 params.get("标题图文件名jp")
             )
-            event.noticeLink.CN = params.get("官网链接cn")
-            event.noticeLink.JP = params.get("官网链接jp")
+            event.noticeLink.update(
+                Region.CN, params.get2s("公告编号cn", "公告链接cn", "官网链接cn")
+            )
+            event.noticeLink.update(Region.JP, params.get2s("公告链接jp", "官网链接jp"))
             # campaign only
             if event.id < 0:
                 event.startTime.CN = MOONCELL.get_timestamp(
@@ -987,7 +989,7 @@ class WikiParser:
                 summon_params = parse_template(
                     MOONCELL.get_page_text(summon_page), r"^{{卡池信息"
                 )
-                key = _gen_jp_notice_key(summon_params.get("卡池官网链接jp"))
+                key = _gen_jp_notice_key(summon_params.get("公告链接jp"))
                 if key:
                     event.relatedSummons.append(key)
             self.wiki_data.events[event.id] = event
@@ -1020,8 +1022,10 @@ class WikiParser:
             war.titleBanner.JP = MOONCELL.get_image_url_null(
                 params.get("标题图文件名jp")
             )
-            war.noticeLink.CN = params.get("官网链接cn")
-            war.noticeLink.JP = params.get("官网链接jp")
+            war.noticeLink.update(
+                Region.CN, params.get2s("公告编号cn", "公告链接cn", "官网链接cn")
+            )
+            war.noticeLink.update(Region.JP, params.get2s("公告链接jp", "官网链接jp"))
             self.wiki_data.wars[war.id] = war
 
         worker = Worker.from_map(
@@ -1106,7 +1110,7 @@ class WikiParser:
         def _parse_one(title: str):
             wikitext = mwparse(MOONCELL.get_page_text(title))
             params = parse_template(wikitext, r"^{{卡池信息")
-            key = _gen_jp_notice_key(params.get("卡池官网链接jp"))
+            key = _gen_jp_notice_key(params.get("公告链接jp"))
             if not key:
                 return
             if key in added_summons:
@@ -1119,31 +1123,39 @@ class WikiParser:
                 )
             added_summons[key] = title
 
-            name_jp = params.get2("卡池名jp")
-            name_cn = params.get2("卡池名ha") or params.get2("卡池名cn") or title
+            name_jp = params.get2("名称jp")
+            name_cn = params.get2s("名称cn", "名称ha") or title
             summon = self.wiki_data.summons.setdefault(key, LimitedSummon(id=key))
             summon.mcLink = title
             summon.name = name_jp
             if name_cn and name_jp:
                 self.mc_transl.summon_names[name_jp] = name_cn
             summon.startTime.JP = MOONCELL.get_timestamp(
-                params.get("卡池开始时间jp"), KnownTimeZone.jst
+                params.get("开始时间jp"), KnownTimeZone.jst
             )
             if not summon.startTime.JP:
                 logger.warning(f"[Summon] unknown startTimeJP: {summon.mcLink}")
             summon.startTime.CN = MOONCELL.get_timestamp(
-                params.get("卡池开始时间cn"), KnownTimeZone.cst
+                params.get("开始时间cn"), KnownTimeZone.cst
             )
             summon.endTime.JP = MOONCELL.get_timestamp(
-                params.get("卡池结束时间jp"), KnownTimeZone.jst
+                params.get("结束时间jp"), KnownTimeZone.jst
             )
             summon.endTime.CN = MOONCELL.get_timestamp(
-                params.get("卡池结束时间cn"), KnownTimeZone.cst
+                params.get("结束时间cn"), KnownTimeZone.cst
             )
-            summon.banner.JP = MOONCELL.get_image_url_null(params.get("卡池图文件名jp"))
-            summon.banner.CN = MOONCELL.get_image_url_null(params.get("卡池图文件名cn"))
-            summon.noticeLink.JP = params.get("卡池官网链接jp")
-            summon.noticeLink.CN = params.get("卡池官网链接cn")
+            summon.banner.JP = MOONCELL.get_image_url_null(params.get("标题图文件名jp"))
+            summon.banner.CN = MOONCELL.get_image_url_null(params.get("标题图文件名cn"))
+            summon.noticeLink.JP = params.get(
+                "公告链接jp", default=summon.noticeLink.JP
+            )
+            summon.noticeLink.CN = params.get(
+                "卡池官网链接cn", default=summon.noticeLink.CN
+            )
+            summon.noticeLink.update(Region.JP, params.get("公告链接jp"))
+            summon.noticeLink.update(
+                Region.CN, params.get2s("公告编号cn", "公告链接cn")
+            )
 
             known_svt, unknown_svt = self._parse_cards(
                 params.get2("推荐召唤从者"), True
