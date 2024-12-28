@@ -424,6 +424,12 @@ class WikiParser:
             name="mc_svt",
         )
         worker.wait()
+        for i in range(ord("A"), ord("Z") + 1):
+            wikitext = MOONCELL.get_page(f"技能一览/职阶技能/{chr(i)}")
+            for params in parse_template_list(wikitext, r"{{职阶技能一览"):
+                skill_cn, skill_jp = params.get2(1), params.get2(2)
+                if skill_cn and skill_jp:
+                    self.mc_transl.skill_names.setdefault(skill_jp, skill_cn)
 
         release_wikitext = MOONCELL.expand_template(
             """{{#ask:

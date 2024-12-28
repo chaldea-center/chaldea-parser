@@ -1,6 +1,9 @@
 import re
+from copy import deepcopy
 from pathlib import Path
 from typing import Callable, Literal
+
+from ....schemas.wiki_data import WikiTranslation
 
 
 _Region = Literal["JP", "CN", "TW", "NA", "KR"]
@@ -10,7 +13,7 @@ _VReplacer = dict[_Region, str | None] | None
 _Replacer = Callable[[str], _VReplacer]
 
 
-def autofill_mapping(mappings: dict[str, Mapping]):
+def autofill_mapping(mappings: dict[str, Mapping], mc_transl: WikiTranslation):
     # actually not dict[str,Mapping], but here only use this kind of format
     quest_names: Mapping = mappings["quest_names"]
     svt_names: Mapping = mappings["svt_names"]
@@ -204,11 +207,15 @@ def autofill_mapping(mappings: dict[str, Mapping]):
         },
         krepls=[_repl_item],
     )
+
+    base_skill_names = deepcopy(buff_names)
+    for skill_jp, skill_cn in mc_transl.skill_names.items():
+        base_skill_names.setdefault(skill_jp, {}).setdefault("CN", skill_cn)
     update_k(
         skill_names,
         pattern=re.compile(r"^(.+) ((?:A|B|C|D|E|EX)[\-+]*)$"),
         templates={r: "{0} {1}" for r in Regions},
-        krepls=[_repl_simple(buff_names), _repl0],
+        krepls=[_repl_simple(base_skill_names), _repl0],
     )
 
     update_kw(
@@ -375,9 +382,10 @@ def main(folder: Path):
         except:
             print(f"unmatched mapping format, skip {fp.name}")
             pass
-    autofill_mapping(mappings)
-    for k, v in mappings.items():
-        dump_json(v, folder / f"{k}.json")
+    raise Exception("don't use")
+    # autofill_mapping(mappings)
+    # for k, v in mappings.items():
+    #     dump_json(v, folder / f"{k}.json")
 
 
 if __name__ == "__main__":

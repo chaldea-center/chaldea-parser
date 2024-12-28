@@ -902,7 +902,10 @@ class MainParser:
         self._merge_repo_mapping()
         self.jp_data.mappingData = parse_json_obj_as(
             MappingData,
-            autofill_mapping(orjson.loads(self.jp_data.mappingData.model_dump_json())),
+            autofill_mapping(
+                orjson.loads(self.jp_data.mappingData.model_dump_json()),
+                self.wiki_data.mcTransl,
+            ),
         )
         self._post_mappings()
 
