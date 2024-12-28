@@ -136,9 +136,11 @@ class MainParser:
             logger.warning("clear all http_cache")
             AtlasApi.cache_storage.clear()
             McApi.cache_storage.clear()
-        if self.payload.clear_cache_wiki:
-            logger.warning("clear all wiki cache")
+        if self.payload.clear_cache_wiki or self.payload.clear_cache_mc:
+            logger.warning("clear all Mooncell wiki caches")
             MOONCELL.clear()
+        if self.payload.clear_cache_wiki or self.payload.clear_cache_mc:
+            logger.warning("clear all Fandom wiki caches")
             FANDOM.clear()
 
         logger.info("update_exported_files")
