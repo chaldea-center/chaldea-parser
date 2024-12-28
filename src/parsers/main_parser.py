@@ -71,7 +71,6 @@ from ..utils.helper import (
     pydantic_encoder,
 )
 from ..utils.stopwatch import Stopwatch
-from ..wiki import FANDOM, MOONCELL
 from ..wiki.wiki_tool import KnownTimeZone
 from .core.aa_export import update_exported_files
 from .core.const_data import get_const_data
@@ -136,12 +135,6 @@ class MainParser:
             logger.warning("clear all http_cache")
             AtlasApi.cache_storage.clear()
             McApi.cache_storage.clear()
-        if self.payload.clear_cache_wiki or self.payload.clear_cache_mc:
-            logger.warning("clear all Mooncell wiki caches")
-            MOONCELL.clear()
-        if self.payload.clear_cache_wiki or self.payload.clear_cache_mc:
-            logger.warning("clear all Fandom wiki caches")
-            FANDOM.clear()
 
         logger.info("update_exported_files")
         update_exported_files(self.payload.regions, self.payload.force_update_export)

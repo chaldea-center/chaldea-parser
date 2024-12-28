@@ -110,23 +110,33 @@ class WikiParser:
 
     @count_time
     def start(self):
-        if self.payload.run_wiki_parser is False:
+        payload = self.payload
+        if payload.run_wiki_parser is False:
             logger.info("run_wiki_parser=False, skip")
             return
-        Worker.fake_mode = not self.payload.enable_wiki_threading
-        update_exported_files(self.payload.regions, self.payload.force_update_export)
+        Worker.fake_mode = not payload.enable_wiki_threading
+        update_exported_files(payload.regions, payload.force_update_export)
 
         self._jp.init()
         self._mc.init()
         self._fandom.init()
-        MOONCELL.load(self.payload.clear_wiki_empty)
-        FANDOM.load(self.payload.clear_wiki_empty)
-        MOONCELL.remove_all_changes(
-            self.payload.clear_wiki_changed, self.payload.clear_wiki_moved
-        )
-        FANDOM.remove_all_changes(
-            self.payload.clear_wiki_changed, self.payload.clear_wiki_moved
-        )
+        MOONCELL.load(payload.clear_wiki_empty)
+        FANDOM.load(payload.clear_wiki_empty)
+        if payload.clear_cache_wiki or payload.clear_cache_mc:
+            logger.warning("clear all Mooncell wiki caches")
+            MOONCELL.clear()
+        else:
+            MOONCELL.remove_all_changes(
+                payload.clear_wiki_changed, payload.clear_wiki_moved
+            )
+
+        if payload.clear_cache_wiki or payload.clear_cache_mc:
+            logger.warning("clear all Fandom wiki caches")
+            FANDOM.clear()
+        else:
+            FANDOM.remove_all_changes(
+                payload.clear_wiki_changed, payload.clear_wiki_moved
+            )
 
         self.init_wiki_data()
         logger.info("[MC] parsing servant data")
@@ -1091,12 +1101,14 @@ class WikiParser:
         unknown_cards: set[str] = set()
 
         def _parse_one(title: str):
-            logger.info(f"[summon] parsing \"{title}\"...")
+            logger.info(f'[summon] parsing "{title}"...')
             wikitext = mwparse(MOONCELL.get_page_text(title))
             params = parse_template(wikitext, r"^{{卡池信息")
             key = _gen_jp_notice_key(params.get("公告链接jp"))
             if not key:
-                logger.info(f"[summon] [{title}] invalid, {len(str(wikitext))} chars, params={params}")
+                logger.info(
+                    f"[summon] [{title}] invalid, {len(str(wikitext))} chars, params={params}"
+                )
                 return
             if key in added_summons:
                 discord.mc(
