@@ -207,7 +207,7 @@ class WarW(BaseModel):
 class EventW(EventWBase):
     startTime: MappingInt = MappingInt()
     endTime: MappingInt = MappingInt()
-    relatedSummons: list[str] = []
+    # relatedSummons: list[str] = []
 
 
 class ProbGroup(BaseModel):
@@ -241,6 +241,7 @@ class LimitedSummon(LimitedSummonBase):
     puSvt: list[int] = []
     puCE: list[int] = []
     subSummons: list[SubSummon] = []
+    relatedEvents: list[str] = []
 
 
 class CampaignEvent(BaseModelORJson):

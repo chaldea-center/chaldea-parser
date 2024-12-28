@@ -974,24 +974,7 @@ class WikiParser:
                 event.endTime.CN = MOONCELL.get_timestamp(
                     params.get2("结束时间cn"), KnownTimeZone.cst
                 )
-            # summons
-            summon_pages = []
-            for i in range(1, 6):
-                if params.get(f"推荐召唤{i}"):
-                    summon_pages.append(f'{event.mcLink}/卡池{"" if i == 1 else i}详情')
-            for i in range(1, 6):
-                page_link = params.get(f"关联卡池{i}")
-                if page_link:
-                    link = MOONCELL.resolve_wikilink(page_link)
-                    if link:
-                        summon_pages.append(link)
-            for summon_page in summon_pages:
-                summon_params = parse_template(
-                    MOONCELL.get_page_text(summon_page), r"^{{卡池信息"
-                )
-                key = _gen_jp_notice_key(summon_params.get("公告链接jp"))
-                if key:
-                    event.relatedSummons.append(key)
+
             self.wiki_data.events[event.id] = event
 
         worker = Worker.from_map(
@@ -1165,6 +1148,12 @@ class WikiParser:
                 unknown_cards.add(f"{title}: " + ", ".join(unknown_svt + unknown_ce))
             summon.puSvt = known_svt
             summon.puCE = known_ce
+
+            events = [params.get2("主关联页")]
+            events += (params.get2("关联页面") or "").split(";;")
+            events = [MOONCELL.norm_key(event) for event in events if event]
+            events = [event for event in events if event]
+            summon.relatedEvents = events
 
             simulator_page = MOONCELL.get_page_text(f"{title}/模拟器")
             sim_params = parse_template(simulator_page, r"^{{抽卡模拟器")

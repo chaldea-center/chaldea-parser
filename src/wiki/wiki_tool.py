@@ -568,7 +568,11 @@ class WikiTool:
     def norm_key(name: str):
         if not name:
             return name
-        return unquote(name.strip()).replace(" ", "_")
+        names = [x.strip() for x in name.split(";;") if x.strip()]
+        if not names:
+            return name
+        name = names[0]
+        return unquote(name).replace(" ", "_")
 
     @staticmethod
     def norm_img_key(name: str):
