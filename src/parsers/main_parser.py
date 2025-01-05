@@ -436,10 +436,6 @@ class MainParser:
                 ):
                     self.jp_data.nice_item.append(item)
 
-        # temp fix
-        for svt in master_data.nice_servant_lore:
-            svt.cardDetails.pop(NiceCardType.addattack2, None)
-
         self.stopwatch.log(f"master data [{region}]")
         return master_data
 

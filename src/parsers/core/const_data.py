@@ -66,7 +66,6 @@ def get_const_data(data: MasterData):
         if isinstance(act_info.plusAction, NiceBuffAction):
             act_info.plusAction = BUFF_ACTION_NAME_REVERSE[act_info.plusAction]
 
-    data.NiceCard.pop(NiceCardType.addattack2, None)
     return ConstGameData(
         cnReplace=dict(CN_REPLACE),
         attributeRelation=data.NiceAttributeRelation,
