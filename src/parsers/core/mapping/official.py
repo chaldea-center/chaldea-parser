@@ -147,7 +147,7 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
         mm = data.mm_dict.get(mm_jp.id)
         if mm_jp.script.missionIconDetailText:
             _update_mapping(
-                mappings.event_names,
+                mappings.mission_names,
                 mm_jp.script.missionIconDetailText,
                 mm.script.missionIconDetailText if mm else None,
             )

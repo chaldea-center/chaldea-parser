@@ -169,6 +169,7 @@ class MappingData(BaseModel):
     entity_names: dict[str, MappingStr] = {}  # only for QuestEnemy.svt.collectionNo==0
     td_types: dict[str, MappingStr] = {}  # jp->
     bgm_names: dict[str, MappingStr] = {}
+    mission_names: dict[str, MappingStr] = {}
     chara_names: dict[str, MappingStr] = {}
 
     buff_names: dict[str, MappingStr] = {}
