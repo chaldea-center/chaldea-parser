@@ -1185,7 +1185,7 @@ class WikiParser:
             else:
                 summon.type = SummonType.limited
 
-            for i in range(1, 31):
+            for i in range(1, 101):
                 sub_title = sim_params.get(f"子名称{i}")
                 sub_data = sim_params.get(f"数据{i}")
                 if sub_title and sub_data:
