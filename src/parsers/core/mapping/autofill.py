@@ -77,6 +77,32 @@ def autofill_mapping(mappings: dict[str, Mapping], mc_transl: WikiTranslation):
         },
         krepls=[_repl_svt, _repl0_null],
     )
+    update_k(
+        quest_names,
+        pattern=re.compile(
+            r"第(\d+)節 進行度(\d+) リコレクションクエスト\((\d+)/(\d+)\)"
+        ),
+        templates={
+            "CN": "第{0}节 进度{1} 回顾关卡({2}/{3})",
+            "TW": "第{0}節 進度{1} 追憶任務({2}/{3})",
+            "NA": "Section {0} Node {1} Recollection Quest ({2}/{3})",
+            "KR": "제{0}절 진행도{1} 리컬렉션 퀘스트({2}/{3})",
+        },
+        krepls=[_repl0, _repl0, _repl0, _repl0],
+    )
+    update_k(
+        quest_names,
+        pattern=re.compile(
+            r"第(\d+)節 進行度(\d+) スーパーリコレクションクエスト\((\d+)/(\d+)\)"
+        ),
+        templates={
+            "CN": "第{0}节 进度{1} 超级回顾关卡({2}/{3})",
+            "TW": "第{0}節 進度{1} 超級追憶任務({2}/{3})",
+            "NA": "Section {0} Node {1} Super Recollection Quest ({2}/{3})",
+            "KR": "제{0}절 진행도{1} 슈퍼 리컬렉션 퀘스트({2}/{3})",
+        },
+        krepls=[_repl0, _repl0, _repl0, _repl0],
+    )
     for names in [quest_names, event_names]:
         update_k(
             names,
