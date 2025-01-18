@@ -286,14 +286,12 @@ class WikiParser:
             # profile
             wikitext = mwparse(MOONCELL.get_page_text(svt_add.mcLink))
             params = parse_template(wikitext, r"^{{基础数值")
-            name_cn, name_cn2 = params.get2("直译名") or params.get2(
-                "中文名"
-            ), params.get2("中文名2")
-            name_jp, name_jp2 = params.get2("日文名"), params.get2("日文名2")
-            if name_cn and name_jp:
-                self.mc_transl.svt_names[name_jp] = name_cn
-            if name_cn2 and name_jp2:
-                self.mc_transl.svt_names[name_jp2] = name_cn2
+            for prefix in ("", "战斗", "卡面"):
+                for idx in ("", 1, 2, 3, 4, 5):
+                    name_cn = params.get2(f"中文{prefix}名{idx}")
+                    name_jp = params.get2(f"日文{prefix}名{idx}")
+                    if name_cn and name_jp:
+                        self.mc_transl.svt_names[name_jp] = name_cn
             nicknames.update(re.split(r"[,，&]", params.get2("昵称") or ""))
             if svt_add.nicknames.CN:
                 nicknames.update(svt_add.nicknames.CN)
