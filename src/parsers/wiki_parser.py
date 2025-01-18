@@ -684,6 +684,25 @@ class WikiParser:
         if not charas:
             return known, unknown
         cache = self._svt_id_cache if is_svt else self._ce_id_cache
+
+        def _get_id(_chara: str) -> int | None:
+            page_text = MOONCELL.get_page_text(_chara)
+            if is_svt:
+                match = re.match(r"^从者(\d+)$", _chara)
+                if match:
+                    _card_id = int(str(match.group(1)).lstrip("0"))
+                else:
+                    param_svt = parse_template(page_text, r"^{{基础数值")
+                    _card_id = param_svt.get_cast("序号", cast=int)
+            else:
+                match = re.match(r"^礼装(\d+)$", _chara)
+                if match:
+                    _card_id = int(str(match.group(1)).lstrip("0"))
+                else:
+                    param_svt = parse_template(page_text, r"^{{概念礼装")
+                    _card_id = param_svt.get_cast("礼装id", cast=int)
+            return _card_id
+
         for chara in charas.split(","):
             if "{{{" in chara:
                 match = re.search(r"\{\{\{([^|{}]+)(?:\|([^|{}]*))?\}\}\}", chara)
@@ -696,27 +715,23 @@ class WikiParser:
                 continue
             if chara in cache:
                 known.append(cache[chara])
-            else:
-                page_text = MOONCELL.get_page_text(chara)
+                continue
+
+            card_id = _get_id(chara)
+            if not card_id:
                 if is_svt:
-                    match = re.match(r"^从者(\d+)$", chara)
-                    if match:
-                        card_id = int(str(match.group(1)).lstrip("0"))
-                    else:
-                        param_svt = parse_template(page_text, r"^{{基础数值")
-                        card_id = param_svt.get_cast("序号", cast=int)
+                    # add if needed
+                    ...
                 else:
-                    match = re.match(r"^礼装(\d+)$", chara)
-                    if match:
-                        card_id = int(str(match.group(1)).lstrip("0"))
-                    else:
-                        param_svt = parse_template(page_text, r"^{{概念礼装")
-                        card_id = param_svt.get_cast("礼装id", cast=int)
-                if card_id:
-                    cache[chara] = card_id
-                    known.append(card_id)
-                else:
-                    unknown.append(chara)
+                    for name_jp, name_cn in self.mc_transl.ce_names.items():
+                        if name_cn == chara:
+                            card_id = _get_id(name_jp)
+                            break
+            if card_id:
+                cache[chara] = card_id
+                known.append(card_id)
+            else:
+                unknown.append(chara)
         return known, unknown
 
     def fandom_svt(self):
@@ -1074,6 +1089,8 @@ class WikiParser:
         worker.wait()
 
     def mc_summon(self):
+        ce_names_reverse = {y: x for x, y in self.mc_transl.ce_names.items()}
+
         def t_summon_data_table(src_str: str, instance: SubSummon):
             table = []
             for row_str in src_str.strip().split("\n"):
