@@ -196,8 +196,7 @@ class HttpApiUtil(abc.ABC):
                 return None
             else:
                 logger.error(
-                    "parsing api model failed",
-                    (_response.status_code, _response.content),
+                    f"parsing api model failed: {(_response.status_code, _response.content)}"
                 )
                 # raise (_response.status_code, _response.content)
                 return None
