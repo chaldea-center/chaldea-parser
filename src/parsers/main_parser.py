@@ -422,6 +422,15 @@ class MainParser:
         # trigger in trigger or some weird trigger
         # 世界樹への生贄, マンドリカルド-間際の一撃, クロエx2
         worker.add_default(None, [966447, 970405, 970412, 970413])
+        worker.add_default(
+            None,
+            [
+                item.value
+                for item in master_data.nice_item
+                if item.type == NiceItemType.eventPassiveSkillGiven and item.value > 0
+            ],
+        )
+
         worker.wait()
         logger.info(
             f"{region}: loaded {len(master_data.base_skills)} trigger skills, {len(master_data.base_tds)} trigger TD"

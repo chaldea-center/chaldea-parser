@@ -41,7 +41,7 @@ def main(
                 if official_new:
                     return official_new
             except Exception as e:
-                logger.error(e)
+                logger.exception(e)
                 return official
         return official
 
