@@ -99,6 +99,7 @@ class SvtObtain(StrEnum):
             "初始获得": SvtObtain.heroine,
             "期间限定": SvtObtain.limited,
             "无法获得": SvtObtain.unavailable,
+            "无法召唤": SvtObtain.unavailable,
             "活动赠送": SvtObtain.eventReward,
             "通关报酬": SvtObtain.clearReward,
             "未知": SvtObtain.unknown,
@@ -113,6 +114,7 @@ class SvtObtain(StrEnum):
             "活动": SvtObtain.eventReward,
             "剧情": SvtObtain.story,
             "友情": SvtObtain.friendPoint,
+            "无法召唤": SvtObtain.unavailable,
         }[s]
 
 
@@ -341,14 +343,6 @@ class MstGacha(BaseModel):
 
 class MstMasterMissionWithGift(MstMasterMission):
     gifts: dict[int, int] = {}  # manually added
-
-
-class SvtLimitHide(BaseModel):
-    limits: list[int]
-    tds: list[int] = []
-    activeSkills: dict[int, list[int]] = {}
-    # classPassives: list[int] = []
-    addPassives: list[int] = []
 
 
 class MstQuestPhaseBasic(BaseModel):
