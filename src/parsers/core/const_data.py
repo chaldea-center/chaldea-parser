@@ -12,7 +12,7 @@ from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail
 from app.schemas.raw import MstBuffTypeDetail, MstFuncTypeDetail, MstSvtExp
 
 from ...schemas.common import MstConstantStr
-from ...schemas.const_data import ConstGameData, SvtExpCurve
+from ...schemas.const_data import ConstDataConfig, ConstGameData, SvtExpCurve
 from ...schemas.data import (
     CN_REPLACE,
     DESTINY_ORDER_SUMMONS,
@@ -21,9 +21,9 @@ from ...schemas.data import (
     FREE_EXCHANGE_SVT_EVENTS,
     LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
     RANDOM_ENEMY_QUESTS,
+    SVT_ALLOWED_EXTRA_PASSIVES,
     SVT_FACE_LIMITS,
     SVT_LIMIT_HIDES,
-    ConstDataConfig,
 )
 from ...schemas.gamedata import MasterData
 from ...utils.helper import parse_json_obj_as, sort_dict
@@ -87,6 +87,7 @@ def get_const_data(data: MasterData):
             for detail in mst_buff_type_details
         },
         svtLimitHides=SVT_LIMIT_HIDES,
+        svtAllowedExtraPassives=SVT_ALLOWED_EXTRA_PASSIVES,
         eventPointBuffGroupSkillNumMap=EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP,
         laplaceUploadAllowAiQuests=LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
         excludeRewardQuests=EXCLUDE_REWARD_QUESTS,

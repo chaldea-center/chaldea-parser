@@ -1,17 +1,12 @@
 import re
 
-from app.schemas.common import Region
 from pydantic import BaseModel
 
-from .common import SvtLimitHide
+from ..schemas.common import Region
+from ..schemas.const_data import SvtAllowedExtraPassive, SvtLimitHide
 
 
 MIN_APP = "2.5.18"
-
-
-class ConstDataConfig(BaseModel):
-    autoLoginMinVerJp: str = "999.999.999"
-    autoLoginMinVerNa: str = "2.5.5"
 
 
 ADD_CES: dict[Region, dict[int, tuple[str | None,]]] = {
@@ -108,6 +103,21 @@ SVT_LIMIT_HIDES: dict[int, list[SvtLimitHide]] = {
         )
     ],
 }
+
+SVT_ALLOWED_EXTRA_PASSIVES = [
+    SvtAllowedExtraPassive(
+        eventId=80414, groupId=1, skillId=940274, fromPassive=True, svtIds=[0]
+    ),
+    SvtAllowedExtraPassive(
+        eventId=80514, groupId=1, skillId=940382, fromPassive=False, svtIds=[0]
+    ),
+    SvtAllowedExtraPassive(
+        eventId=80514, groupId=1, skillId=940383, fromPassive=False, svtIds=[0]
+    ),
+    SvtAllowedExtraPassive(
+        eventId=80514, groupId=1, skillId=940384, fromPassive=False, svtIds=[0]
+    ),
+]
 
 
 # svt_no, questIds

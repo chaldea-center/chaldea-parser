@@ -12,8 +12,12 @@ from app.schemas.gameenums import (
 from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail, NiceGift
 from pydantic import BaseModel
 
-from .common import MstClass, SvtLimitHide
-from .data import ConstDataConfig
+from .common import MstClass
+
+
+class ConstDataConfig(BaseModel):
+    autoLoginMinVerJp: str = "999.999.999"
+    autoLoginMinVerNa: str = "2.5.5"
 
 
 class BuffActionInfo(BaseModel):
@@ -74,6 +78,22 @@ class SvtExpCurve(BaseModel):
     curve: list[int]
 
 
+class SvtLimitHide(BaseModel):
+    limits: list[int]
+    tds: list[int] = []
+    activeSkills: dict[int, list[int]] = {}
+    # classPassives: list[int] = []
+    addPassives: list[int] = []
+
+
+class SvtAllowedExtraPassive(BaseModel):
+    eventId: int
+    groupId: int
+    skillId: int
+    fromPassive: bool
+    svtIds: list[int]
+
+
 class ConstGameData(BaseModel):
     cnReplace: dict[str, str]
     attributeRelation: dict[Attribute, dict[Attribute, int]]
@@ -89,6 +109,7 @@ class ConstGameData(BaseModel):
     funcTypeDetail: dict[int, NiceFuncTypeDetail]
     buffTypeDetail: dict[int, NiceBuffTypeDetail]
     svtLimitHides: dict[int, list[SvtLimitHide]]
+    svtAllowedExtraPassives: list[SvtAllowedExtraPassive]
     eventPointBuffGroupSkillNumMap: dict[int, dict[int, int]]
     laplaceUploadAllowAiQuests: list[int]
     excludeRewardQuests: list[int]
