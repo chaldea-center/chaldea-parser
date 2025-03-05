@@ -89,7 +89,7 @@ class HttpApiUtil(abc.ABC):
             cache_session: CachedSession = CachedSession(
                 backend=self.cache_storage,
                 expire_after=kwargs.pop("expire_after", expire_after),
-            )
+            )  # pyright: ignore[reportArgumentType]
             r = cache_session.get(url, **kwargs)
             if r.status_code == 429:
                 logger.warning(r.text)
@@ -127,7 +127,9 @@ class HttpApiUtil(abc.ABC):
         :return:
         """
         url = self.full_url(url)
-        key = self.cache_storage.create_key(url=url, method="GET")
+        key = self.cache_storage.create_key(
+            url=url, method="GET"
+        )  # pyright: ignore[reportArgumentType]
         resp = self.cache_storage.get_response(key)
         should_delete = False
         if resp and resp.is_expired:

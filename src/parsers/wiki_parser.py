@@ -724,7 +724,7 @@ class WikiParser:
                     ...
                 else:
                     for name_jp, name_cn in self.mc_transl.ce_names.items():
-                        if name_cn == chara:
+                        if name_cn == chara or name_jp.replace("・", "·") == chara:
                             card_id = _get_id(name_jp)
                             break
             if card_id:
@@ -1089,7 +1089,6 @@ class WikiParser:
         worker.wait()
 
     def mc_summon(self):
-        ce_names_reverse = {y: x for x, y in self.mc_transl.ce_names.items()}
 
         def t_summon_data_table(src_str: str, instance: SubSummon):
             table = []
@@ -1338,7 +1337,13 @@ class WikiParser:
             "Sub:Costume_Dress/Simple_Costume_List",
         ]:
             costume_page = FANDOM.get_page_text(page_name)
-            for row in wikitextparser.parse(costume_page).tables[0].data()[1:]:
+            for row in (
+                wikitextparser.parse(
+                    costume_page
+                )  # pyright: ignore[reportArgumentType]
+                .tables[0]
+                .data()[1:]  # pyright: ignore[reportArgumentType]
+            ):
                 names = re.split(r"<br\s*/>", row[2])
                 if len(names) != 2:
                     continue
