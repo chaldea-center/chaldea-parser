@@ -1019,6 +1019,14 @@ class WikiParser:
                 )
             if not war.mcLink:
                 return
+            move_target = MOONCELL.moved_pages.get(MOONCELL.norm_key(war.mcLink))
+            if move_target:
+                discord.mc(
+                    "War page moved",
+                    discord.mc_link(war.mcLink) + " -> " + discord.mc_link(move_target),
+                )
+                war.mcLink = move_target
+
             text = MOONCELL.get_page_text(war.mcLink)
             if not text:
                 self._mc.invalid_links.append(war.mcLink)
