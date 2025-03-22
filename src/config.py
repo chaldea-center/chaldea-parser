@@ -89,6 +89,7 @@ class PayloadSetting(BaseSettings):
     clear_cache_fandom: bool = False
     clear_wiki_changed: float | None = None  # -101: clear all image caches
     clear_wiki_moved: float | None = None
+    clear_wiki_deleted: float | None = None
     clear_wiki_empty: bool = False
     skip_mapping: bool = False
     skip_quests: bool = False

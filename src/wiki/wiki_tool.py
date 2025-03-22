@@ -6,7 +6,7 @@ from enum import StrEnum
 from functools import cached_property
 from hashlib import md5
 from pathlib import Path
-from typing import Any, Callable, cast
+from typing import Any, Callable, Literal, cast
 from urllib.parse import unquote
 
 import mwclient
@@ -449,7 +449,10 @@ class WikiTool:
         return int(last_timestamp)
 
     def remove_all_changes(
-        self, edit_days: float | None = None, move_days: float | None = None
+        self,
+        edit_days: float | None = None,
+        move_days: float | None = None,
+        delete_days: float | None = None,
     ):
         all_updated = True
         _now = int(time.time())
@@ -461,7 +464,11 @@ class WikiTool:
         else:
             all_updated = False
         if not move_days or move_days > 0:
-            self.clear_moved_or_deleted(move_days)
+            self.clear_moved_or_deleted("move", move_days)
+        else:
+            all_updated = False
+        if not delete_days or delete_days > 0:
+            self.clear_moved_or_deleted("delete", delete_days)
         else:
             all_updated = False
         if all_updated:
@@ -489,40 +496,36 @@ class WikiTool:
                 dropped += 1
                 logger.debug(f'{self.host}: drop outdated: {dropped} - "{title}"')
 
-    def clear_moved_or_deleted(self, days: float | None = None):
+    def clear_moved_or_deleted(
+        self, letype: Literal["move", "delete"], days: float | None = None
+    ):
         last_timestamp = self._get_expire_time(2, days)
 
-        for letype in ("move", "delete"):
-            params = {
-                "action": "query",
-                "format": "json",
-                "list": "logevents",
-                "utf8": 1,
-                "leend": datetime.fromtimestamp(last_timestamp).isoformat(),
-                "letype": letype,
-                "ledir": "older",
-                "lenamespace": "0",
-                "lelimit": "max",
-            }
-            log_events = self._api_call_continue(
-                params, lambda x: x["query"]["logevents"]
-            )
-            logger.debug(f"page {letype}: {log_events}")
-            for event in log_events:
-                title: str = event["title"]
-                if self.get_page_cache(title):
-                    self.remove_page_cache(title)
-                    logger.debug(f'{self.host}: drop {letype}d page: "{title}"')
-                if (
-                    letype == "move"
-                    and event["ns"] == event["params"]["target_ns"] == 0
-                ):
-                    target_page = event["params"]["target_title"]
-                    self.remove_page_cache(target_page)
-                    src = self.norm_key(title)
-                    dest = self.norm_key(target_page)
-                    if dest not in self.moved_pages:
-                        self.moved_pages[src] = dest
+        params = {
+            "action": "query",
+            "format": "json",
+            "list": "logevents",
+            "utf8": 1,
+            "leend": datetime.fromtimestamp(last_timestamp).isoformat(),
+            "letype": letype,
+            "ledir": "older",
+            "lenamespace": "0",
+            "lelimit": "max",
+        }
+        log_events = self._api_call_continue(params, lambda x: x["query"]["logevents"])
+        logger.debug(f"page {letype}: {log_events}")
+        for event in log_events:
+            title: str = event["title"]
+            if self.get_page_cache(title):
+                self.remove_page_cache(title)
+                logger.debug(f'{self.host}: drop {letype}d page: "{title}"')
+            if letype == "move" and event["ns"] == event["params"]["target_ns"] == 0:
+                target_page = event["params"]["target_title"]
+                self.remove_page_cache(target_page)
+                src = self.norm_key(title)
+                dest = self.norm_key(target_page)
+                if dest not in self.moved_pages:
+                    self.moved_pages[src] = dest
 
     def save_cache(self):
         logger.debug(

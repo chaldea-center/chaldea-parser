@@ -127,7 +127,9 @@ class WikiParser:
             MOONCELL.clear()
         else:
             MOONCELL.remove_all_changes(
-                payload.clear_wiki_changed, payload.clear_wiki_moved
+                payload.clear_wiki_changed,
+                payload.clear_wiki_moved,
+                payload.clear_wiki_deleted,
             )
 
         if payload.clear_cache_wiki or payload.clear_cache_mc:
@@ -135,7 +137,9 @@ class WikiParser:
             FANDOM.clear()
         else:
             FANDOM.remove_all_changes(
-                payload.clear_wiki_changed, payload.clear_wiki_moved
+                payload.clear_wiki_changed,
+                payload.clear_wiki_moved,
+                payload.clear_wiki_deleted,
             )
 
         self.init_wiki_data()
