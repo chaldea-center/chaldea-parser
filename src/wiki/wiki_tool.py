@@ -298,6 +298,11 @@ class WikiTool:
         name = self.norm_img_key(name)
         return self.cache.images.get(name)
 
+    def remove_image_cache(self, name: str):
+        name = self.norm_img_key(name)
+        page = self.cache.images.pop(name, None)
+        return page
+
     def get_image(self, name: str, allow_cache: bool = True) -> WikiImageInfo | None:
         if not name:
             return None
@@ -501,31 +506,41 @@ class WikiTool:
     ):
         last_timestamp = self._get_expire_time(2, days)
 
-        params = {
-            "action": "query",
-            "format": "json",
-            "list": "logevents",
-            "utf8": 1,
-            "leend": datetime.fromtimestamp(last_timestamp).isoformat(),
-            "letype": letype,
-            "ledir": "older",
-            "lenamespace": "0",
-            "lelimit": "max",
-        }
-        log_events = self._api_call_continue(params, lambda x: x["query"]["logevents"])
-        logger.debug(f"page {letype}: {log_events}")
-        for event in log_events:
-            title: str = event["title"]
-            if self.get_page_cache(title):
-                self.remove_page_cache(title)
-                logger.debug(f'{self.host}: drop {letype}d page: "{title}"')
-            if letype == "move" and event["ns"] == event["params"]["target_ns"] == 0:
-                target_page = event["params"]["target_title"]
-                self.remove_page_cache(target_page)
-                src = self.norm_key(title)
-                dest = self.norm_key(target_page)
-                if dest not in self.moved_pages:
-                    self.moved_pages[src] = dest
+        for ns in [0, 6]:  # Main, File
+            params = {
+                "action": "query",
+                "format": "json",
+                "list": "logevents",
+                "utf8": 1,
+                "leend": datetime.fromtimestamp(last_timestamp).isoformat(),
+                "letype": letype,
+                "ledir": "older",
+                "lenamespace": str(ns),
+                "lelimit": "max",
+            }
+            log_events = self._api_call_continue(
+                params, lambda x: x["query"]["logevents"]
+            )
+            logger.debug(f"page {letype}: {log_events}")
+            for event in log_events:
+                title: str = event["title"]
+                if ns == 0:
+                    if self.get_page_cache(title):
+                        self.remove_page_cache(title)
+                        logger.debug(f'{self.host}: drop {letype}d page: "{title}"')
+                    if (
+                        letype == "move"
+                        and event["ns"] == event["params"]["target_ns"] == 0
+                    ):
+                        target_page = event["params"]["target_title"]
+                        self.remove_page_cache(target_page)
+                        src = self.norm_key(title)
+                        dest = self.norm_key(target_page)
+                        if dest not in self.moved_pages:
+                            self.moved_pages[src] = dest
+                elif ns == 6:
+                    if self.get_image_cache(title):
+                        self.remove_image_cache(title)
 
     def save_cache(self):
         logger.debug(
