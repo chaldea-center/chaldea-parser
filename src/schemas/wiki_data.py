@@ -177,6 +177,7 @@ class EventExtraFixedItems(BaseModel):
 class EventExtraScript(BaseModelTrim):
     huntingId: int | None = None
     raidLink: dict[Region, str] | None = None
+    commitRef: str | None = None
 
 
 class EventWBase(BaseModel):

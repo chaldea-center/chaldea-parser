@@ -696,8 +696,10 @@ class MainParser:
         if mapping_patch:
             _normal_dump(mapping_patch, "mappingPatch")
 
+        event_dict = dict(data.event_dict)
+        event_dict.pop(71543, None)  # 期間限定で攻撃威力アップ！
         _dump_by_ranges(
-            data.event_dict,
+            event_dict,
             ranges=[
                 range(80000, 80100),
                 range(80100, 80300),
