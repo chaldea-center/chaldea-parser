@@ -316,9 +316,8 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
             costume_jp.shortName,
             costume.shortName if costume else None,
         )
-        cos_w = mappings.costume_detail.setdefault(
-            costume_jp.costumeCollectionNo, MappingStr()
-        )
+        costume_id = costume_jp.costumeCollectionNo or costume_jp.battleCharaId
+        cos_w = mappings.costume_detail.setdefault(costume_id, MappingStr())
         cos_w.JP = costume_jp.detail
         if costume and costume.detail and costume.detail != costume_jp.detail:
             cos_w.update(region, costume.detail)
