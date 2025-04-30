@@ -713,7 +713,9 @@ class MainParser:
         _dump_by_ranges(
             data.war_dict,
             ranges=[
-                list(range(0, 2000)) + list(range(9999, 19000)),
+                list(range(0, 2000))
+                + list(range(40000, 41000))
+                + list(range(9999, 19000)),
                 range(8000, 9000),
                 range(9000, 9050),
                 range(9050, 9100),
