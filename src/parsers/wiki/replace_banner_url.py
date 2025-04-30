@@ -160,7 +160,7 @@ def try_get_jp_02(url: str) -> str:
     assert url.startswith("https://news.fate-go.jp/wp-content/uploads/"), url
     if not url.endswith("top_banner.png"):
         return url
-    for suffix in ("_02.png", "02.png"):
+    for suffix in ("_02.png", "02.png", "_2.png"):
         url2 = url.replace("top_banner.png", "top_banner" + suffix)
         resp = requests.head(url2)
         if resp.status_code == 200 and resp.headers.get("content-type") == "image/png":
