@@ -416,9 +416,15 @@ class MainParser:
                 NiceBuffType.comboEndFunction,
             }:
                 worker.add_default(buff, get_all_func_val(func, "Value"))
+        skillIds = set()
         for svt in master_data.nice_servant_lore:
             for skills in (svt.script.SkillRankUp or {}).values():
-                worker.add_default(None, skills)
+                skillIds.update(skills)
+            for skills in svt.ascensionAdd.overwriteClassPassive.ascension.values():
+                skillIds.update(skills)
+            for skills in svt.ascensionAdd.overwriteClassPassive.costume.values():
+                skillIds.update(skills)
+        worker.add_default(None, skillIds)
         # trigger in trigger or some weird trigger
         # 世界樹への生贄, マンドリカルド-間際の一撃, クロエx2
         worker.add_default(None, [966447, 970405, 970412, 970413])
