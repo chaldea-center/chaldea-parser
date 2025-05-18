@@ -163,7 +163,7 @@ def try_get_jp_02(url: str) -> str:
     for suffix in ("_02.png", "02.png", "_2.png"):
         url2 = url.replace("top_banner.png", "top_banner" + suffix)
         resp = requests.head(url2)
-        if resp.status_code == 200 and resp.headers.get("content-type") == "image/png":
+        if resp.ok and resp.headers.get("content-type") == "image/png":
             length = resp.headers.get("content-length")
             if length and int(length) > 0:
                 return url2

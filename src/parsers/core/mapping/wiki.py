@@ -163,7 +163,9 @@ def merge_atlas_na_mapping(mappings: MappingData):
         else:
             url = f"https://raw.githubusercontent.com/atlasacademy/fgo-game-data-api/master/app/data/mappings/{fn}"
             # url = f"https://cdn.jsdelivr.net/gh/atlasacademy/fgo-game-data-api/app/data/mappings/{fn}"
-            return requests.get(url).json()
+            resp = requests.get(url)
+            resp.raise_for_status()
+            return resp.json()
 
     for src_fn, dest in src_mapping:
         source: dict[str, str | None] = _read_json(src_fn)

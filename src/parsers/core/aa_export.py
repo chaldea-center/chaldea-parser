@@ -17,9 +17,9 @@ def update_exported_files(regions: list[Region], force_update: bool):
         regions = [r for r in Region]
 
     def _add_download_task(_url, _fp):
-        Path(_fp).write_bytes(
-            requests.get(_url, headers={"cache-control": "no-cache"}).content
-        )
+        resp = requests.get(_url, headers={"cache-control": "no-cache"})
+        resp.raise_for_status()
+        Path(_fp).write_bytes(resp.content)
         logger.info(f"{_fp}: update exported file from {_url}")
 
     fp_openapi = settings.atlas_export_dir / "openapi.json"
