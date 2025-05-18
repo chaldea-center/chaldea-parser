@@ -1,4 +1,5 @@
 import re
+import time
 from pathlib import Path
 
 import requests
@@ -169,6 +170,7 @@ def merge_atlas_na_mapping(mappings: MappingData):
 
     for src_fn, dest in src_mapping:
         source: dict[str, str | None] = _read_json(src_fn)
+        time.sleep(0.5)
         if not source:
             continue
         for key, trans in dest.items():
