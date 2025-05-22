@@ -426,8 +426,8 @@ class MainParser:
                 skillIds.update(skills)
         worker.add_default(None, skillIds)
         # trigger in trigger or some weird trigger
-        # 世界樹への生贄, マンドリカルド-間際の一撃, クロエx2
-        worker.add_default(None, [966447, 970405, 970412, 970413])
+        # 世界樹への生贄, マンドリカルド-間際の一撃, クロエx2, 冠位接続
+        worker.add_default(None, [966447, 970405, 970412, 970413, 994725])
         worker.add_default(
             None,
             [
