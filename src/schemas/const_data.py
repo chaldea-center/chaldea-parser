@@ -16,7 +16,7 @@ from .common import MstClass
 
 
 class ConstDataConfig(BaseModel):
-    autoLoginMinVerJp: str = "999.999.999"
+    autoLoginMinVerJp: str = "2.5.19"
     autoLoginMinVerNa: str = "2.5.5"
 
 
