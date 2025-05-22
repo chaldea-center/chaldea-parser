@@ -154,7 +154,7 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
 
     war_release = mappings.war_release.of(region) or []
     for war_jp in jp_data.nice_war:
-        if war_jp.id < 1000:
+        if war_jp.id < 1000 or war_jp.parentWarId == 8396:
             wiki_data.get_war(war_jp.id)
         _set_key(mappings.war_names, war_jp.name)
         _set_key(mappings.war_names, war_jp.longName)
