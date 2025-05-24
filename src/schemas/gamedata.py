@@ -17,6 +17,7 @@ from app.schemas.nice import (
     NiceEvent,
     NiceEventTower,
     NiceFunction,
+    NiceGrandGraph,
     NiceItem,
     NiceMasterMission,
     NiceMysticCode,
@@ -125,6 +126,7 @@ class MasterData(BaseModelORJson):
     nice_event: list[NiceEvent] = []
     nice_enemy_master: list[NiceEnemyMaster] = []
     nice_class_board: list[NiceClassBoard] = []
+    nice_grand_graph: list[NiceGrandGraph] = []
     nice_trait: dict[int, Trait] = {}
     NiceAttributeRelation: dict[Attribute, dict[Attribute, int]] = {}
     NiceBuffList_ActionList: dict[NiceBuffAction, BuffActionInfo] = {}

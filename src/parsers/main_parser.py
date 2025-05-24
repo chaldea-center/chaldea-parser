@@ -426,8 +426,10 @@ class MainParser:
                 skillIds.update(skills)
         worker.add_default(None, skillIds)
         # trigger in trigger or some weird trigger
-        # 世界樹への生贄, マンドリカルド-間際の一撃, クロエx2, 冠位接続
-        worker.add_default(None, [966447, 970405, 970412, 970413, 994725])
+        # 世界樹への生贄, マンドリカルド-間際の一撃, クロエx2
+        worker.add_default(None, [966447, 970405, 970412, 970413])
+        # grand board
+        worker.add_default(None, [994725, 5009002])
         worker.add_default(
             None,
             [
@@ -685,6 +687,7 @@ class MainParser:
         _normal_dump(data.exchangeTickets, "exchangeTickets")
         _normal_dump(data.nice_enemy_master, "enemyMasters")
         _normal_dump(data.nice_class_board, "classBoards")
+        _normal_dump(data.nice_grand_graph, "grandGraphs")
         _normal_dump(list(wiki_data.mms.values()), "masterMissions")
 
         logger.info("Updating mappings")
