@@ -353,7 +353,7 @@ def get_quest_phase_basic(
             giftId=quest_phase.giftId,
             gifts=(
                 []
-                if quest_phase.giftId in (0, 448)  # 482
+                if quest_phase.giftId in (0, 448, 482)  # 482
                 else (
                     AtlasApi.api_model(
                         f"/nice/JP/gift/{quest_phase.giftId}",

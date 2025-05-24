@@ -6,7 +6,7 @@ from ..schemas.common import Region
 from ..schemas.const_data import SvtAllowedExtraPassive, SvtLimitHide
 
 
-MIN_APP = "2.5.18"
+MIN_APP = "2.5.19"
 
 
 ADD_CES: dict[Region, dict[int, tuple[str | None,]]] = {
@@ -56,6 +56,8 @@ SVT_LIMIT_HIDES: dict[int, list[SvtLimitHide]] = {
                 940284, 940285, 940289, 940298, 940302, 940308,
                 #  終局特異点
                 960502, 960503, 960504, 960505, 960506, 960507,
+                # 夢火の導き Bond 15
+                970663,
                 # fmt:on
             ],
         )
