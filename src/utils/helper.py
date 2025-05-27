@@ -49,7 +49,7 @@ def iter_model(
     for key, value in model.__iter__():
         if value is None and exclude_none:
             continue
-        field_info = model.model_fields.get(key)
+        field_info = type(model).model_fields.get(key)
         if (
             field_info
             and exclude_defaults
@@ -262,19 +262,26 @@ def catch_exception(func):
     return catch_exception_wrapper
 
 
-def retry_decorator(retry_times=5, lapse=3):
+def retry_decorator(
+    retry_times=3,
+    lapse=0,
+    backoff=1,
+    exception=Exception,
+):
     def decorator(func):
         def wrapper(*args, **kwargs):
-            nonlocal retry_times
-            while retry_times > 0:
+            mtries, mdelay = retry_times, lapse
+            while mtries > 1:
                 try:
                     return func(*args, **kwargs)
-                except Exception as e:
-                    logger.error(f"retry_times: {retry_times}, error: {e}")
-                    retry_times -= 1
-                    if retry_times <= 0:
-                        raise
-                    time.sleep(lapse)
+                except exception as e:
+                    logger.error(
+                        f"Retry {retry_times - mtries + 1}/{retry_times} failed: {e!r}, retrying in {mdelay} seconds..."
+                    )
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return func(*args, **kwargs)
 
         return wrapper
 
