@@ -11,8 +11,8 @@ def get_time():
 
 
 class DownUrl:
-    @retry_decorator(3, 5)
     @classmethod
+    @retry_decorator(3, 5)
     def download(cls, url: str):
         resp = requests.get(url, headers={"cache-control": "no-cache"})
         resp.raise_for_status()
