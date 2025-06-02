@@ -15,12 +15,13 @@ from app.schemas.gameenums import (
     NiceQuestFlag,
     NiceQuestType,
 )
-from app.schemas.nice import NiceItem, NiceQuest, NiceQuestPhase, NiceWar
+from app.schemas.nice import NiceItem, NiceQuest, NiceQuestPhase, NiceSpot, NiceWar
 from app.schemas.raw import MstQuestPhase
 
 from src.config import settings
 from src.parsers.core.aa_export import update_exported_files
 from src.parsers.domus_aurea_data import FIX_SPOT_QUEST_MAPPING, ITEM_NAME_MAPPING
+from src.schemas.common import NEVER_CLOSED_TIMESTAMP
 from src.schemas.drop_data import DomusAureaData, DropRateSheet
 from src.utils import logger
 from src.utils.helper import (
@@ -33,6 +34,7 @@ from src.utils.url import DownUrl
 
 
 LOCAL_MODE = False
+GRAND_BOARD_WAR_ID = 8395
 
 
 class DOMUS_URLS:
@@ -74,15 +76,11 @@ def get_master_data():
 
     for war in wars:
         if war.id != 1002 and war.id >= 1000:
-            continue
+            if war.parentWarId != GRAND_BOARD_WAR_ID:
+                continue
         for spot in war.spots:
             for quest in spot.quests:
-                if (
-                    quest.type == NiceQuestType.free
-                    and quest.afterClear == NiceQuestAfterClearType.repeatLast
-                    and NiceQuestFlag.dropFirstTimeOnly not in quest.flags
-                    and NiceQuestFlag.forceToNoDrop not in quest.flags
-                ) or quest.id in extra_quest_ids:
+                if is_valid_free_quest(quest) or quest.id in extra_quest_ids:
                     valid_quests[quest.id] = quest
 
     for quest_id in extra_quest_ids:
@@ -239,36 +237,57 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
     return sheet
 
 
+def is_valid_free_quest(quest: NiceQuest) -> bool:
+    if (
+        quest.afterClear != NiceQuestAfterClearType.repeatLast
+        or NiceQuestFlag.dropFirstTimeOnly in quest.flags
+        or NiceQuestFlag.forceToNoDrop in quest.flags
+    ):
+        return False
+    if (
+        quest.closedAt < NEVER_CLOSED_TIMESTAMP
+        and quest.closedAt - quest.openedAt < 365 * 24 * 3600
+    ):
+        return False
+    if quest.warId >= GRAND_BOARD_WAR_ID and quest.warId < GRAND_BOARD_WAR_ID + 10:
+        if quest.type not in (NiceQuestType.free, NiceQuestType.event):
+            return False
+    elif quest.type != NiceQuestType.free:
+        return False
+    return True
+
+
 def get_quest_id(mst_data: _MasterData, war_name: str, spot_name: str) -> int | None:
     if not war_name or spot_name == "クエスト名":
         return
+
+    spots: list[NiceSpot] = []
     match_wars = [
         war
         for war in mst_data.wars.values()
         if war.id < 1000 and war_name in war.longName
     ]
     if war_name.startswith("修練場"):
-        war = mst_data.wars[1002]
+        spots = mst_data.wars[1002].spots
     elif len(match_wars) == 1:
-        war = match_wars[0]
-    else:
-        print(f'"{war_name}"-"{spot_name}": no war found')
+        spots = match_wars[0].spots
+    elif war_name == "冠位研鑽戦":
+        for war in mst_data.wars.values():
+            if war.parentWarId == GRAND_BOARD_WAR_ID:
+                spots.extend(war.spots)
+
+    if not spots:
+        print(f'"{war_name}"-"{spot_name}": no war spots found')
         return None
     if spot_name in FIX_SPOT_QUEST_MAPPING:
         return FIX_SPOT_QUEST_MAPPING[spot_name]
 
     _fix_spot_quest_ids = list(FIX_SPOT_QUEST_MAPPING.values())
-    for spot in war.spots:
+    for spot in spots:
         frees = [
             quest
             for quest in spot.quests
-            if (
-                quest.type == NiceQuestType.free
-                and quest.afterClear == NiceQuestAfterClearType.repeatLast
-                and NiceQuestFlag.dropFirstTimeOnly not in quest.flags
-                and NiceQuestFlag.forceToNoDrop not in quest.flags
-            )
-            or quest.id in _fix_spot_quest_ids
+            if is_valid_free_quest(quest) or quest.id in _fix_spot_quest_ids
         ]
         if not frees:
             continue
@@ -277,10 +296,17 @@ def get_quest_id(mst_data: _MasterData, war_name: str, spot_name: str) -> int | 
         for quest in frees:
             if spot_name == quest.name or spot_name == f"{spot.name}（{quest.name}）":
                 return quest.id
+            war = mst_data.wars[quest.warId]
+            if (
+                war.parentWarId == GRAND_BOARD_WAR_ID
+                and war_name + spot_name == quest.name
+            ):
+                return quest.id
     print(f'"{war_name}"-"{spot_name}": no quest found')
 
 
 def run_drop_rate_update():
+    print("parsing domus data...")
     mst_data = get_master_data()
     fp = settings.output_wiki / "domusAurea.json"
     if fp.exists():
