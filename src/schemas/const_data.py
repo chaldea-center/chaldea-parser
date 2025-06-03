@@ -117,4 +117,5 @@ class ConstGameData(BaseModel):
     freeExchangeSvtEvents: list[int]
     destinyOrderSummons: list[str]
     svtFaceLimits: dict[int, list[int]]
+    extraWarEventMapping: dict[int, int]
     config: ConstDataConfig

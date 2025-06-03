@@ -273,6 +273,17 @@ GUARANTEED_RARE_COPY_ENEMY_WARS = [
     9166,  # 魔法使いの夜
 ]
 
+EXTRA_WAR_EVENT_MAPPING: dict[int, int] = {
+    108: 80038,
+    201: 80044,
+    202: 80059,
+    203: 80072,
+    204: 80077,
+    311: 80421,
+    404: 80491,
+    8396: 80543,
+}
+
 
 SVT_FACE_LIMITS: dict[int, list[int]] = {
     9935510: [1],  # ゲーティア

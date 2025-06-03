@@ -18,6 +18,7 @@ from ...schemas.data import (
     DESTINY_ORDER_SUMMONS,
     EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP,
     EXCLUDE_REWARD_QUESTS,
+    EXTRA_WAR_EVENT_MAPPING,
     FREE_EXCHANGE_SVT_EVENTS,
     LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
     RANDOM_ENEMY_QUESTS,
@@ -95,6 +96,7 @@ def get_const_data(data: MasterData):
         freeExchangeSvtEvents=FREE_EXCHANGE_SVT_EVENTS,
         svtFaceLimits=SVT_FACE_LIMITS,
         destinyOrderSummons=DESTINY_ORDER_SUMMONS,
+        extraWarEventMapping=EXTRA_WAR_EVENT_MAPPING,
         config=ConstDataConfig(),
     )
 
