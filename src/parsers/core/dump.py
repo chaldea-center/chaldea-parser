@@ -1,7 +1,7 @@
 from typing import Any
 
 from app.schemas.common import NiceTrait
-from app.schemas.gameenums import NiceCondType
+from app.schemas.gameenums import NiceCondType, NicePurchaseType
 from app.schemas.nice import (
     AscensionAdd,
     BasicServant,
@@ -327,23 +327,9 @@ class DataEncoder:
             self._save_basic_svt(excludes, obj)
         elif isinstance(obj, NiceServant):
             self._trim_nice_svt(obj)
-        elif isinstance(obj, NiceEventTradeGoods):
-            if not obj.eventPointItem:
-                obj.eventPointItem = NiceItem.model_validate(
-                    {
-                        "id": 5,
-                        "name": "",
-                        "originalName": "",
-                        "type": "qp",
-                        "detail": "",
-                        "icon": "https://static.atlasacademy.io/JP/Items/0.png",
-                        "background": "zero",
-                        "priority": 0,
-                        "dropPriority": 0,
-                        "startedAt": 0,
-                        "endedAt": 0,
-                    }
-                )
+        elif isinstance(obj, NiceShop):
+            if obj.purchaseType == NicePurchaseType.partsSkill:
+                excludes.discard("detail")
 
         if isinstance(obj, BaseModel):
             if isinstance(obj, NiceFunction):
