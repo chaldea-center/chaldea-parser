@@ -247,6 +247,10 @@ EXCLUDE_REWARD_QUESTS = [
     94086970,  # 【聖杯戦線 ～白天の城、黒夜の城～】night main story
 ]
 
+# Grand Graph
+SAME_QUEST_REMAP: dict[int, int] = {94145401 + i: 94145431 + i for i in range(7)} | {}
+
+
 FREE_EXCHANGE_SVT_EVENTS = [
     80450,  # 109, 3000日突破記念
     80374,  # 68, 2500万DL突破纪念活动

@@ -22,6 +22,7 @@ from ...schemas.data import (
     FREE_EXCHANGE_SVT_EVENTS,
     LAPLACE_UPLOAD_ALLOW_AI_QUESTS,
     RANDOM_ENEMY_QUESTS,
+    SAME_QUEST_REMAP,
     SVT_ALLOWED_EXTRA_PASSIVES,
     SVT_FACE_LIMITS,
     SVT_LIMIT_HIDES,
@@ -97,6 +98,7 @@ def get_const_data(data: MasterData):
         svtFaceLimits=SVT_FACE_LIMITS,
         destinyOrderSummons=DESTINY_ORDER_SUMMONS,
         extraWarEventMapping=EXTRA_WAR_EVENT_MAPPING,
+        sameQuestRemap=SAME_QUEST_REMAP,
         config=ConstDataConfig(),
     )
 

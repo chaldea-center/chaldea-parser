@@ -118,4 +118,5 @@ class ConstGameData(BaseModel):
     destinyOrderSummons: list[str]
     svtFaceLimits: dict[int, list[int]]
     extraWarEventMapping: dict[int, int]
+    sameQuestRemap: dict[int, int]
     config: ConstDataConfig
