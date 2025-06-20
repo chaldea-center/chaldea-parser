@@ -222,6 +222,10 @@ CN_REPLACE = {
 }
 
 
+# Grand Graph
+SAME_QUEST_REMAP: dict[int, int] = {94145401 + i: 94145431 + i for i in range(7)} | {}
+
+
 EXCLUDE_REWARD_QUESTS = [
     1000825,  # 终局特异点 section 12
     3000540,  # Atlantis section 18
@@ -245,10 +249,7 @@ EXCLUDE_REWARD_QUESTS = [
     94086966,
     94086969,
     94086970,  # 【聖杯戦線 ～白天の城、黒夜の城～】night main story
-]
-
-# Grand Graph
-SAME_QUEST_REMAP: dict[int, int] = {94145401 + i: 94145431 + i for i in range(7)} | {}
+] + list(SAME_QUEST_REMAP.values())
 
 
 FREE_EXCHANGE_SVT_EVENTS = [
