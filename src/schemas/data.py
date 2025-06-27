@@ -223,8 +223,11 @@ CN_REPLACE = {
 
 
 # Grand Graph
-SAME_QUEST_REMAP: dict[int, int] = {94145401 + i: 94145431 + i for i in range(7)} | {}
-
+SAME_QUEST_REMAP: dict[int, int] = (
+    {94145401 + i: 94145431 + i for i in range(7)}  # Grand Saber
+    | {94146501 + i: 94146531 + i for i in range(7)}  # Grand Berserker
+    | {}
+)
 
 EXCLUDE_REWARD_QUESTS = [
     1000825,  # 终局特异点 section 12
