@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 import requests
 import wikitextparser
 from app.schemas.gameenums import NiceEventType
-from app.schemas.nice import NiceEvent, NiceLoreComment, NiceServant
+from app.schemas.nice import NiceEquip, NiceEvent, NiceLoreComment, NiceServant
 
 from ..config import PayloadSetting, settings
 from ..schemas.common import (
@@ -67,6 +67,7 @@ class _WikiTemp:
         self.region = region
         self.invalid_links: list[str] = []
         self.released_svts: dict[int, NiceServant] = {}
+        self.released_ces: dict[int, NiceEquip] = {}
         self.events: dict[int, NiceEvent] = {}
 
     def init(self):
@@ -80,6 +81,12 @@ class _WikiTemp:
             f"{settings.atlas_export_dir}/{self.region}/nice_servant_lore.json",
         )
         self.released_svts = {e.collectionNo: e for e in servants}
+
+        ces = parse_json_file_as(
+            list[NiceEquip],
+            f"{settings.atlas_export_dir}/{self.region}/nice_equip_lore.json",
+        )
+        self.released_ces = {e.collectionNo: e for e in ces}
 
     def _load_events(self):
         events = parse_json_file_as(
@@ -728,9 +735,18 @@ class WikiParser:
                     ...
                 else:
                     for name_jp, name_cn in self.mc_transl.ce_names.items():
-                        if name_cn == chara or name_jp.replace("・", "·") == chara:
+                        if (
+                            name_cn == chara
+                            or name_jp == chara
+                            or name_jp.replace("・", "·") == chara.replace("・", "·")
+                        ):
                             card_id = _get_id(name_jp)
                             break
+                    if not card_id:
+                        for ce in self._jp.released_ces.values():
+                            if ce.name == chara:
+                                card_id = ce.collectionNo
+                                break
             if card_id:
                 cache[chara] = card_id
                 known.append(card_id)
