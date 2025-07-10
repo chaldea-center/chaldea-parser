@@ -189,12 +189,6 @@ EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP = {
     },
 }
 
-# Update api worker too
-LAPLACE_UPLOAD_ALLOW_AI_QUESTS: list[int] = [
-    *range(94065101, 94065129 + 1),  # Tunguska
-    *range(94090301, 94090330 + 1),  # Gudaguda2023
-]
-
 
 DESTINY_ORDER_SUMMONS = ["2023_8th_destiny", "50021851", "2024_9th_destiny"]
 
@@ -229,6 +223,12 @@ SAME_QUEST_REMAP: dict[int, int] = (
     | {94146501 + i: 94146531 + i for i in range(7)}  # Grand Berserker
     | {}
 )
+
+# Update api worker too
+LAPLACE_UPLOAD_ALLOW_AI_QUESTS: list[int] = [
+    *range(94065101, 94065129 + 1),  # Tunguska
+    *range(94090301, 94090330 + 1),  # Gudaguda2023
+] + list(SAME_QUEST_REMAP.keys()) + list(SAME_QUEST_REMAP.values())
 
 EXCLUDE_REWARD_QUESTS = [
     1000825,  # 终局特异点 section 12
