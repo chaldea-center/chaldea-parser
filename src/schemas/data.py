@@ -221,7 +221,7 @@ CN_REPLACE = {
 SAME_QUEST_REMAP: dict[int, int] = (
     {94145401 + i: 94145431 + i for i in range(7)}  # Grand Saber
     | {94146501 + i: 94146531 + i for i in range(7)}  # Grand Berserker
-    | {}
+    | {94146801 + i: 94146831 + i for i in range(7)}  # Grand Lancer
 )
 
 # Update api worker too
