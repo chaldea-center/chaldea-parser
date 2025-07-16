@@ -930,7 +930,7 @@ class MainParser:
     def _post_mappings(self):
         mappings = self.jp_data.mappingData
         for key in mappings.war_names.keys():
-            name = mappings.event_names.get(key, None)
+            name = mappings.event_names.pop(key, None)
             if name:
                 name.update_from(mappings.war_names[key])
                 mappings.war_names[key].update_from(name)
