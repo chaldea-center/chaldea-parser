@@ -1086,7 +1086,7 @@ class MainParser:
         cn_top = cn_top["response"][0]["success"]
         cn_config = requests.get("https://static.biligame.com/config/fgo.config.js")
         data["CN"] |= {
-            "appVer": re.findall(r"FateGO_(\d+\.\d+\.\d+)_", cn_config.text)[0],
+            "appVer": re.findall(r"_([1-3]\.\d+\.\d+)_[^\"]+\.apk", cn_config.text)[0],
             "verCode": "",
             "dataVer": cn_top["version"],
             "dateVer": 0,
