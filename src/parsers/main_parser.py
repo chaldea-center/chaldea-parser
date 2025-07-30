@@ -11,7 +11,7 @@ import orjson
 import pytz
 import requests
 from app.schemas.basic import BasicCommandCode, BasicEquip
-from app.schemas.common import Region, Trait
+from app.schemas.common import Region, RegionInfo, Trait
 from app.schemas.enums import OLD_TRAIT_MAPPING, SvtClass, get_class_name
 from app.schemas.gameenums import EventType, NiceCardType, NiceItemType, SvtType
 from app.schemas.nice import NiceBaseFunction, NiceBuff, NiceBuffType
@@ -506,7 +506,7 @@ class MainParser:
             quest = self.jp_data.quest_dict.get(phase.questId)
             if not quest or quest.warId == 9999:
                 continue
-            for indiv in phase.individuality:
+            for indiv in phase.individuality or []:
                 if indiv >= 94000000:
                     fields[indiv].add(quest.warId)
         ids = sorted(fields.keys())
@@ -1061,6 +1061,17 @@ class MainParser:
                 "unityVer": "2022.3.18f1",
             },
         }
+
+        for region in data.keys():
+            region_info = AtlasApi.api_model(f"/raw/{region}/info", RegionInfo)
+            assert region_info
+            data[region] |= {
+                "hash": region_info.hash,
+                "timestamp": region_info.timestamp,
+                "serverHash": region_info.serverHash,
+                "serverTimestamp": region_info.serverTimestamp,
+            }
+
         for region in ["JP", "NA"]:
             top = DownUrl.gitaa("gamedatatop", Region(region), "")
             top = top["response"][0]["success"]

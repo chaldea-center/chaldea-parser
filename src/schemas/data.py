@@ -226,10 +226,14 @@ SAME_QUEST_REMAP: dict[int, int] = (
 )
 
 # Update api worker too
-LAPLACE_UPLOAD_ALLOW_AI_QUESTS: list[int] = [
-    *range(94065101, 94065129 + 1),  # Tunguska
-    *range(94090301, 94090330 + 1),  # Gudaguda2023
-] + list(SAME_QUEST_REMAP.keys()) + list(SAME_QUEST_REMAP.values())
+LAPLACE_UPLOAD_ALLOW_AI_QUESTS: list[int] = (
+    [
+        *range(94065101, 94065129 + 1),  # Tunguska
+        *range(94090301, 94090330 + 1),  # Gudaguda2023
+    ]
+    + list(SAME_QUEST_REMAP.keys())
+    + list(SAME_QUEST_REMAP.values())
+)
 
 EXCLUDE_REWARD_QUESTS = [
     1000825,  # 终局特异点 section 12
