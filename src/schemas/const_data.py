@@ -116,6 +116,7 @@ class ConstGameData(BaseModel):
     randomEnemyQuests: list[int]
     freeExchangeSvtEvents: list[int]
     destinyOrderSummons: list[str]
+    destinyOrderClasses: dict[str, list[int]]
     svtFaceLimits: dict[int, list[int]]
     extraWarEventMapping: dict[int, int]
     sameQuestRemap: dict[int, int]

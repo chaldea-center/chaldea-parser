@@ -134,6 +134,16 @@ SVT_LIMIT_HIDES: dict[int, list[SvtLimitHide]] = {
             tds=[106099],
         )
     ],
+    4000100: [
+        SvtLimitHide(
+            limits=[0, 1, 2],
+            activeSkills={1: [2512650], 2: [2513450], 3: [2514650]},
+        ),
+        SvtLimitHide(
+            limits=[3, 4],
+            activeSkills={1: [2516650], 2: [2517450], 3: [2518650]},
+        ),
+    ],
 }
 
 SVT_ALLOWED_EXTRA_PASSIVES = [
@@ -191,7 +201,23 @@ EVENT_POINT_BUFF_GROUP_SKILL_NUM_MAP = {
 }
 
 
-DESTINY_ORDER_SUMMONS = ["2023_8th_destiny", "50021851", "2024_9th_destiny"]
+DESTINY_ORDER_SUMMONS = [
+    "2023_8th_destiny",
+    "50021851",
+    "2024_9th_destiny",
+    "2025_10th_destiny_1",
+    "2025_10th_destiny_2",
+]
+DESTINY_ORDER_CLASSES: dict[str, list[int]] = {
+    "2023_8th_destiny": [1, 2, 3, 4, 5, 6, 7, 1004, 1005],
+    "50021851": [1, 2, 3, 4, 5, 6, 7, 1004, 1005],
+    "2024_9th_destiny": [1, 2, 3, 4, 5, 6, 7, 1004, 1005],
+    "50024111": [1, 2, 3, 4, 5, 6, 7, 1004, 1005],
+    "2025_10th_destiny_1": [1, 2, 3, 4, 5, 6, 7],
+    "50029381": [1, 2, 3, 4, 5, 6, 7],
+    "2025_10th_destiny_2": [9, 11, 10, 23, 25, 28, 33],
+    "50029391": [9, 11, 10, 23, 25, 28, 33],
+}
 
 CN_REPLACE = {
     "西行者": "玄奘三藏",
