@@ -245,11 +245,18 @@ CN_REPLACE = {
 
 
 # Grand Graph
-SAME_QUEST_REMAP: dict[int, int] = (
+_GRAND_DUEL_QUEST_REMAP: dict[int, int] = (
     {94145401 + i: 94145431 + i for i in range(7)}  # Grand Saber
     | {94146501 + i: 94146531 + i for i in range(7)}  # Grand Berserker
     | {94146801 + i: 94146831 + i for i in range(7)}  # Grand Lancer
+    | {94148901 + i: 94148931 + i for i in range(7)}  # Grand Extra I 火
+    | {94148911 + i: 94148941 + i for i in range(7)}  # Grand Extra I 地
+    | {94149001 + i: 94149031 + i for i in range(7)}  # Grand Extra II 星
+    | {94149011 + i: 94149041 + i for i in range(7)}  # Grand Extra II 水
 )
+
+
+SAME_QUEST_REMAP: dict[int, int] = _GRAND_DUEL_QUEST_REMAP | {}
 
 # Update api worker too
 LAPLACE_UPLOAD_ALLOW_AI_QUESTS: list[int] = (
@@ -257,34 +264,39 @@ LAPLACE_UPLOAD_ALLOW_AI_QUESTS: list[int] = (
         *range(94065101, 94065129 + 1),  # Tunguska
         *range(94090301, 94090330 + 1),  # Gudaguda2023
     ]
-    + list(SAME_QUEST_REMAP.keys())
-    + list(SAME_QUEST_REMAP.values())
+    + list(_GRAND_DUEL_QUEST_REMAP.keys())
+    + list(_GRAND_DUEL_QUEST_REMAP.values())
 )
 
-EXCLUDE_REWARD_QUESTS = [
-    1000825,  # 终局特异点 section 12
-    3000540,  # Atlantis section 18
-    94040905,  # Battle In NewYork 2019
-    94067707,  # Battle In NewYork 2022 > 2019 rerun story
-    94077706,  # カルデア妖精騎士杯
-    94087053,
-    94087054,
-    94087055,
-    94087056,
-    94087057,
-    94087058,
-    94087059,  # 【聖杯戦線 ～白天の城、黒夜の城～】night war bard
-    94086956,
-    94086957,
-    94086959,
-    94086960,
-    94086961,
-    94086964,
-    94086965,
-    94086966,
-    94086969,
-    94086970,  # 【聖杯戦線 ～白天の城、黒夜の城～】night main story
-] + list(SAME_QUEST_REMAP.values())
+EXCLUDE_REWARD_QUESTS = (
+    [
+        1000825,  # 终局特异点 section 12
+        3000540,  # Atlantis section 18
+        94040905,  # Battle In NewYork 2019
+        94067707,  # Battle In NewYork 2022 > 2019 rerun story
+        94077706,  # カルデア妖精騎士杯
+        94087053,
+        94087054,
+        94087055,
+        94087056,
+        94087057,
+        94087058,
+        94087059,  # 【聖杯戦線 ～白天の城、黒夜の城～】night war bard
+        94086956,
+        94086957,
+        94086959,
+        94086960,
+        94086961,
+        94086964,
+        94086965,
+        94086966,
+        94086969,
+        94086970,  # 【聖杯戦線 ～白天の城、黒夜の城～】night main story
+    ]
+    + list(SAME_QUEST_REMAP.values())
+    + list(range(94148911, 94148911 + 8))  # Grand Extra I 火&地 share
+    + list(range(94149011, 94149011 + 8))  # Grand Extra II 星&水 share
+)
 
 
 FREE_EXCHANGE_SVT_EVENTS = [
@@ -324,6 +336,9 @@ EXTRA_WAR_EVENT_MAPPING: dict[int, int] = {
     8396: 80543,
     8398: 80551,
     8399: 80555,
+    8401: 80571,
+    8402: 80571,
+    8403: 80571,
 }
 
 
