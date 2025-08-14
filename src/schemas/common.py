@@ -337,6 +337,7 @@ class MstGacha(BaseModel):
     imageId: int = 0
     priority: int = 0
     type: int = 1
+    freeDrawFlag: int = 0
     openedAt: int
     closedAt: int
     detailUrl: str = ""
