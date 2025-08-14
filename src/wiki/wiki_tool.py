@@ -458,12 +458,17 @@ class WikiTool:
         edit_days: float | None = None,
         move_days: float | None = None,
         delete_days: float | None = None,
+        clear_pages: list[str] | None = None,
     ):
         all_updated = True
         _now = int(time.time())
         if edit_days == -101:
             self.cache.images.clear()
             edit_days = None
+        if clear_pages:
+            for page in clear_pages:
+                self.remove_page_cache(page)
+                self.remove_image_cache(page)
         if not edit_days or edit_days > 0:
             self.remove_recent_changed(edit_days)
         else:

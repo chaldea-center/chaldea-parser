@@ -103,6 +103,8 @@ class PayloadSetting(BaseSettings):
     mc_extra_svt: dict[int, str] = {}
     mc_extra_ce: dict[int, str] = {}
     extra: dict = {}
+    mc_pages_to_clear: list[str] = []
+    fandom_pages_to_clear: list[str] = []
 
     model_config = SettingsConfigDict(
         json_file="payload.json", json_file_encoding="utf-8", extra="allow"

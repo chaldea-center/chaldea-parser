@@ -137,6 +137,7 @@ class WikiParser:
                 payload.clear_wiki_changed,
                 payload.clear_wiki_moved,
                 payload.clear_wiki_deleted,
+                payload.mc_pages_to_clear,
             )
 
         if payload.clear_cache_wiki or payload.clear_cache_mc:
@@ -147,6 +148,7 @@ class WikiParser:
                 payload.clear_wiki_changed,
                 payload.clear_wiki_moved,
                 payload.clear_wiki_deleted,
+                payload.fandom_pages_to_clear,
             )
 
         self.init_wiki_data()
