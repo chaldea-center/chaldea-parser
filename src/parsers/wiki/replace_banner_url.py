@@ -134,7 +134,8 @@ def parse_na_top_banner(url: str):
 
 def parse_cn_top_banner(notice_id: str):
     if not notice_id.isdigit():
-        notice_id = re.findall(r"[^\d]\d+$", notice_id)[-1][1:]
+        return None
+        # notice_id = re.findall(r"[^\d]\d+$", notice_id)[-1][1:]
     response = api.call_api(f"https://api.biligame.com/news/{notice_id}.action").json()
     if response.get("code") == -400:
         logger.warning(f"https://api.biligame.com/news/{notice_id}.action", response)
