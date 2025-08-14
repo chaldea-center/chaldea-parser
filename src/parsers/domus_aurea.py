@@ -132,6 +132,8 @@ def _add_quest_to_table(
     resp = requests.get(
         f"https://api.atlasacademy.io/nice/JP/quest/{quest.id}/{quest.phases[-1]}"
     )
+    if not resp.ok:
+        print(resp.status_code, resp.text, resp.headers)
     quest_phase = parse_json_obj_as(NiceQuestPhase, resp.json())
     if not quest_phase.drops:
         raise Exception(f"Quest {quest.id} has no drop data")
@@ -206,6 +208,7 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
         94137202,
     ]:
         _add_quest_to_table(table, mst_data.quests[add_quest_id], item_id_col_map)
+        time.sleep(2)
 
     # <questId, row>
     quest_id_row_map: dict[int, int] = {}
@@ -297,11 +300,10 @@ def get_quest_id(mst_data: _MasterData, war_name: str, spot_name: str) -> int | 
             if spot_name == quest.name or spot_name == f"{spot.name}（{quest.name}）":
                 return quest.id
             war = mst_data.wars[quest.warId]
-            if (
-                war.parentWarId == GRAND_BOARD_WAR_ID
-                and war_name + spot_name == quest.name
-            ):
-                return quest.id
+            if war.parentWarId == GRAND_BOARD_WAR_ID:
+                quest_name = (war_name + spot_name).replace(" ", "")
+                if quest_name == quest.name.replace(" ", ""):
+                    return quest.id
     print(f'"{war_name}"-"{spot_name}": no quest found')
 
 

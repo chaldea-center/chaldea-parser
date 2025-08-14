@@ -355,6 +355,10 @@ class MainParser:
                 self._add_trigger(master_data, skill_id, is_td)
 
         worker = Worker(f"base_skill_{region}", _add_trigger_skill)
+        for skill in master_data.skill_list_no_cache():
+            for branch in skill.script.condBranchSkillInfo or []:
+                self._add_trigger(master_data, branch.skillId)
+
         for func in master_data.func_list_no_cache():
             if func.svals and func.svals[0].DependFuncId:
                 func_id = func.svals[0].DependFuncId
