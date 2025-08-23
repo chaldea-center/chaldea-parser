@@ -205,6 +205,8 @@ class HttpApiUtil(abc.ABC):
 
         return _parse_model(response, True)
 
+    @sleep_and_retry
+    @limits(calls=60, period=150)
     def quest_phase(
         self,
         quest_id: int,
