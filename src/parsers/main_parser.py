@@ -304,6 +304,14 @@ class MainParser:
 
         if region == Region.NA:
             self.jp_data.all_quests_na = master_data.quest_dict
+        if region == Region.KR:
+            # fha remastered CE
+            for ce in master_data.nice_equip_lore:
+                if ce.id == 9310570 and ce.collectionNo == 24050:
+                    ce.collectionNo = 2405
+            for ce in master_data.basic_svt:
+                if ce.id == 9310570 and ce.collectionNo == 24050:
+                    ce.collectionNo = 2405
         for svt in master_data.nice_servant_lore:
             master_data.remainedQuestIds.update(svt.relateQuestIds)
             master_data.remainedQuestIds.update(svt.trialQuestIds)
