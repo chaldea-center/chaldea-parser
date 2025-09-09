@@ -253,6 +253,7 @@ _GRAND_DUEL_QUEST_REMAP: dict[int, int] = (
     | {94148911 + i: 94148941 + i for i in range(7)}  # Grand Extra I 地
     | {94149001 + i: 94149031 + i for i in range(7)}  # Grand Extra II 星
     | {94149011 + i: 94149041 + i for i in range(7)}  # Grand Extra II 水
+    | {94149801 + i: 94149831 + i for i in range(7)}  # Grand Rider
 )
 
 
@@ -266,6 +267,7 @@ LAPLACE_UPLOAD_ALLOW_AI_QUESTS: list[int] = (
     ]
     + list(_GRAND_DUEL_QUEST_REMAP.keys())
     + list(_GRAND_DUEL_QUEST_REMAP.values())
+    + list(range(94148302, 94148306 + 1))  # Noah's ark raid
 )
 
 EXCLUDE_REWARD_QUESTS = (
