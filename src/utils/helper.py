@@ -14,7 +14,7 @@ from typing import Any, Callable, Generic, Iterable, Sequence, Type, TypeVar
 import orjson
 import pydantic_core
 from app.schemas.common import Region
-from lxml import etree
+from lxml import etree  # type: ignore
 from pydantic import BaseModel, TypeAdapter
 from pydantic.main import TupleGenerator
 

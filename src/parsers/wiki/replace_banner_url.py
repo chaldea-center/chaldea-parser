@@ -5,7 +5,7 @@ from typing import Any, Callable
 from urllib.parse import urljoin
 
 import requests
-from lxml import etree
+from lxml import etree  # type: ignore
 
 from ...config import settings
 from ...schemas.wiki_data import EventWBase, LimitedSummonBase, WarW

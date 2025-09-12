@@ -138,6 +138,8 @@ def get_constant_str():
         "EXTEND_TURN_BUFF_TYPE",
         "NOT_REDUCE_COUNT_WITH_NO_DAMAGE_BUFF",
         "STAR_REFRESH_BUFF_TYPE",
+        # FUNC
+        "FUNCTION_TYPE_NOT_NP_DAMAGE",
         # OTHERS
         "PLAYABLE_BEAST_CLASS_IDS",
         "ENABLE_OVERWRITE_CLASS_IDS",

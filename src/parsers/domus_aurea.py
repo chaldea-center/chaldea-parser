@@ -226,8 +226,11 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
         ap = mst_data.quests[quest_id].consume
         bond = mst_data.questPhases[quest_id].friendshipExp
         exp = mst_data.questPhases[quest_id].playerExp
-        run = int(table[row][RUN_COL].replace(",", ""))
-        sheet.add_quest(quest_id, ap=ap, run=run, bond=bond, exp=exp)
+        run_str = table[row][RUN_COL].replace(",", "").strip()
+        if run_str == "" or run_str == "0":
+            print("skip 0 run quest:", quest_id, mst_data.quests[quest_id].name)
+            continue
+        sheet.add_quest(quest_id, ap=ap, run=int(run_str), bond=bond, exp=exp)
 
     for x, item_id in enumerate(item_id_col_map.keys()):
         col = item_id_col_map[item_id]
@@ -252,7 +255,7 @@ def is_valid_free_quest(quest: NiceQuest) -> bool:
         and quest.closedAt - quest.openedAt < 365 * 24 * 3600
     ):
         return False
-    if quest.warId >= GRAND_BOARD_WAR_ID and quest.warId < GRAND_BOARD_WAR_ID + 10:
+    if quest.name.startswith("冠位研鑽戦"):
         if quest.type not in (NiceQuestType.free, NiceQuestType.event):
             return False
     elif quest.type != NiceQuestType.free:

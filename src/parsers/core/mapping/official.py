@@ -404,6 +404,8 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
             )
             for btn_index, btn_jp in enumerate(add_jp.btn):
                 btn = add.btn[btn_index] if add and btn_index < len(add.btn) else None
+                if not btn_jp.name:
+                    continue
                 _update_mapping(
                     select_add_mappings, btn_jp.name, btn.name if btn else None
                 )
