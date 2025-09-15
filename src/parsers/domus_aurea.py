@@ -232,9 +232,9 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
             continue
         sheet.add_quest(quest_id, ap=ap, run=int(run_str), bond=bond, exp=exp)
 
-    for x, item_id in enumerate(item_id_col_map.keys()):
+    for x, item_id in enumerate(sheet.itemIds):
         col = item_id_col_map[item_id]
-        for y, quest_id in enumerate(quest_id_row_map.keys()):
+        for y, quest_id in enumerate(sheet.questIds):
             row = quest_id_row_map[quest_id]
             cell = table[row][col].strip()
             if not cell:
