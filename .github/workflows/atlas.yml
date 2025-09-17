@@ -3,6 +3,9 @@ on:
   workflow_dispatch:
   repository_dispatch:
 
+concurrency:
+  group: "chaldea-parser"
+
 jobs:
   atlas:
     runs-on: ubuntu-latest

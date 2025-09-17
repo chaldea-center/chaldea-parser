@@ -7,6 +7,9 @@ on:
   schedule:
     - cron: "15 12 * * 1,3,5"
 
+concurrency:
+  group: "chaldea-parser"
+
 jobs:
   wiki:
     runs-on: ubuntu-latest
