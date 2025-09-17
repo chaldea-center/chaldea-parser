@@ -1069,7 +1069,7 @@ class MainParser:
         }
 
         for region in data.keys():
-            region_info = AtlasApi.api_model(f"/raw/{region}/info", RegionInfo)
+            region_info = AtlasApi.api_model(f"/raw/{region}/info", RegionInfo, expire_after=0)
             assert region_info
             data[region] |= {
                 "hash": region_info.hash,
