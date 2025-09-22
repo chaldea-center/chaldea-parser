@@ -765,7 +765,6 @@ class MainParser:
         _normal_dump(list(wiki_events_campaign), "wiki.events", "wiki.events.2.json")
         _normal_dump(list(wiki_data.wars.values()), "wiki.wars")
         _dump_by_count(list(wiki_data.summons.values()), 100, "wiki.summons")
-        _dump_file(settings.output_wiki / "webcrowMapping.json", "wiki.webcrowMapping")
         base_tds = list(self.jp_data.base_tds.values())
         base_tds.sort(key=lambda x: x.id)
         _normal_dump(base_tds, "baseTds")
