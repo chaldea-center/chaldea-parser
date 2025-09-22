@@ -6,7 +6,6 @@ from app.schemas.gameenums import (
     NiceBuffAction,
     NiceBuffLimit,
     NiceBuffType,
-    NiceCardType,
     NiceSvtFrameType,
 )
 from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail, NiceGift
@@ -99,7 +98,7 @@ class ConstGameData(BaseModel):
     attributeRelation: dict[Attribute, dict[Attribute, int]]
     buffActions: dict[NiceBuffAction, BuffActionInfo]
     classInfo: dict[int, MstClass]
-    cardInfo: dict[NiceCardType, dict[int, CardInfo]]
+    cardInfo: dict[str, dict[int, CardInfo]]
     classRelation: dict[int, dict[int, int]]
     constants: dict[str, int]
     constantStr: dict[str, Any]  # list[int] | int | str | list[str] ...

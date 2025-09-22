@@ -6,7 +6,6 @@ from app.schemas.gameenums import (
     BUFF_TYPE_NAME,
     FUNC_TYPE_NAME,
     NiceBuffAction,
-    NiceCardType,
 )
 from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail
 from app.schemas.raw import MstBuffTypeDetail, MstFuncTypeDetail, MstSvtExp

@@ -13,7 +13,7 @@ import requests
 from app.schemas.basic import BasicCommandCode, BasicEquip
 from app.schemas.common import Region, RegionInfo, Trait
 from app.schemas.enums import OLD_TRAIT_MAPPING, SvtClass, get_class_name
-from app.schemas.gameenums import EventType, NiceCardType, NiceItemType, SvtType
+from app.schemas.gameenums import EventType, NiceItemType, SvtType
 from app.schemas.nice import NiceBaseFunction, NiceBuff, NiceBuffType
 from app.schemas.raw import (
     MstEvent,

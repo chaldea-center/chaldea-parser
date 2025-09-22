@@ -4,7 +4,7 @@ from app.schemas.base import BaseModelORJson
 from app.schemas.basic import BasicServant
 from app.schemas.common import Region
 from app.schemas.enums import Attribute, NiceSkillType, Trait
-from app.schemas.gameenums import NiceBuffAction, NiceCardType
+from app.schemas.gameenums import NiceBuffAction
 from app.schemas.nice import (
     NiceBaseFunction,
     NiceBgmEntity,
@@ -73,7 +73,7 @@ class FixedDrop(BaseModel):
 class NiceBaseTd(NiceTd):
     ...
     # damage
-    # card: NiceCardType
+    # card: int
     # icon: HttpUrl|None=None
     # npDistribution: list[int]
 
@@ -130,7 +130,7 @@ class MasterData(BaseModelORJson):
     nice_trait: dict[int, Trait] = {}
     NiceAttributeRelation: dict[Attribute, dict[Attribute, int]] = {}
     NiceBuffList_ActionList: dict[NiceBuffAction, BuffActionInfo] = {}
-    NiceCard: dict[NiceCardType, dict[int, CardInfo]] = {}
+    NiceCard: dict[str, dict[int, CardInfo]] = {}
 
     # NiceClass: list[NiceClassInfo] = []
     # NiceClassAttackRate: dict[SvtClass, int] = {}
