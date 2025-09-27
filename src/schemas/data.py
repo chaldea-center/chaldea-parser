@@ -6,7 +6,7 @@ from ..schemas.common import Region
 from ..schemas.const_data import SvtAllowedExtraPassive, SvtLimitHide
 
 
-MIN_APP = "2.5.21"
+MIN_APP = "2.5.22"
 
 
 ADD_CES: dict[Region, dict[int, tuple[str | None,]]] = {
