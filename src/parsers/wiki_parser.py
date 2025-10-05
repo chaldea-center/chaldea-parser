@@ -1436,20 +1436,25 @@ def _mc_index_data(page: str) -> dict[int, dict[str, str]]:
 
 
 def _mc_smw_card_list(category: str, prop: str) -> dict[int, str]:
-    query = f"https://fgo.wiki/w/特殊:询问/format%3Djson/sort%3D{prop}/order%3Ddesc/offset%3D0/limit%3D100/-5B-5B分类:{category}-5D-5D/-3F{prop}/mainlabel%3D/prettyprint%3Dtrue/unescape%3Dtrue/searchlabel%3DJSON"
-    logger.info(query)
+    limit = 10000
+    params = {
+        "action": "ask",
+        "query": f"[[分类:{category}]]|?{prop}|sort={prop}|order=desc|mainlabel=-|prettyprint=true|unescape=true|limit={limit}",
+        "format": "json",
+    }
     try:
-        resp = requests.get(query)
-        assert resp.status_code == 200, (resp, resp.text)
+        resp = requests.get("https://fgo.wiki/api.php", params=params)
+        logger.info(resp.url)
+        resp.raise_for_status()
     except:
         logger.exception(f"smw failed; {category}  {prop}")
         return {}
-    results: dict = resp.json()["results"]
+    results: dict = resp.json()["query"]["results"]
     out: dict[int, str] = {}
-    for item in results.values():
+    for key, item in results.items():
         col_no = int(item["printouts"][prop][0])
         if col_no < 10000:
-            out[col_no] = item["fulltext"]
+            out[col_no] = key
     return out
 
 
