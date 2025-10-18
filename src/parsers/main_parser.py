@@ -33,7 +33,6 @@ from ..schemas.common import (
     MappingStr,
     MstClass,
     MstClassRelation,
-    MstGacha,
     MstQuestGroup,
     MstViewEnemy,
 )
@@ -328,9 +327,6 @@ class MainParser:
             master_data.mstClassRelation = parse_json_obj_as(
                 list[MstClassRelation], DownUrl.gitaa("mstClassRelation", region)
             )
-            master_data.mstGacha = parse_json_obj_as(
-                list[MstGacha], DownUrl.gitaa("mstGacha", region)
-            )
             master_data.mstQuestPhase = parse_json_obj_as(
                 list[MstQuestPhase], DownUrl.gitaa("mstQuestPhase", region)
             )
@@ -379,6 +375,12 @@ class MainParser:
             elif buff.type == NiceBuffType.counterFunction:
                 # this is TD
                 worker.add_default(buff, get_all_func_val(func, "CounterId"), True)
+            elif buff.type == NiceBuffType.substituteInstantDeath:
+                # this is TD
+                worker.add_default(
+                    buff, get_all_func_val(func, "SubstituteSkillId"), True
+                )
+                worker.add_default(buff, get_all_func_val(func, "ResistSkillId"), True)
             elif buff.type in {
                 NiceBuffType.delayFunction,
                 NiceBuffType.deadFunction,
@@ -748,7 +750,7 @@ class MainParser:
                 phases, "questPhaseDetails", f"questPhaseDetails.{index+1}.json"
             )
 
-        _dump_by_count(data.mstGacha, 2000, "mstGacha")
+        _dump_by_count(data.nice_gacha, 2000, "mstGacha")
         _normal_dump(list(wiki_data.campaigns.values()), "campaigns")
 
         assert data.constData

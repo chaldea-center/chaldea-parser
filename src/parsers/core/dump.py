@@ -1,7 +1,12 @@
 from typing import Any
 
 from app.schemas.common import NiceTrait
-from app.schemas.gameenums import NiceCondType, NicePurchaseType
+from app.schemas.gameenums import (
+    PAY_TYPE_NAME,
+    NiceCondType,
+    NicePayType,
+    NicePurchaseType,
+)
 from app.schemas.nice import (
     AscensionAdd,
     BasicServant,
@@ -23,9 +28,9 @@ from app.schemas.nice import (
     NiceEventPointBuff,
     NiceEventReward,
     NiceEventTowerReward,
-    NiceEventTradeGoods,
     NiceEventTreasureBox,
     NiceFunction,
+    NiceGacha,
     NiceGift,
     NiceHeelPortrait,
     NiceItem,
@@ -52,6 +57,8 @@ from pydantic import BaseModel
 from ...schemas.gamedata import MasterData, NiceBaseSkill, NiceBaseTd, NiceEquipSort
 from ...utils.helper import iter_model, parse_json_obj_as, pydantic_encoder
 
+
+PAY_TYPE_NAME_REVERSE: dict[NicePayType, int] = {v: k for k, v in PAY_TYPE_NAME.items()}
 
 _excluded_fields: dict[type, list[str]] = {
     BuffScript: [
@@ -187,6 +194,7 @@ _excluded_fields: dict[type, list[str]] = {
         "rarity",  # playable servants always the same except mash
     ],
     NiceMasterMission: ["quests"],
+    NiceGacha: ["adjustId", "pickupId", "drawNum1", "drawNum2", "maxDrawNum", "flags"],
     # NiceMysticCode: ["shortName"],
 }
 
@@ -330,6 +338,11 @@ class DataEncoder:
         elif isinstance(obj, NiceShop):
             if obj.purchaseType == NicePurchaseType.partsSkill:
                 excludes.discard("detail")
+        elif isinstance(obj, NiceGacha):
+            if obj.type == NicePayType.stone:
+                excludes.add("type")
+            if isinstance(obj.type, NicePayType):
+                obj.type = PAY_TYPE_NAME_REVERSE[obj.type]
 
         if isinstance(obj, BaseModel):
             if isinstance(obj, NiceFunction):

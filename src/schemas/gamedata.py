@@ -17,6 +17,7 @@ from app.schemas.nice import (
     NiceEvent,
     NiceEventTower,
     NiceFunction,
+    NiceGacha,
     NiceGrandGraph,
     NiceItem,
     NiceMasterMission,
@@ -38,7 +39,6 @@ from .common import (
     MappingBase,
     MstClass,
     MstClassRelation,
-    MstGacha,
     MstQuestGroup,
     MstQuestPhaseBasic,
     MstViewEnemy,
@@ -127,6 +127,7 @@ class MasterData(BaseModelORJson):
     nice_enemy_master: list[NiceEnemyMaster] = []
     nice_class_board: list[NiceClassBoard] = []
     nice_grand_graph: list[NiceGrandGraph] = []
+    nice_gacha: list[NiceGacha] = []
     nice_trait: dict[int, Trait] = {}
     NiceAttributeRelation: dict[Attribute, dict[Attribute, int]] = {}
     NiceBuffList_ActionList: dict[NiceBuffAction, BuffActionInfo] = {}
@@ -145,7 +146,6 @@ class MasterData(BaseModelORJson):
     viewEnemy: list[MstViewEnemy] = []
     mstConstant: dict[str, int] = {}
     mstEnemyMaster: list[dict] = []
-    mstGacha: list[MstGacha] = []
     mstQuestPhase: list[MstQuestPhase] = []
     mstQuestPhaseDetail: list[MstQuestPhaseDetail] = []
 
@@ -191,7 +191,7 @@ class MasterData(BaseModelORJson):
         self.base_tds = sort_dict(self.base_tds)
         self.base_skills = sort_dict(self.base_skills)
         self.base_functions = sort_dict(self.base_functions)
-        self.mstGacha.sort(key=lambda x: (x.closedAt, x.id))
+        self.nice_gacha.sort(key=lambda x: (x.closedAt, x.id))
 
     # @cached_property
     # def svt_dict(self) -> dict[int, NiceServant]:

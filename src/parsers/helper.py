@@ -20,4 +20,9 @@ def get_all_func_val(func: NiceFunction, val_key: str):
         + (func.svals4 or [])
         + (func.svals5 or [])
     )
-    return set(getattr(val, val_key) for val in vals)
+    result = set()
+    for val in vals:
+        v = getattr(val, val_key)
+        if v is not None:
+            result.add(v)
+    return result

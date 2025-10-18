@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Generic, TypeVar, override
+from typing import Generic, TypeVar
 
 from app.schemas.common import Region
 from app.schemas.nice import NiceGift
@@ -234,6 +234,7 @@ class AtlasExportFile(StrEnum):
     nice_enemy_master = "nice_enemy_master"
     nice_class_board = "nice_class_board"
     nice_grand_graph = "nice_grand_graph"
+    nice_gacha = "nice_gacha"
     # shared constants
     nice_enums = "nice_enums"  # hard code
     nice_trait = "nice_trait"  # hard code, +unknown
