@@ -63,11 +63,6 @@ def get_const_data(data: MasterData):
         list[MstBuffTypeDetail], DownUrl.gitaa("mstBuffTypeDetail")
     )
 
-    BUFF_ACTION_NAME_REVERSE = {v: k for k, v in BUFF_ACTION_NAME.items()}
-    for act_info in data.NiceBuffList_ActionList.values():
-        if isinstance(act_info.plusAction, NiceBuffAction):
-            act_info.plusAction = BUFF_ACTION_NAME_REVERSE[act_info.plusAction]
-
     return ConstGameData(
         cnReplace=dict(CN_REPLACE),
         attributeRelation=data.NiceAttributeRelation,

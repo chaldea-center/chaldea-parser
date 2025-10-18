@@ -28,6 +28,7 @@ class BuffActionInfo(BaseModel):
     isRec: bool
     plusAction: int | NiceBuffAction  # remove int type in 2.6.0
     maxRate: list[int]
+    isChangeMaxHp: bool
 
 
 class NiceClassInfo(BaseModel):
@@ -98,7 +99,7 @@ class ConstGameData(BaseModel):
     attributeRelation: dict[Attribute, dict[Attribute, int]]
     buffActions: dict[NiceBuffAction, BuffActionInfo]
     classInfo: dict[int, MstClass]
-    cardInfo: dict[str, dict[int, CardInfo]]
+    cardInfo: dict[int, dict[int, CardInfo]]
     classRelation: dict[int, dict[int, int]]
     constants: dict[str, int]
     constantStr: dict[str, Any]  # list[int] | int | str | list[str] ...

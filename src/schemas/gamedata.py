@@ -130,7 +130,7 @@ class MasterData(BaseModelORJson):
     nice_trait: dict[int, Trait] = {}
     NiceAttributeRelation: dict[Attribute, dict[Attribute, int]] = {}
     NiceBuffList_ActionList: dict[NiceBuffAction, BuffActionInfo] = {}
-    NiceCard: dict[str, dict[int, CardInfo]] = {}
+    NiceCard: dict[int, dict[int, CardInfo]] = {}
 
     # NiceClass: list[NiceClassInfo] = []
     # NiceClassAttackRate: dict[SvtClass, int] = {}
