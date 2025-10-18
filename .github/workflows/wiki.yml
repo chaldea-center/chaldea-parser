@@ -54,7 +54,7 @@ jobs:
         with:
           path: ${{ env.cache_dir }}
           fail-on-cache-miss: true
-          save-always: true
+          # save-always: true
           key: api-cache-${{ runner.os }}-${{ steps.get-date.outputs.date }}
           restore-keys: |
             api-cache-${{ runner.os }}-
