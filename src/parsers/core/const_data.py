@@ -1,4 +1,6 @@
+import re
 from collections import defaultdict
+from pathlib import Path
 
 from app.core.utils import get_traits_list
 from app.schemas.gameenums import (
@@ -40,7 +42,7 @@ def get_const_data(data: MasterData):
         if not isinstance(cls_info.individuality, int):
             cls_info.individuality = 0
 
-    mst_exps = parse_json_obj_as(list[MstSvtExp], DownUrl.gitaa("mstSvtExp"))
+    mst_exps = parse_json_obj_as(list[MstSvtExp], DownUrl.git_jp("mstSvtExp"))
     exp_dict: dict[int, list[MstSvtExp]] = defaultdict(list)
     for exp in mst_exps:
         exp_dict[exp.type].append(exp)
@@ -57,10 +59,10 @@ def get_const_data(data: MasterData):
         )
 
     mst_func_type_details = parse_json_obj_as(
-        list[MstFuncTypeDetail], DownUrl.gitaa("mstFuncTypeDetail")
+        list[MstFuncTypeDetail], DownUrl.git_jp("mstFuncTypeDetail")
     )
     mst_buff_type_details = parse_json_obj_as(
-        list[MstBuffTypeDetail], DownUrl.gitaa("mstBuffTypeDetail")
+        list[MstBuffTypeDetail], DownUrl.git_jp("mstBuffTypeDetail")
     )
 
     return ConstGameData(
@@ -95,6 +97,7 @@ def get_const_data(data: MasterData):
         destinyOrderClasses=DESTINY_ORDER_CLASSES,
         extraWarEventMapping=EXTRA_WAR_EVENT_MAPPING,
         sameQuestRemap=SAME_QUEST_REMAP,
+        routeSelects=get_route_selects(),
         config=ConstDataConfig(),
     )
 
@@ -117,7 +120,7 @@ def get_nice_buff_type_detail(detail: MstBuffTypeDetail) -> NiceBuffTypeDetail:
 
 def get_constant_str():
     mst_const_str = parse_json_obj_as(
-        list[MstConstantStr], DownUrl.gitaa("mstConstantStr")
+        list[MstConstantStr], DownUrl.git_jp("mstConstantStr")
     )
     int_list_keys = [
         # INDIV
@@ -157,3 +160,31 @@ def get_constant_str():
         elif key in str_keys:
             out[key] = value
     return out
+
+
+def get_route_selects() -> dict[str, list[str]]:
+    from ...config import settings
+    from ...utils import logger
+
+    folder = Path(settings.game_data_jp_dir) / "ScriptActionEncrypt"
+    result: dict[str, list[str]] = {}
+    for fp in folder.glob("**/*.txt"):
+        context = fp.read_text()
+        matches = re.findall(
+            r"[？?]\s*(\d+|[\?？])?\s*(?:[,，]\s*(\d+)\s*)[：:](.*)", context
+        )
+        route_ids = [route_id for (index, route_id, text) in matches if route_id]
+        if not route_ids:
+            continue
+        script_id = fp.name[:-4]
+        if not script_id.isdigit():
+            logger.warning(f"not digit script id: {fp}")
+        else:
+            result[script_id] = route_ids
+    result = sort_dict(result)
+    if not result:
+        raise Exception("no route select found")
+
+    route_count = sum(len(v) for v in result.values())
+    logger.info(f"Found {route_count} routes in {len(result)} script files")
+    return result

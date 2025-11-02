@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     output_dir: str = "data/"
     cache_dir: str = "cache/"
     log_dir: str = "logs/"
+    game_data_jp_dir: str = "fgo-game-data-jp/"
 
     # keys
     mc_user: str = ""

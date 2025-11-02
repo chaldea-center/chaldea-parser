@@ -94,7 +94,7 @@ def get_master_data():
         )
     else:
         mst_phases = parse_json_obj_as(
-            list[MstQuestPhase], DownUrl.gitaa("mstQuestPhase")
+            list[MstQuestPhase], DownUrl.git_jp("mstQuestPhase")
         )
 
     all_quest_phases: dict[int, dict[int, MstQuestPhase]] = defaultdict(dict)

@@ -149,7 +149,7 @@ class MainParser:
 
         self.jp_data.exchangeTickets = parse_exchange_tickets(self.jp_data.nice_item)
         self.jp_data.questGroups = parse_json_obj_as(
-            list[MstQuestGroup], DownUrl.gitaa("mstQuestGroup")
+            list[MstQuestGroup], DownUrl.git_jp("mstQuestGroup")
         )
         self.wiki_data.mms = load_mm_with_gifts(self.wiki_data.mms)
         self.jp_data.questPhaseDetails = get_quest_phase_basic(
@@ -175,7 +175,7 @@ class MainParser:
                         out[entry[field_key]] = entry
             return out
 
-        remote_svts = parse_json_obj_as(list[MstSvt], DownUrl.gitaa("mstSvt"))
+        remote_svts = parse_json_obj_as(list[MstSvt], DownUrl.git_jp("mstSvt"))
         local_svts = load_data_dict("servants", "collectionNo")
         for svt in remote_svts:
             collection = svt.collectionNo
@@ -209,20 +209,20 @@ class MainParser:
                 continue
             added.ccs.append(cc.id)
 
-        remote_items = parse_json_obj_as(list[MstItem], DownUrl.gitaa("mstItem"))
+        remote_items = parse_json_obj_as(list[MstItem], DownUrl.git_jp("mstItem"))
         local_items = load_data_dict("items", "id")
         for item in remote_items:
             if item.id not in local_items:
                 added.items.append(item.id)
 
-        remote_events = parse_json_obj_as(list[MstEvent], DownUrl.gitaa("mstEvent"))
+        remote_events = parse_json_obj_as(list[MstEvent], DownUrl.git_jp("mstEvent"))
         local_events = load_data_dict("events", "id")
         for event in remote_events:
             if event.id in local_events or event.type != EventType.EVENT_QUEST:
                 continue
             added.events.append(event.id)
 
-        remote_wars = parse_json_obj_as(list[MstWar], DownUrl.gitaa("mstWar"))
+        remote_wars = parse_json_obj_as(list[MstWar], DownUrl.git_jp("mstWar"))
         local_wars = load_data_dict("wars", "id")
         for war in remote_wars:
             if war.id in local_wars:
@@ -495,11 +495,11 @@ class MainParser:
         # field_indiv: warId[]
         fields: dict[int, set[int]] = defaultdict(set)
         quest_list = parse_json_obj_as(
-            list[MstQuestPhase], DownUrl.gitaa("mstQuestPhase")
+            list[MstQuestPhase], DownUrl.git_jp("mstQuestPhase")
         )
         phase_indiv_list = parse_json_obj_as(
             list[MstQuestPhaseIndividuality],
-            DownUrl.gitaa("mstQuestPhaseIndividuality"),
+            DownUrl.git_jp("mstQuestPhaseIndividuality"),
         )
         for phase in quest_list:
             quest = self.jp_data.quest_dict.get(phase.questId)

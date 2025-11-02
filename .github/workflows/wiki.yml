@@ -16,6 +16,7 @@ jobs:
     env:
       output_dir: "data/"
       cache_dir: "cache/"
+      game_data_jp_dir: "fgo-game-data-jp/"
       mc_user: ${{ secrets.MC_USER }}
       mc_pwd: ${{ secrets.MC_PWD }}
       fandom_user: ${{ secrets.FANDOM_USER }}
@@ -37,6 +38,12 @@ jobs:
         with:
           repository: chaldea-center/fgo-game-data-api
           path: fgo-game-data-api
+      - uses: actions/checkout@v4
+        with:
+          repository: atlasacademy/fgo-game-data
+          path: ${{ env.game_data_jp_dir }}
+          ref: JP
+          token: ${{ secrets.GH_PAGES_TOKEN }}
 
       - name: Configure git author
         run: |

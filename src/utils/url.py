@@ -1,9 +1,10 @@
 import time
+from pathlib import Path
 
 import requests
 from app.schemas.common import Region
 
-from .helper import retry_decorator
+from .helper import load_json, retry_decorator
 
 
 def get_time():
@@ -41,3 +42,10 @@ class DownUrl:
         name = cls._json_fn(name)
         url = f"https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}/{folder}{name}?t={get_time()}"
         return cls.download(url)
+
+    @classmethod
+    def git_jp(cls, name: str, folder: str = "master/"):
+        from ..config import settings
+
+        fp = Path(settings.game_data_jp_dir) / folder / cls._json_fn(name)
+        return load_json(fp)

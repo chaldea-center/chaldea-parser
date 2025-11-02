@@ -30,7 +30,7 @@ def load_mm_with_gifts(
     mms: dict[int, MstMasterMissionWithGift] = dict(mms_cache)
 
     for mm in parse_json_obj_as(
-        list[MstMasterMissionWithGift], DownUrl.gitaa("mstMasterMission")
+        list[MstMasterMissionWithGift], DownUrl.git_jp("mstMasterMission")
     ):
         mms[mm.id] = mm
     now = int(time.time())
