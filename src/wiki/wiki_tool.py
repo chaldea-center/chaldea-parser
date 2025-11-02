@@ -484,6 +484,18 @@ class WikiTool:
         if all_updated:
             self.cache.updated = _now
 
+        # remove last 10 pages
+        remove_last_count = 10
+        pages = list(self.cache.pages.items()) + list(self.cache.images.items())
+        pages.sort(key=lambda x: x[1].updated)
+        for page in pages[:remove_last_count]:
+            if isinstance(page[1], WikiPageInfo):
+                logger.info(f"purge oldest page {page[0]}")
+                self.remove_page_cache(page[0])
+            elif isinstance(page[1], WikiImageInfo):
+                logger.info(f"purge oldest image {page[0]}")
+                self.remove_image_cache(page[0])
+
     def remove_recent_changed(self, days: float | None = None):
         last_timestamp = self._get_expire_time(2 / 24, days)
         changes = self.recent_changes(
