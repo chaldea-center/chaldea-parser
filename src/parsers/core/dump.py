@@ -20,6 +20,8 @@ from app.schemas.nice import (
     NiceBuff,
     NiceEquip,
     NiceEvent,
+    NiceEventCampaign,
+    NiceEventDetail,
     NiceEventCooltimeReward,
     NiceEventDiggingBlock,
     NiceEventLotteryBox,
@@ -139,6 +141,7 @@ _excluded_fields: dict[type, list[str]] = {
     EnemyDrop: ["dropExpected", "dropVariance"],
     EnemyTd: ["noblePhantasmLv2", "noblePhantasmLv3"],  # noblePhantasmLv1
     NiceEvent: ["voicePlays", "materialOpenedAt"],
+    NiceEventDetail: ["condMessage", "shopCondMessage", "entryCondMessage"],
     NiceEventMissionCondition: ["missionTargetId", "detail"],
     NiceEventMission: [
         "flag",
@@ -206,6 +209,7 @@ _exclude_empty_fields: dict[type, list[str]] = {
     NiceBaseTd: ["script"],
     NiceServant: ["script"],
     NiceEquip: ["script"],
+    NiceEventCampaign: ["script"],
 }
 
 
