@@ -15,6 +15,7 @@ ADD_CES: dict[Region, dict[int, tuple[str | None,]]] = {
         202022: ("ダンミル",),  # 5th 90082001
         202023: ("リヨ",),  # 6th 90082002
         202024: (None,),  # 7th 90082003
+        202025: (None,),  # 8th 90082004
     },
     # 2017.06
     Region.NA: {
@@ -255,7 +256,7 @@ _GRAND_DUEL_QUEST_REMAP: dict[int, int] = (
     | {94149011 + i: 94149041 + i for i in range(7)}  # Grand Extra II 水
     | {94149801 + i: 94149831 + i for i in range(7)}  # Grand Rider
     | {94150501 + i: 94150531 + i for i in range(7)}  # Grand Assassin
-    | {94150801 + i: 94150811 + i for i in range(7)}  # Grand Archer
+    | {94150801 + i: 94150841 + i for i in range(7)}  # Grand Archer
 )
 
 
