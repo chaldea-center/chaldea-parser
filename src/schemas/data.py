@@ -1,7 +1,5 @@
 import re
 
-from pydantic import BaseModel
-
 from ..schemas.common import Region
 from ..schemas.const_data import SvtAllowedExtraPassive, SvtLimitHide
 
@@ -301,6 +299,7 @@ EXCLUDE_REWARD_QUESTS = (
     + list(SAME_QUEST_REMAP.values())
     + list(range(94148911, 94148911 + 8))  # Grand Extra I 火&地 share
     + list(range(94149011, 94149011 + 8))  # Grand Extra II 星&水 share
+    + list(range(94150811, 94150811 + 8))  # Grand Archer unknown duplicate share
 )
 
 
