@@ -420,7 +420,7 @@ class MainParser:
                 NiceBuffType.functionedFunction,
                 NiceBuffType.comboStartFunction,
                 NiceBuffType.comboEndFunction,
-            }:
+            } or buff.type.name.endswith("Function"):
                 worker.add_default(buff, get_all_func_val(func, "Value"))
         skillIds = set()
         for svt in master_data.nice_servant_lore:
@@ -1095,8 +1095,8 @@ class MainParser:
             data[region] |= {
                 "appVer": ver_code_match.group(1),
                 "verCode": ver_code_match.group(2),
-                "dataVer": top["dataVer"],
-                "dateVer": top["dateVer"],
+                "dataVer": max(data[region]["dataVer"], top["dataVer"]),
+                "dateVer": max(data[region]["dateVer"], top["dateVer"]),
                 "assetbundle": top["assetbundle"],
                 "assetbundleFolder": assetbundle["folderName"],
             }

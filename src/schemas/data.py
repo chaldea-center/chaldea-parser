@@ -255,6 +255,7 @@ _GRAND_DUEL_QUEST_REMAP: dict[int, int] = (
     | {94149801 + i: 94149831 + i for i in range(7)}  # Grand Rider
     | {94150501 + i: 94150531 + i for i in range(7)}  # Grand Assassin
     | {94150801 + i: 94150841 + i for i in range(7)}  # Grand Archer
+    | {94151201 + i: 94151231 + i for i in range(7)}  # Grand Caster
 )
 
 
@@ -337,6 +338,7 @@ EXTRA_WAR_EVENT_MAPPING: dict[int, int] = {
     204: 80077,
     311: 80421,
     404: 80491,
+    406: 80585,
     8396: 80543,
     8398: 80551,
     8399: 80555,
