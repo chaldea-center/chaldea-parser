@@ -1079,6 +1079,9 @@ class MainParser:
                 "timestamp": region_info.timestamp,
                 "serverHash": region_info.serverHash,
                 "serverTimestamp": region_info.serverTimestamp,
+                "dataVer": region_info.dataVer or 0,
+                "dateVer": region_info.dateVer or 0,
+                "assetbundle": region_info.assetbundle,
             }
 
         for region in ["JP", "NA"]:
@@ -1097,7 +1100,6 @@ class MainParser:
                 "verCode": ver_code_match.group(2),
                 "dataVer": max(data[region]["dataVer"], top["dataVer"]),
                 "dateVer": max(data[region]["dateVer"], top["dateVer"]),
-                "assetbundle": top["assetbundle"],
                 "assetbundleFolder": assetbundle["folderName"],
             }
 
@@ -1110,7 +1112,6 @@ class MainParser:
             "verCode": "",
             "dataVer": cn_top["version"],
             "dateVer": 0,
-            "assetbundle": "",
             "assetbundleFolder": "",
         }
         dump_json(data, fp)
