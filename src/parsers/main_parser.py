@@ -139,13 +139,13 @@ class MainParser:
         update_exported_files(self.payload.regions, self.payload.force_update_export)
         self.stopwatch.log("update_export")
         self.wiki_data = WikiData.parse_dir(full_version=True)
-        self.stopwatch.log(f"load wiki data")
+        self.stopwatch.log("load wiki data")
         self.encoder.jp_data = self.jp_data = self.load_master_data(Region.JP)
 
         self.merge_all_mappings()
-        self.stopwatch.log(f"mappings finish")
+        self.stopwatch.log("mappings finish")
         self.parse_quest_data()
-        self.stopwatch.log(f"quests")
+        self.stopwatch.log("quests")
 
         self.jp_data.exchangeTickets = parse_exchange_tickets(self.jp_data.nice_item)
         self.jp_data.questGroups = parse_json_obj_as(
@@ -230,7 +230,7 @@ class MainParser:
             added.wars.append(war.id)
 
         if added.is_empty():
-            logger.info(f"No new notable resources added")
+            logger.info("No new notable resources added")
             return
 
         def _encoder(obj):
@@ -593,7 +593,7 @@ class MainParser:
         wiki_data.save(full_version=False)
 
         logger.debug("Saving data")
-        self.stopwatch.log(f"Save start")
+        self.stopwatch.log("Save start")
         cur_version = DataVersion(
             timestamp=int(self.now.timestamp()),
             utc=self.now.isoformat(timespec="seconds").split("+")[0],
@@ -776,7 +776,7 @@ class MainParser:
         base_functions = list(self.jp_data.base_functions.values())
         base_functions.sort(key=lambda x: x.funcId)
         _normal_dump(base_functions, "baseFunctions")
-        self.stopwatch.log(f"save end")
+        self.stopwatch.log("save end")
 
         changed = False
         for k, f in cur_version.files.items():
@@ -801,7 +801,7 @@ class MainParser:
         try:
             self.gametop()
         except Exception as e:
-            logger.exception(f"update gametop failed")
+            logger.exception("update gametop failed")
             discord.text(f"Update gametop failed: {e}")
 
     @staticmethod

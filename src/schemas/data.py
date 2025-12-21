@@ -255,7 +255,8 @@ _GRAND_DUEL_QUEST_REMAP: dict[int, int] = (
     | {94149801 + i: 94149831 + i for i in range(7)}  # Grand Rider
     | {94150501 + i: 94150531 + i for i in range(7)}  # Grand Assassin
     | {94150801 + i: 94150841 + i for i in range(7)}  # Grand Archer
-    | {94151201 + i: 94151231 + i for i in range(7)}  # Grand Caster
+    | {94151201 + i: 94151241 + i for i in range(7)}  # Grand Caster
+    | {94151211 + i: 94151241 + i for i in range(7)}  # Grand Caster
 )
 
 

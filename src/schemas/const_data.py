@@ -122,3 +122,4 @@ class ConstGameData(BaseModel):
     sameQuestRemap: dict[int, int]
     routeSelects: dict[str, list[str]]
     config: ConstDataConfig
+    deprecatedEnums: dict[str, dict[str, int]]

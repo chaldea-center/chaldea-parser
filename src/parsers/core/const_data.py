@@ -4,10 +4,8 @@ from pathlib import Path
 
 from app.core.utils import get_traits_list
 from app.schemas.gameenums import (
-    BUFF_ACTION_NAME,
     BUFF_TYPE_NAME,
     FUNC_TYPE_NAME,
-    NiceBuffAction,
 )
 from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail
 from app.schemas.raw import MstBuffTypeDetail, MstFuncTypeDetail, MstSvtExp
@@ -99,6 +97,7 @@ def get_const_data(data: MasterData):
         sameQuestRemap=SAME_QUEST_REMAP,
         routeSelects=get_route_selects(),
         config=ConstDataConfig(),
+        deprecatedEnums={"BuffType": {}, "BuffAction": {}, "FuncType": {}},
     )
 
 
