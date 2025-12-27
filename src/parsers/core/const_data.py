@@ -3,10 +3,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from app.core.utils import get_traits_list
-from app.schemas.gameenums import (
-    BUFF_TYPE_NAME,
-    FUNC_TYPE_NAME,
-)
+from app.schemas.gameenums import BUFF_TYPE_NAME, FUNC_TYPE_NAME
 from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail
 from app.schemas.raw import MstBuffTypeDetail, MstFuncTypeDetail, MstSvtExp
 

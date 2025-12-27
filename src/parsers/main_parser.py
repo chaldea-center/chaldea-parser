@@ -315,24 +315,24 @@ class MainParser:
         ]
         # raw
         master_data.viewEnemy = parse_json_obj_as(
-            list[MstViewEnemy], DownUrl.gitaa("viewEnemy", region)
+            list[MstViewEnemy], DownUrl.mst_data("viewEnemy", region)
         )
         master_data.mstEnemyMaster = parse_json_obj_as(
-            list[dict], DownUrl.gitaa("mstEnemyMaster", region)
+            list[dict], DownUrl.mst_data("mstEnemyMaster", region)
         )
         if region == Region.JP:
             master_data.mstClass = parse_json_obj_as(
-                list[MstClass], DownUrl.gitaa("mstClass", region)
+                list[MstClass], DownUrl.mst_data("mstClass", region)
             )
             master_data.mstClassRelation = parse_json_obj_as(
-                list[MstClassRelation], DownUrl.gitaa("mstClassRelation", region)
+                list[MstClassRelation], DownUrl.mst_data("mstClassRelation", region)
             )
             master_data.mstQuestPhase = parse_json_obj_as(
-                list[MstQuestPhase], DownUrl.gitaa("mstQuestPhase", region)
+                list[MstQuestPhase], DownUrl.mst_data("mstQuestPhase", region)
             )
 
         master_data.mstConstant = {
-            e["name"]: e["value"] for e in DownUrl.gitaa("mstConstant", region)
+            e["name"]: e["value"] for e in DownUrl.mst_data("mstConstant", region)
         }
 
         master_data.sort()
@@ -1085,9 +1085,9 @@ class MainParser:
             }
 
         for region in ["JP", "NA"]:
-            top = DownUrl.gitaa("gamedatatop", Region(region), "")
+            top = DownUrl.mst_data("gamedatatop", Region(region), "")
             top = top["response"][0]["success"]
-            assetbundle = DownUrl.gitaa("assetbundle", Region(region), "metadata/")
+            assetbundle = DownUrl.mst_data("assetbundle", Region(region), "metadata/")
             ver_codes = requests.get(
                 f"https://fgo.square.ovh/{region}/verCode.txt?t={int(time.time())}"
             ).text
@@ -1104,7 +1104,7 @@ class MainParser:
             }
 
         # CN
-        cn_top = DownUrl.gitaa("gamedatatop", Region.CN, "")
+        cn_top = DownUrl.mst_data("gamedatatop", Region.CN, "")
         cn_top = cn_top["response"][0]["success"]
         cn_config = requests.get("https://static.biligame.com/config/fgo.config.js")
         data["CN"] |= {

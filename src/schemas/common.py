@@ -376,3 +376,18 @@ class EventRaidData(BaseModel):
     questIds: list[int]
     svtIds: list[int]
     enemyNames: list[str]
+
+
+class GameTop(BaseModel):
+    region: Region
+    gameServer: str
+    hash: str
+    timestamp: int
+    serverHash: str
+    serverTimestamp: int
+    appVer: str
+    verCode: str
+    dataVer: int
+    dateVer: int
+    assetbundleFolder: str
+    unityVer: str | None

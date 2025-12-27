@@ -33,14 +33,14 @@ class DownUrl:
         )
 
     @classmethod
-    def gitaa(
+    def mst_data(
         cls,
         name: str,
         region: Region = Region.JP,
         folder: str = "master/",
     ):
         name = cls._json_fn(name)
-        url = f"https://git.atlasacademy.io/atlasacademy/fgo-game-data/raw/branch/{region}/{folder}{name}?t={get_time()}"
+        url = f"https://api.atlasacademy.io/repo/{region}/{folder}{name}?t={get_time()}"
         return cls.download(url)
 
     @classmethod
