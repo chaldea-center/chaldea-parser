@@ -420,6 +420,7 @@ class MainParser:
                 NiceBuffType.functionedFunction,
                 NiceBuffType.comboStartFunction,
                 NiceBuffType.comboEndFunction,
+                NiceBuffType.buff245,
             } or buff.type.name.endswith("Function"):
                 worker.add_default(buff, get_all_func_val(func, "Value"))
         skillIds = set()
