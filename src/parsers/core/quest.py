@@ -188,6 +188,9 @@ class _QuestParser:
                     phase_drops[drop.objectId] = (
                         phase_drops.get(drop.objectId, 0) + int(drop_prob) * drop.num
                     )
+            # オルガマリークエスト_3: 10 phases with the same enemy
+            if phase_data.id in (94141901, 94141902, 94141903, 94141904):
+                phase_drops = {k: round(v / 10) for k, v in phase_drops.items()}
             # always add even if there is nothing dropped
             self.jp_data.dropData.fixedDrops[phase_key] = QuestDropData(
                 runs=runs, items=sort_dict(phase_drops)
