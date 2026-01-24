@@ -407,6 +407,14 @@ class WikiParser:
                 text_cn, text_jp = params.get2(2), params.get2(3)
                 if text_cn and text_jp:
                     self.mc_transl.skill_names[text_jp] = text_cn
+            # for params in parse_template_list(wikitext, r"^{{职阶技能"):
+            #     for i in range(len(params.keys()) // 5):
+            #         text_cn, text_jp = params.get2(5 * i + 2), params.get2(5 * i + 3)
+            #         rank = params.get2(5 * i + 4)
+            #         if text_cn and text_jp:
+            #             if rank:
+            #                 text_cn, text_jp = f"{text_jp} {rank}", f"{text_cn} {rank}"
+            #             self.mc_transl.skill_names[text_jp] = text_cn
 
             for params in parse_template_list(wikitext, r"^{{宝具"):
                 td_name_cn, td_ruby_cn = params.get2("中文名"), params.get2("国服上标")
@@ -653,7 +661,7 @@ class WikiParser:
         transl = self.wiki_data.mcTransl
         for params in parse_template_list(wikitext, "^{{魔术礼装"):
             name_jp, name_cn = params.get2("日文名称"), params.get2("中文名称")
-            detail_jp, detail_cn = params.get2("日文简介"), params.get2("中文简介")
+            _, detail_cn = params.get2("日文简介"), params.get2("中文简介")
             if name_jp and name_cn:
                 transl.mc_names[name_jp] = name_cn
             if name_jp and detail_cn:
@@ -1118,7 +1126,6 @@ class WikiParser:
         worker.wait()
 
     def mc_summon(self):
-
         def t_summon_data_table(src_str: str, instance: SubSummon):
             table = []
             for row_str in src_str.strip().split("\n"):
@@ -1367,9 +1374,7 @@ class WikiParser:
         ]:
             costume_page = FANDOM.get_page_text(page_name)
             for row in (
-                wikitextparser.parse(
-                    costume_page
-                )  # pyright: ignore[reportArgumentType]
+                wikitextparser.parse(costume_page)  # pyright: ignore[reportArgumentType]
                 .tables[0]
                 .data()[1:]  # pyright: ignore[reportArgumentType]
             ):
@@ -1446,7 +1451,7 @@ def _mc_smw_card_list(category: str, prop: str) -> dict[int, str]:
         resp = requests.get("https://fgo.wiki/api.php", params=params)
         logger.info(resp.url)
         resp.raise_for_status()
-    except:
+    except:  # noqa: E722
         logger.exception(f"smw failed; {category}  {prop}")
         return {}
     results: dict = resp.json()["query"]["results"]
@@ -1464,12 +1469,12 @@ def _gen_jp_notice_key(jp_url: str | None) -> str | None:
     assert "fate-go.jp" in jp_url.lower(), jp_url
     try:
         return urlparse(jp_url).path.strip("/").replace("/", "_")
-    except:
+    except:  # noqa: E722
         return None
 
 
 def parse_int(x) -> int | None:
     try:
         return int(x)
-    except:
+    except:  # noqa: E722
         return None
