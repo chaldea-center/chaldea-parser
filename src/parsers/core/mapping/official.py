@@ -511,7 +511,7 @@ def fix_cn_transl_qab(data: dict[str, dict[str, str | None]]):
     # QAB
     color_regexes = [
         re.compile(
-            r"(?<![击御威])([力技迅])(?=提升|攻击|指令卡|下降|性能|耐性|威力|暴击)"
+            r"(?<![击御威])([力技迅])(?=提升|攻击|普通攻击|指令卡|下降|性能|耐性|威力|暴击|化〕)"
         ),
         re.compile(r"(?<=[:：])([力技迅])$"),
         re.compile(r"(?<=[〔（(])[力技迅](?=[)）〕])"),
@@ -527,6 +527,7 @@ def fix_cn_transl_qab(data: dict[str, dict[str, str | None]]):
         cn_name2 = cn_name = regions["CN"]
         if not cn_name or not cn_name2:
             continue
+        cn_name2 = cn_name2.replace("迅、技、力", "Quick、Arts、Buster")
         if re.findall(r"Buster|Art|Quick|アーツ|クイック|バスター", jp_name):
             for regex in color_regexes:
                 cn_name2 = regex.sub(_repl, cn_name2)

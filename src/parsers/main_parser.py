@@ -991,7 +991,7 @@ class MainParser:
         ):
             fix_cn_transl_qab(mappings_dict[key])
         fix_cn_transl_svt_class(
-            mappings_dict, ["对{0}", "({0})", "（{0}）", "〔{0}〕", "{0}职阶"]
+            mappings_dict, ["对{0}", "({0})", "（{0}）", "〔{0}〕", "{0}职阶", "：{0}"]
         )
         for key in ["svt_names", "entity_names"]:
             fix_cn_transl_svt_class(mappings_dict[key], ["的{0}"])
