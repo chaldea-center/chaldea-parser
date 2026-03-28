@@ -101,7 +101,15 @@ class _QuestParser:
                         _quest_na if _quest_na and _quest_na.phasesWithEnemies else None
                     )
                 if not has_enemy:
-                    continue
+                    if (
+                        _quest.openedAt < self._now
+                        and _quest.closedAt > self._now
+                        and _quest.consume > 0
+                    ):
+                        # ongoing event frees
+                        pass
+                    else:
+                        continue
                 if add_fixed:
                     worker.add(self._save_fixed_drops, _quest)
                 if add_free:
@@ -188,9 +196,6 @@ class _QuestParser:
                     phase_drops[drop.objectId] = (
                         phase_drops.get(drop.objectId, 0) + int(drop_prob) * drop.num
                     )
-            # オルガマリークエスト_3: 10 phases with the same enemy
-            if phase_data.id in (94141901, 94141902, 94141903, 94141904):
-                phase_drops = {k: round(v / 10) for k, v in phase_drops.items()}
             # always add even if there is nothing dropped
             self.jp_data.dropData.fixedDrops[phase_key] = QuestDropData(
                 runs=runs, items=sort_dict(phase_drops)
@@ -214,6 +219,8 @@ class _QuestParser:
         )
 
         phase = quest.phases[-1]
+        if phase in quest.phasesNoBattle:
+            return
         phase_key = quest.id * 100 + phase
         prev_free = self.prev_data.freeDrops.get(phase_key) if self.prev_data else None
         if prev_free and not retry:
@@ -221,7 +228,7 @@ class _QuestParser:
             self.used_prev.add(phase_key)
             return
         phase_data = None
-        if phase in quest.phasesWithEnemies:
+        if phase in quest.phasesWithEnemies or quest.closedAt > self._now:
             phase_data = get_quest_phase_check_rare_enemy(
                 quest, phase, Region.JP, self._get_expire(quest)
             )
