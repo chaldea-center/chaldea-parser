@@ -61,6 +61,8 @@ from ..wiki.wiki_tool import KnownTimeZone
 from .core.aa_export import update_exported_files
 from .wiki import replace_banner_url
 
+ENEMY_COLLECTION_IDS = (83, 149, 151, 152, 168, 240, 333, 411, 412, 436, 443, 460)
+
 
 class _WikiTemp:
     def __init__(self, region: Region) -> None:
@@ -274,12 +276,15 @@ class WikiParser:
         if no_index_ids:
             logger.info(f"svt not in index: {no_index_ids}")
 
-        def _parse_one(svt_id: int):
-            svt_add = self.wiki_data.get_svt(svt_id)
-            col_no = svt_add.collectionNo
-            record = index_data.get(svt_id)
+        def _parse_one(col_no: int):
+            svt_add = self.wiki_data.get_svt(col_no)
+
+            svt = self._jp.released_svts[col_no]
+            svt_id = svt.id
+
+            record = index_data.get(col_no)
             nicknames: set[str] = set()
-            svt_add.mcLink = extra_pages.get(svt_id) or svt_add.mcLink
+            svt_add.mcLink = extra_pages.get(col_no) or svt_add.mcLink
             if record:
                 nicknames.update([s.strip() for s in record["name_other"].split("&")])
                 obtains: list[SvtObtain] = []
@@ -319,13 +324,33 @@ class WikiParser:
                     obtain = SvtObtain.from_cn2(detail_obtain)
                     svt_add.obtains.append(obtain)
 
-            BEAST_IDS = (83, 149, 151, 152, 168, 240, 333)
             EXTERNAL_BASE = "https://static.atlasacademy.io/JP/External"
+            is_enemy = (
+                col_no in ENEMY_COLLECTION_IDS
+                or SvtObtain.unavailable in svt_add.obtains
+            )
+
+            af_assets = svt_add.aprilFoolAssets
+            # AF JP 2026 riyo
+            if 1 <= col_no <= 466:
+                af_assets.append(f"{EXTERNAL_BASE}/JP_AF_2026/CharaGraph/{svt_id}.png")
+                if col_no == 1:
+                    af_assets.append(
+                        f"{EXTERNAL_BASE}/JP_AF_2026/CharaGraph/{svt_id}_2.png"
+                    )
+                    af_assets.append(
+                        f"{EXTERNAL_BASE}/JP_AF_2026/CharaGraph/800140.png"
+                    )
+                if not is_enemy:
+                    af_assets.append(
+                        f"{EXTERNAL_BASE}/JP_AF_2026/CharaFigure/{svt_id}4_merged.png"
+                    )
+
             # FDS - aa
-            if 1 <= col_no <= 408 and col_no not in BEAST_IDS:
+            if 1 <= col_no <= 408 and not is_enemy:
                 _col_no = f"{col_no:03}"
                 for img_id in [_col_no, _col_no + "_1"] if col_no == 316 else [_col_no]:
-                    svt_add.aprilFoolAssets.extend(
+                    af_assets.extend(
                         [
                             f"{EXTERNAL_BASE}/FDS/Card/card_sg_{img_id}.png",
                             f"{EXTERNAL_BASE}/FDS/Figure/figure_{img_id}.png",
@@ -333,9 +358,8 @@ class WikiParser:
                     )
 
             # FGL - aa
-            if 1 <= col_no <= 375 and col_no not in BEAST_IDS:
-                svt_id = self._jp.released_svts[col_no].id
-                svt_add.aprilFoolAssets.extend(
+            if 1 <= col_no <= 375 and not is_enemy:
+                af_assets.extend(
                     [
                         f"{EXTERNAL_BASE}/FGL/SaintGraph/card_sg_{col_no:03}.png",
                         f"{EXTERNAL_BASE}/FGL/Figure/figure_{col_no:03}.png",
@@ -343,43 +367,29 @@ class WikiParser:
                     ]
                 )
             # riyo - CN 2023 + NA 2024
-            if 1 <= col_no <= 336 and col_no not in BEAST_IDS:
-                svt_id = self._jp.released_svts[col_no].id
-                svt_add.aprilFoolAssets.extend(
-                    [
-                        f"{EXTERNAL_BASE}/FGOPoker/{col_no:03}.png",
-                        f"{EXTERNAL_BASE}/CN_AF_2023/{svt_id}c@1.png",
-                    ]
-                )
+            if 1 <= col_no <= 336 and not is_enemy:
+                af_assets.append(f"{EXTERNAL_BASE}/FGOPoker/{col_no:03}.png")
+                af_assets.append(f"{EXTERNAL_BASE}/CN_AF_2023/{svt_id}c@1.png")
+
             # riyo - mc
             if svt_add.collectionNo == 1:
-                svt_add.aprilFoolAssets.append(
-                    MOONCELL.get_image_url("玛修·基列莱特-卡面-y.png")
-                )
+                af_assets.append(MOONCELL.get_image_url("玛修·基列莱特-卡面-y.png"))
             if svt_add.collectionNo == 83:
-                svt_add.aprilFoolAssets.append(
-                    MOONCELL.get_image_url("083所罗门愚人节.png")
-                )
+                af_assets.append(MOONCELL.get_image_url("083所罗门愚人节.png"))
             if svt_add.collectionNo == 150:
-                svt_add.aprilFoolAssets.append(
-                    MOONCELL.get_image_url("梅林-愚人节2021.png")
-                )
+                af_assets.append(MOONCELL.get_image_url("梅林-愚人节2021.png"))
             # FGL - mc
             for index in range(1, 15):
                 if "Grail League" in (params.get(f"立绘{index}") or ""):
                     illustration = params.get(f"文件{index}")
                     if illustration:
-                        svt_add.aprilFoolAssets.append(
-                            MOONCELL.get_image_url(f"{illustration}.png")
-                        )
+                        af_assets.append(MOONCELL.get_image_url(f"{illustration}.png"))
             # riyo-old mc
             for index in range(1, 15):
                 if "愚人节（背景变更前）" in (params.get(f"立绘{index}") or ""):
                     illustration = params.get(f"文件{index}")
                     if illustration:
-                        svt_add.aprilFoolAssets.append(
-                            MOONCELL.get_image_url(f"{illustration}.png")
-                        )
+                        af_assets.append(MOONCELL.get_image_url(f"{illustration}.png"))
 
             april_profile_jp, april_profile_cn = [], []
             for params in parse_template_list(wikitext, r"^{{愚人节资料"):
@@ -470,15 +480,15 @@ class WikiParser:
             r";No\.(\d+) .*\n:日服：(.*)\n:国服：(.*)\n:创建：(.*)<br", release_wikitext
         )
         release_times: dict[int, int] = {}
-        for svt_id, t_jp, t_cn, t_page in release_matches:
-            svt_id = int(svt_id)
-            if svt_id < 198:
+        for svt_col_no, t_jp, t_cn, t_page in release_matches:
+            svt_col_no = int(svt_col_no)
+            if svt_col_no < 198:
                 # 葛飾北斎, JP 2018/1/1
                 continue
             t_jp, t_cn, t_page = parse_date(t_jp), parse_date(t_cn), parse_date(t_page)
             released_at = t_jp or t_page
             if released_at:
-                release_times[svt_id] = released_at
+                release_times[svt_col_no] = released_at
         # in case some pages are created before released
         release_list = [
             release_times.get(x, 0) for x in range(max(release_times.keys()) + 1)
@@ -489,9 +499,9 @@ class WikiParser:
                 continue
             if release_list[index] < mean(prev_ts):
                 release_list[index] = 0
-        for svt_id, released_at in enumerate(release_list):
+        for svt_col_no, released_at in enumerate(release_list):
             if released_at > 0:
-                self.wiki_data.get_svt(svt_id).releasedAt = released_at
+                self.wiki_data.get_svt(svt_col_no).releasedAt = released_at
 
     def mc_ce(self):
         index_data = _mc_index_data("礼装图鉴/数据")
@@ -947,7 +957,7 @@ class WikiParser:
             end_time = MOONCELL.get_timestamp(end_jp, KnownTimeZone.jst)
             if not start_time or not end_time:
                 logger.warning(
-                    f"[{title}] Invalid timestamp: {start_jp,start_time,end_jp,end_time}",
+                    f"[{title}] Invalid timestamp: {start_jp, start_time, end_jp, end_time}",
                 )
                 continue
             notice_link = params.get2s("公告链接jp", "官网链接jp")
