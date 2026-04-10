@@ -299,6 +299,7 @@ EXCLUDE_REWARD_QUESTS = (
         94086966,
         94086969,
         94086970,  # 【聖杯戦線 ～白天の城、黒夜の城～】night main story
+        94143891,  #  復刻:昭和キ神計画 留めおかまし大和魂
     ]
     + list(SAME_QUEST_REMAP.values())
     + list(range(94148911, 94148911 + 8))  # Grand Extra I 火&地 share
