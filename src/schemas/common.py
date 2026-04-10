@@ -132,6 +132,7 @@ class CEObtain(StrEnum):
     drop = "drop"
     regionSpecific = "regionSpecific"
     unknown = "unknown"  # should not be included in db
+    davinciBondBonus = "davinciBondBonus"
 
     @staticmethod
     def from_cn(s: str) -> "CEObtain":
