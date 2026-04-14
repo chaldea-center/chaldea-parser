@@ -44,6 +44,9 @@ ADD_CES: dict[Region, dict[int, tuple[str | None,]]] = {
     },
 }
 
+
+SVT_TRAIT_RELEASE_KEYS = [2780]
+
 # Laplace - skip skills/tds
 SVT_LIMIT_HIDES: dict[int, list[SvtLimitHide]] = {
     -1: [

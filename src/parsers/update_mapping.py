@@ -36,15 +36,7 @@ def run_mapping_update(mappings: MappingData | None = None):
     folder.mkdir(exist_ok=True, parents=True)
     mapping_dict = mappings.model_dump()
     for key, trans in mapping_dict.items():
-        if not settings.is_debug and key in (
-            "skill_priority",
-            "td_priority",
-            "entity_release",
-            "cc_release",
-            "mc_release",
-            "war_release",
-            "quest_release",
-        ):
+        if not settings.is_debug and MappingData.is_not_translation(key):
             # release->MappingBase[list[int]]
             continue
         fp = folder / f"{key}.json"

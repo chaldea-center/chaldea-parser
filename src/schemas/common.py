@@ -26,9 +26,10 @@ class MappingBase(BaseModel, Generic[_KV]):
 
     def update(self, region: Region, value: _KV | None, skip_exists=False):
         def _resolve_value(region_v: _KV | None):
-            v = (region_v or value) if skip_exists else (value or region_v)
-            if v:
-                return v
+            if skip_exists:
+                return region_v if region_v is not None else value
+            else:
+                return value if value is not None else region_v
 
         if region == Region.JP:
             self.JP = _resolve_value(self.JP)

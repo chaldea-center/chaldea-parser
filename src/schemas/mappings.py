@@ -196,6 +196,19 @@ class MappingData(BaseModel):
 
     # ignored when copy to mapping folder
     # <svt_id, region:<skill_id, strengthenState>>
+    @classmethod
+    def is_not_translation(cls, key: str):
+        return key in [
+            "skill_priority",
+            "td_priority",
+            "entity_release",
+            "cc_release",
+            "mc_release",
+            "war_release",
+            "quest_release",
+            "svt_trait_release",
+        ]
+
     skill_priority: dict[int, MappingBase[dict[int, int]]] = {}
     # <svt_id, region:<td_id, strengthenState>>
     td_priority: dict[int, MappingBase[dict[int, int]]] = {}
@@ -205,6 +218,7 @@ class MappingData(BaseModel):
     mc_release: MappingBase[list[int]] = MappingBase()
     war_release: MappingBase[list[int]] = MappingBase()
     quest_release: dict[int, MappingInt] = {}
+    svt_trait_release: dict[int, MappingBase[list[int]]] = {}
 
     enums: EnumMapping = EnumMapping()
     misc: dict[str, dict[str, MappingStr]] = {}
