@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Generic, TypeVar
 
-from app.schemas.common import Region, RegionInfo
+from app.schemas.common import Region, RegionAssetBundle, RegionInfo
 from app.schemas.nice import NiceGift
 from app.schemas.raw import MstMasterMission
 from pydantic import BaseModel, ConfigDict, Field
@@ -281,21 +281,23 @@ class DataVersion(BaseModel):
     files: dict[str, FileVersion] = {}
 
 
-class GameTopRegionInfo(RegionInfo):
+class GameTopRegionInfo(BaseModel):
     region: Region
+    gameServer: str
+    # app
+    bundle: str
+    appVer: str = ""
+    verCode: str = ""
+    unityVer: str | None = None
+    # hash
     hash: str = ""
     timestamp: int = 0
     serverHash: str = ""
     serverTimestamp: int = 0
-    gameServer: str
-    bundle: str
-    appVer: str = ""
-    verCode: str = ""
-    # dataVer: int | None = None
-    # dateVer: int | None = None
-    # assetbundle: RegionAssetBundle | None = None
-    assetbundleFolder: str = ""
-    unityVer: str | None = None
+    # data
+    dataVer: int | None = None
+    dateVer: int | None = None
+    assetbundle: RegionAssetBundle | None = None
 
     def update_region_info(self, info: RegionInfo):
         if info.timestamp > self.timestamp or (
@@ -405,18 +407,3 @@ class EventRaidData(BaseModel):
     questIds: list[int]
     svtIds: list[int]
     enemyNames: list[str]
-
-
-class GameTop(BaseModel):
-    region: Region
-    gameServer: str
-    hash: str
-    timestamp: int
-    serverHash: str
-    serverTimestamp: int
-    appVer: str
-    verCode: str
-    dataVer: int
-    dateVer: int
-    assetbundleFolder: str
-    unityVer: str | None

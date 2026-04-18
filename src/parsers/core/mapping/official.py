@@ -21,6 +21,7 @@ from ....schemas.data import (
     jp_chars,
 )
 from ....schemas.gamedata import MasterData
+from ....schemas.mappings import MappingData
 from ....schemas.wiki_data import WikiData
 from ....utils import discord, logger
 from .common import _KT, _KV, process_skill_detail, update_key_mapping
@@ -35,7 +36,7 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
     mappings.entity_release.update(region, sorted([svt.id for svt in data.basic_svt]))
     mappings.cc_release.update(region, sorted(data.cc_dict.keys()))
     mappings.mc_release.update(region, sorted(data.mc_dict.keys()))
-    mappings.svt_trait_release = update_svt_trait_release(data)
+    update_svt_trait_release(mappings, data)
 
     def _update_mapping(
         m: dict[_KT, MappingBase[_KV]],
@@ -513,14 +514,13 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
     del data
 
 
-def update_svt_trait_release(data: MasterData) -> dict[int, MappingBase[list[int]]]:
-    svt_trait_release: dict[int, MappingBase[list[int]]] = {}
+def update_svt_trait_release(mappings: MappingData, data: MasterData) -> None:
     for trait_id in SVT_TRAIT_RELEASE_KEYS:
         svt_ids: list[int] = []
-        svt_traits: list[NiceTrait] = []
         for svt in data.nice_servant_lore:
             if svt.collectionNo <= 0:
                 continue
+            svt_traits: list[NiceTrait] = []
             svt_traits.extend(svt.traits)
             for x in svt.ascensionAdd.individuality.ascension.values():
                 svt_traits.extend(x)
@@ -528,13 +528,12 @@ def update_svt_trait_release(data: MasterData) -> dict[int, MappingBase[list[int
                 svt_traits.extend(x)
             for x in svt.traitAdd:
                 svt_traits.extend(x.trait)
-            svt_trait_ids = [trait.id for trait in svt_traits]
+            svt_trait_ids = {trait.id for trait in svt_traits}
             if trait_id in svt_trait_ids:
                 svt_ids.append(svt.collectionNo)
         svt_ids.sort()
-        trait_release = svt_trait_release.setdefault(trait_id, MappingBase())
+        trait_release = mappings.svt_trait_release.setdefault(trait_id, MappingBase())
         trait_release.update(data.region, svt_ids)
-    return svt_trait_release
 
 
 def fix_cn_transl_qab(data: dict[str, dict[str, str | None]]):

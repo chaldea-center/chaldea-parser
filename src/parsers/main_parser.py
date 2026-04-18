@@ -1056,7 +1056,7 @@ class MainParser:
         region_data: list[GameTopRegionInfo] = [
             GameTopRegionInfo(
                 region=Region.JP,
-                gameServer="gaem.fate-go.jp",
+                gameServer="game.fate-go.jp",
                 bundle="com.aniplex.fategrandorder",
                 unityVer="2022.3.28f1",
             ),
