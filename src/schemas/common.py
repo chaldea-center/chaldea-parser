@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Generic, TypeVar
 
-from app.schemas.common import Region
+from app.schemas.common import Region, RegionInfo
 from app.schemas.nice import NiceGift
 from app.schemas.raw import MstMasterMission
 from pydantic import BaseModel, ConfigDict, Field
@@ -279,6 +279,33 @@ class DataVersion(BaseModel):
     utc: str
     minimalApp: str
     files: dict[str, FileVersion] = {}
+
+
+class GameTopRegionInfo(RegionInfo):
+    region: Region
+    hash: str = ""
+    timestamp: int = 0
+    serverHash: str = ""
+    serverTimestamp: int = 0
+    gameServer: str
+    bundle: str
+    appVer: str = ""
+    verCode: str = ""
+    # dataVer: int | None = None
+    # dateVer: int | None = None
+    # assetbundle: RegionAssetBundle | None = None
+    assetbundleFolder: str = ""
+    unityVer: str | None = None
+
+    def update_region_info(self, info: RegionInfo):
+        if info.timestamp > self.timestamp or (
+            info.timestamp == self.timestamp
+            and info.serverTimestamp > self.serverTimestamp
+        ):
+            for field in RegionInfo.model_fields:
+                value = getattr(info, field, None)
+                if value is not None:
+                    setattr(self, field, value)
 
 
 # raw

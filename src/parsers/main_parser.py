@@ -29,6 +29,7 @@ from ..config import PayloadSetting, settings
 from ..schemas.common import (
     DataVersion,
     FileVersion,
+    GameTopRegionInfo,
     MappingBase,
     MappingStr,
     MstClass,
@@ -658,9 +659,9 @@ class MainParser:
                     values = list(obj.values())
                 _normal_dump(values, key, f"{base_fn}.{i + 2}.json", encoder)
             else:
-                assert (
-                    not obj
-                ), f"There are still {len(obj)} values not saved: {list(obj.keys())}"
+                assert not obj, (
+                    f"There are still {len(obj)} values not saved: {list(obj.keys())}"
+                )
 
         def _dump_file(fp: Path, key: str, fn: str | None = None):
             if fn is None:
@@ -750,7 +751,7 @@ class MainParser:
         _normal_dump(data.questGroups, "questGroups")
         for index, phases in enumerate(data.questPhaseDetails):
             _normal_dump(
-                phases, "questPhaseDetails", f"questPhaseDetails.{index+1}.json"
+                phases, "questPhaseDetails", f"questPhaseDetails.{index + 1}.json"
             )
 
         _dump_by_count(data.nice_gacha, 2000, "mstGacha")
@@ -1051,70 +1052,55 @@ class MainParser:
     @staticmethod
     def gametop():
         fp = settings.output_dist / "gametop.json"
-        data = {
-            "JP": {
-                "region": "JP",
-                "gameServer": "game.fate-go.jp",
-                "bundle": "com.aniplex.fategrandorder",
-                "unityVer": "2022.3.28f1",
-            },
-            "NA": {
-                "region": "NA",
-                "gameServer": "game.fate-go.us",
-                "bundle": "com.aniplex.fategrandorder.en",
-                "unityVer": None,
-            },
-            "CN": {
-                "region": "CN",
-                "gameServer": "",
-                "bundle": "com.bilibili.fatego",
-                "unityVer": "2022.3.18f1",
-            },
-        }
 
-        for region in data.keys():
-            region_info = AtlasApi.api_model(
-                f"/raw/{region}/info", RegionInfo, expire_after=0
-            )
-            assert region_info
-            data[region] |= {
-                "hash": region_info.hash,
-                "timestamp": region_info.timestamp,
-                "serverHash": region_info.serverHash,
-                "serverTimestamp": region_info.serverTimestamp,
-                "dataVer": region_info.dataVer or 0,
-                "dateVer": region_info.dateVer or 0,
-                "assetbundle": region_info.assetbundle,
-            }
+        region_data: list[GameTopRegionInfo] = [
+            GameTopRegionInfo(
+                region=Region.JP,
+                gameServer="gaem.fate-go.jp",
+                bundle="com.aniplex.fategrandorder",
+                unityVer="2022.3.28f1",
+            ),
+            GameTopRegionInfo(
+                region=Region.NA,
+                gameServer="game.fate-go.us",
+                bundle="com.aniplex.fategrandorder.en",
+                unityVer=None,
+            ),
+            GameTopRegionInfo(
+                region=Region.CN,
+                gameServer="",
+                bundle="com.bilibili.fatego",
+                unityVer="2022.3.18f1",
+            ),
+        ]
 
-        for region in ["JP", "NA"]:
-            top = DownUrl.mst_data("gamedatatop", Region(region), "")
-            top = top["response"][0]["success"]
-            assetbundle = DownUrl.mst_data("assetbundle", Region(region), "metadata/")
-            ver_codes = requests.get(
-                f"https://fgo.square.ovh/{region}/verCode.txt?t={int(time.time())}"
-            ).text
-            ver_code_match = re.match(
-                r"^appVer=(\d+\.\d+\.\d+)&verCode=([0-9a-f]{64})$", ver_codes
-            )
-            assert ver_code_match, ver_codes
-            data[region] |= {
-                "appVer": ver_code_match.group(1),
-                "verCode": ver_code_match.group(2),
-                "dataVer": max(data[region]["dataVer"], top["dataVer"]),
-                "dateVer": max(data[region]["dateVer"], top["dateVer"]),
-                "assetbundleFolder": assetbundle["folderName"],
-            }
+        for data in region_data:
+            for url in (f"/raw/{data.region}/info", f"/export/{data.region}/info.json"):
+                region_info = AtlasApi.api_model(url, RegionInfo, expire_after=0)
+                assert region_info
+                data.update_region_info(region_info)
+            # appVer & verCode
+            if data.region in (Region.JP, Region.NA):
+                resp = requests.get(
+                    f"https://fgo.bigcereal.com/{data.region}/verCode.txt?t={int(time.time())}"
+                )
+                resp.raise_for_status()
+                ver_code_match = re.match(
+                    r"^appVer=(\d+\.\d+\.\d+)&verCode=([0-9a-f]{64})$", resp.text
+                )
+                assert ver_code_match, resp.text
+                data.appVer = ver_code_match.group(1)
+                data.verCode = ver_code_match.group(2)
+            elif data.region == Region.CN:
+                cn_config = requests.get(
+                    "https://static.biligame.com/config/fgo.config.js"
+                )
+                cn_config.raise_for_status()
+                data.appVer = re.findall(
+                    r"_([1-3]\.\d+\.\d+)_[^\"]+\.apk", cn_config.text
+                )[0]
+                data.verCode = ""
 
-        # CN
-        cn_top = DownUrl.mst_data("gamedatatop", Region.CN, "")
-        cn_top = cn_top["response"][0]["success"]
-        cn_config = requests.get("https://static.biligame.com/config/fgo.config.js")
-        data["CN"] |= {
-            "appVer": re.findall(r"_([1-3]\.\d+\.\d+)_[^\"]+\.apk", cn_config.text)[0],
-            "verCode": "",
-            "dataVer": cn_top["version"],
-            "dateVer": 0,
-            "assetbundleFolder": "",
-        }
-        dump_json(data, fp)
+            assert data.timestamp and data.dataVer and data.appVer, data
+
+        dump_json({data.region: data for data in region_data}, fp)
