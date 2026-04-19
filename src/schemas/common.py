@@ -295,8 +295,8 @@ class GameTopRegionInfo(BaseModel):
     serverHash: str = ""
     serverTimestamp: int = 0
     # data
-    dataVer: int | None = None
-    dateVer: int | None = None
+    dataVer: int = 0
+    dateVer: int = 0
     assetbundle: RegionAssetBundle | None = None
 
     def update_region_info(self, info: RegionInfo):
