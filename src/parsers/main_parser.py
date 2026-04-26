@@ -1058,7 +1058,7 @@ class MainParser:
                 region=Region.JP,
                 gameServer="game.fate-go.jp",
                 bundle="com.aniplex.fategrandorder",
-                unityVer="2022.3.28f1",
+                unityVer="2022.3.62f2",
             ),
             GameTopRegionInfo(
                 region=Region.NA,
