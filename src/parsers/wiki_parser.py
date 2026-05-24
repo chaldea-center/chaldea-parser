@@ -1238,12 +1238,21 @@ class WikiParser:
             simulator_page = MOONCELL.get_page_text(f"{title}/模拟器")
             sim_params = parse_template(simulator_page, r"^{{抽卡模拟器")
             ssr_str = sim_params.get2("福袋")
-            if ssr_str and ssr_str.lower() == "ssrsr":
-                summon.type = SummonType.gssrsr
-            elif ssr_str:
-                summon.type = SummonType.gssr
+            if ssr_str:
+                if ssr_str and ssr_str.lower() == "ssrsr":
+                    summon.type = SummonType.gssrsr
+                elif ssr_str:
+                    summon.type = SummonType.gssr
+                else:
+                    summon.type = SummonType.limited
             else:
-                summon.type = SummonType.limited
+                summon_type = params.get2("类型")
+                if summon_type == "福袋":
+                    summon.type = SummonType.gssr
+                elif summon_type == "剧情":
+                    summon.type = SummonType.story
+                else:
+                    summon.type = SummonType.limited
 
             for i in range(1, 101):
                 sub_title = sim_params.get(f"子名称{i}")
