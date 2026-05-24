@@ -123,10 +123,10 @@ class ServantWBase(BaseModel):
     mcLink: str | None = None
     fandomLink: str | None = None
     nicknames: MappingBase[list[str]] = MappingBase()
+    releasedAt: int | None = None
 
 
 class ServantW(ServantWBase):
-    releasedAt: int | None = None
     obtains: list[SvtObtain] = []
     aprilFoolAssets: list[str] = []  # url
     aprilFoolProfile: MappingStr = MappingStr()

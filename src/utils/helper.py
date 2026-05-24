@@ -13,6 +13,7 @@ from typing import Any, Callable, Generic, Iterable, Sequence, Type, TypeVar
 
 import orjson
 import pydantic_core
+import pydantic.networks
 from app.schemas.common import Region
 from lxml import etree  # type: ignore
 from pydantic import BaseModel, TypeAdapter
@@ -93,6 +94,8 @@ ENCODERS_BY_TYPE: dict[Type[Any], Callable[[Any], Any]] = {
     set: list,
     # UUID: str,
     pydantic_core.Url: str,
+    pydantic_core.Url: str,
+    pydantic.networks.AnyUrl: str,
 }
 
 
@@ -251,7 +254,7 @@ def catch_exception(func):
     def catch_exception_wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except:  # noqas
+        except:  # noqa: E722
             s = f"=== Error in {threading.current_thread()}, {func} ===\n"
             if args:
                 s += f"args={str(args):.200s}\n"
