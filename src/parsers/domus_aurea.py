@@ -180,7 +180,7 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
     WAR_COL = 0
     SPOT_COL = 1
     RUN_COL = 3
-    table = table[HEAD_ROW:][:-6]
+    table = table[HEAD_ROW:][:-2]
 
     # _add_item_to_table(table, 6559, "ユニバーサルキューブ", "花")
     # _add_item_to_table(table, 6560, "月光核", "釜")
@@ -207,8 +207,9 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
         94137201,
         94137202,
     ]:
-        _add_quest_to_table(table, mst_data.quests[add_quest_id], item_id_col_map)
-        time.sleep(2)
+        # _add_quest_to_table(table, mst_data.quests[add_quest_id], item_id_col_map)
+        # time.sleep(2)
+        ...
 
     # <questId, row>
     quest_id_row_map: dict[int, int] = {}
@@ -223,11 +224,15 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
     sheet = DropRateSheet()
     sheet.itemIds = list(item_id_col_map.keys())
     for quest_id, row in quest_id_row_map.items():
-        ap = mst_data.quests[quest_id].consume
-        bond = mst_data.questPhases[quest_id].friendshipExp
-        exp = mst_data.questPhases[quest_id].playerExp
+        quest = mst_data.quests[quest_id]
+        quest_phase = mst_data.questPhases[quest_id]
+        ap = quest.consume
+        bond = quest_phase.friendshipExp
+        exp = quest_phase.playerExp
         run_str = table[row][RUN_COL].replace(",", "").strip()
         if run_str == "" or run_str == "0":
+            if "冠位研鑽戦" in quest.name and "Ⅶ" not in quest.name:
+                continue
             print("skip 0 run quest:", quest_id, mst_data.quests[quest_id].name)
             continue
         sheet.add_quest(quest_id, ap=ap, run=int(run_str), bond=bond, exp=exp)
