@@ -214,15 +214,18 @@ class WikiTool:
                         info=img._info,
                     )
                     self.cache.images[name] = info
+                    logger.debug(f"{prefix} download: {name_json}")
                 else:
-                    info = None
+                    info = WikiImageInfo(
+                        name=name,
+                        updated=now,
+                        info={"__exists__": False},
+                    )
                     logger.debug(f"{prefix}: {name_json} not exists")
                 if retry_n > 0:
                     logger.warning(
                         f"{prefix} downloaded {name_json} after {retry_n} retry"
                     )
-                else:
-                    logger.debug(f"{prefix} download: {name_json}")
                 self._count += 1
                 if self._count > 100:
                     self._count = 0
@@ -296,7 +299,10 @@ class WikiTool:
 
     def get_image_cache(self, name: str) -> WikiImageInfo | None:
         name = self.norm_img_key(name)
-        return self.cache.images.get(name)
+        img = self.cache.images.get(name)
+        if img and img.is_not_exists:
+            return None
+        return img
 
     def remove_image_cache(self, name: str):
         name = self.norm_img_key(name)
@@ -311,6 +317,8 @@ class WikiTool:
             image = self.get_image_cache(name)
         if image is None:
             image = self._call_request_img(name)
+        if image and image.is_not_exists:
+            return None
         return image
 
     def get_image_name(self, name: str, allow_cache: bool = True) -> str:
@@ -495,6 +503,13 @@ class WikiTool:
             elif isinstance(page[1], WikiImageInfo):
                 logger.info(f"purge oldest image {page[0]}")
                 self.remove_image_cache(page[0])
+        images = list(self.cache.images.items())
+        for k, img in images:
+            if img.is_not_exists and (
+                img.updated < _now - 3600 * 24 * 60
+                or img.updated > _now - 3600 * 24 * 7
+            ):
+                self.cache.images.pop(k, None)
 
     def remove_recent_changed(self, days: float | None = None):
         last_timestamp = self._get_expire_time(2 / 24, days)

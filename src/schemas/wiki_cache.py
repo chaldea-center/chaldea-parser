@@ -15,6 +15,10 @@ class WikiImageInfo(_WikiPageBase):
     info: dict = {}
 
     @property
+    def is_not_exists(self) -> bool:
+        return self.info.get("__exists__") is False
+
+    @property
     def title(self) -> str:
         return self.info["title"]
 
