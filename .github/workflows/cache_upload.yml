@@ -4,7 +4,7 @@ on:
 
 jobs:
   upload:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       cache_dir: "cache/"
     steps:

@@ -29,11 +29,13 @@ jobs:
         shell: bash
 
       - uses: actions/checkout@v6
-      - uses: actions/checkout@v6
+      - name: Checkout fgo-game-data-api
+        uses: actions/checkout@v6
         with:
           repository: chaldea-center/fgo-game-data-api
           path: fgo-game-data-api
-      - uses: actions/checkout@v6
+      - name: Checkout fgo-game-data-jp
+        uses: actions/checkout@v6
         with:
           repository: atlasacademy/fgo-game-data
           path: ${{ env.game_data_jp_dir }}
