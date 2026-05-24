@@ -3,6 +3,7 @@ name = "chaldea-parser"
 version = "1.1.0"
 description = "Chaldea parser"
 authors = ["narumi <narumi@chaldea.center>"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -20,6 +21,7 @@ lxml = "^4.9.1"
 discord-webhook = "^1.0.0"
 msgpack = "^1.0.8"
 pytz = "^2024.1"
+gitpython = "^3.1.50"
 
 [tool.poetry.group.dev.dependencies]
 fgo-game-data-api = { git = "https://github.com/chaldea-center/fgo-game-data-api.git" }
