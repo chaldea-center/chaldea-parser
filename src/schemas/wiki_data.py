@@ -145,6 +145,7 @@ class CraftEssenceW(BaseModel):
     unknownCharacters: list[str] = []
     mcLink: str | None = None
     fandomLink: str | None = None
+    releasedAt: int | None = None
 
 
 class CommandCodeW(BaseModel):

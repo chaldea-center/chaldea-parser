@@ -12,7 +12,7 @@ import pytz
 import requests
 from app.schemas.basic import BasicCommandCode, BasicEquip
 from app.schemas.common import Region, RegionInfo, Trait
-from app.schemas.enums import OLD_TRAIT_MAPPING, SvtClass, get_class_name
+from app.schemas.enums import OLD_TRAIT_MAPPING, SvtClass, get_class_name, SERVANT_TYPES
 from app.schemas.gameenums import EventType, NiceItemType, SvtType
 from app.schemas.nice import NiceBaseFunction, NiceBuff, NiceBuffType
 from app.schemas.raw import (
@@ -89,6 +89,7 @@ from .core.ticket import parse_exchange_tickets
 from .domus_aurea import run_drop_rate_update
 from .helper import get_all_func_val
 from .update_mapping import run_mapping_update
+from . import svt_release_time
 
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
@@ -159,6 +160,7 @@ class MainParser:
             self.jp_data.mstQuestPhaseDetail,
         )
         self.jp_data.constData = get_const_data(self.jp_data)
+        self.update_svt_release_time()
         self.save_data()
         print(self.stopwatch.output())
 
@@ -1029,6 +1031,25 @@ class MainParser:
         )
         self._merge_json(mappings_repo, override_data)
         self.jp_data.mappingData = parse_json_obj_as(MappingData, mappings_repo)
+
+    def update_svt_release_time(self):
+        svt_releases = svt_release_time.main(
+            Path(settings.game_data_jp_dir),
+            output_path=Path(settings.output_wiki / "svt_release_time.json"),
+            ignore_first_commit=True,
+        )
+        for release in svt_releases:
+            if release.collectionNo <= 0 or release.timestamp <= 0:
+                continue
+            if release.timestamp <= svt_release_time.MOST_OLD_TIMESTAMP:
+                # use previous data
+                continue
+            if release.type in SERVANT_TYPES:
+                svt_add = self.wiki_data.get_svt(release.collectionNo)
+                svt_add.releasedAt = release.timestamp
+            elif release.type == SvtType.SERVANT_EQUIP:
+                ce_add = self.wiki_data.get_ce(release.collectionNo)
+                ce_add.releasedAt = release.timestamp
 
     @staticmethod
     def _merge_json(dest: dict, src: dict):

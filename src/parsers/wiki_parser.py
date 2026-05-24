@@ -459,6 +459,8 @@ class WikiParser:
                 if skill_cn and skill_jp:
                     self.mc_transl.skill_names.setdefault(skill_jp, skill_cn)
 
+    # deprecated
+    def _mc_svt_release(self):
         release_wikitext = MOONCELL.expand_template(
             """{{#ask:
 [[分类:英灵图鉴]][[基础ATK::+]]

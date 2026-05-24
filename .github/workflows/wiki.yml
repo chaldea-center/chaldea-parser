@@ -44,6 +44,7 @@ jobs:
           path: ${{ env.game_data_jp_dir }}
           ref: JP
           token: ${{ secrets.GH_PAGES_TOKEN }}
+          fetch-depth: 5
 
       - name: Configure git author
         run: |
