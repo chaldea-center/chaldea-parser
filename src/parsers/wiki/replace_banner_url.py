@@ -1,6 +1,7 @@
 # %%
 import re
 from pathlib import Path
+import time
 from typing import Any, Callable
 from urllib.parse import urljoin
 
@@ -136,9 +137,15 @@ def parse_cn_top_banner(notice_id: str):
     if not notice_id.isdigit():
         return None
         # notice_id = re.findall(r"[^\d]\d+$", notice_id)[-1][1:]
-    response = api.call_api(f"https://api.biligame.com/news/{notice_id}.action").json()
+    time.sleep(0.2)
+    url = f"https://api.biligame.com/news/{notice_id}.action"
+    logger.debug(f"parse CN top banner: {url}")
+    resp = api.call_api(url)
+    resp.raise_for_status()
+    response = resp.json()
+
     if response.get("code") == -400:
-        logger.warning(f"https://api.biligame.com/news/{notice_id}.action", response)
+        logger.warning(url, response)
         return
     source = response["data"]["content"]
     img = _get_xpath(source, "//img/@src")
