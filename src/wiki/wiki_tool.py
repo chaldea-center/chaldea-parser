@@ -299,10 +299,12 @@ class WikiTool:
             self.remove_page_cache(page.redirect)
         return page
 
-    def get_image_cache(self, name: str) -> WikiImageInfo | None:
+    def get_image_cache(
+        self, name: str, skip_exist_check=False
+    ) -> WikiImageInfo | None:
         name = self.norm_img_key(name)
         img = self.cache.images.get(name)
-        if img and img.is_not_exists:
+        if not skip_exist_check and img and img.is_not_exists:
             return None
         return img
 
@@ -316,8 +318,10 @@ class WikiTool:
             return None
         image: WikiImageInfo | None = None
         if allow_cache:
-            image = self.get_image_cache(name)
-        if image is None:
+            image = self.get_image_cache(name, skip_exist_check=True)
+        if image is None or (
+            image.is_not_exists and image.updated > time.time() - 7 * 24 * 3600
+        ):
             image = self._call_request_img(name)
         if image and image.is_not_exists:
             return None
