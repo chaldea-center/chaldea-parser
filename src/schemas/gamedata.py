@@ -174,7 +174,7 @@ class MasterData(BaseModelORJson):
         self.nice_equip_lore.sort(key=lambda x: x.collectionNo)
         self.nice_mystic_code.sort(key=lambda x: x.id)
         self.nice_servant_lore.sort(
-            key=lambda x: (x.collectionNo if x.collectionNo else x.id)
+            key=lambda x: x.collectionNo if x.collectionNo else x.id
         )
         self.nice_war.sort(key=lambda x: x.id)
         self.nice_event.sort(key=lambda x: x.startedAt)
@@ -185,9 +185,7 @@ class MasterData(BaseModelORJson):
         self.fixedDrops = sort_dict(self.fixedDrops)
         self.dropData.fixedDrops = sort_dict(self.dropData.fixedDrops)
         self.dropData.freeDrops = sort_dict(self.dropData.freeDrops)
-        self.mappingData.costume_detail = sort_dict(self.mappingData.costume_detail)
-        self.mappingData.trait = sort_dict(self.mappingData.trait)
-        # self.mappingData.event_trait = sort_dict(self.mappingData.event_trait)
+        self.mappingData.sort()
         self.base_tds = sort_dict(self.base_tds)
         self.base_skills = sort_dict(self.base_skills)
         self.base_functions = sort_dict(self.base_functions)

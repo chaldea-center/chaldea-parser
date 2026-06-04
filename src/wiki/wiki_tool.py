@@ -235,6 +235,8 @@ class WikiTool:
                     )
 
                 self.active_requests.discard(name)
+                if info.is_not_exists:
+                    return None
                 return info
             except Exception as e:
                 retry_n += 1

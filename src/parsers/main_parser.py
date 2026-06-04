@@ -977,9 +977,6 @@ class MainParser:
             if isinstance(name, SvtClass):
                 name = name.value
             v.name = name
-        svt_class = sort_dict(enums.svt_class)
-        enums.svt_class = {}
-        enums.svt_class = svt_class
 
     def _fix_cn_translation(self):
         logger.info("fix Chinese translations")

@@ -40,6 +40,7 @@ from .common import (
     SummonType,
     SvtObtain,
 )
+from ..utils.helper import sort_dict
 
 
 class EventTrait(MappingStr):
@@ -222,3 +223,9 @@ class MappingData(BaseModel):
 
     enums: EnumMapping = EnumMapping()
     misc: dict[str, dict[str, MappingStr]] = {}
+
+    def sort(self):
+        self.costume_detail = sort_dict(self.costume_detail)
+        self.trait = sort_dict(self.trait)
+        self.event_trait = sort_dict(self.event_trait)
+        self.enums.svt_class = sort_dict(self.enums.svt_class)
