@@ -8,11 +8,13 @@ from git import Repo
 
 from ..utils.log import logger
 
+
 SVT_FILE = "master/mstSvt.json"
 VALID_SVT_TYPES = {1, 2, 6, 9}
 JST = timezone(timedelta(hours=9))
 
 MOST_OLD_TIMESTAMP = 1576299577
+
 
 @dataclass
 class SvtRelease:

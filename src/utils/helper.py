@@ -12,8 +12,8 @@ from pathlib import Path
 from typing import Any, Callable, Generic, Iterable, Sequence, Type, TypeVar
 
 import orjson
-import pydantic_core
 import pydantic.networks
+import pydantic_core
 from app.schemas.common import Region
 from lxml import etree  # type: ignore
 from pydantic import BaseModel, TypeAdapter

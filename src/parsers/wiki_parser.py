@@ -61,6 +61,7 @@ from ..wiki.wiki_tool import KnownTimeZone
 from .core.aa_export import update_exported_files
 from .wiki import replace_banner_url
 
+
 ENEMY_COLLECTION_IDS = (83, 149, 151, 152, 168, 240, 333, 411, 412, 436, 443, 460)
 
 
@@ -1395,7 +1396,9 @@ class WikiParser:
         ]:
             costume_page = FANDOM.get_page_text(page_name)
             for row in (
-                wikitextparser.parse(costume_page)  # pyright: ignore[reportArgumentType]
+                wikitextparser.parse(
+                    costume_page
+                )  # pyright: ignore[reportArgumentType]
                 .tables[0]
                 .data()[1:]  # pyright: ignore[reportArgumentType]
             ):

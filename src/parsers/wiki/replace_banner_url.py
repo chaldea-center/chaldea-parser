@@ -1,7 +1,7 @@
 # %%
 import re
-from pathlib import Path
 import time
+from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import urljoin
 

@@ -12,7 +12,7 @@ import pytz
 import requests
 from app.schemas.basic import BasicCommandCode, BasicEquip
 from app.schemas.common import Region, RegionInfo, Trait
-from app.schemas.enums import OLD_TRAIT_MAPPING, SvtClass, get_class_name, SERVANT_TYPES
+from app.schemas.enums import OLD_TRAIT_MAPPING, SERVANT_TYPES, SvtClass, get_class_name
 from app.schemas.gameenums import EventType, NiceItemType, SvtType
 from app.schemas.nice import NiceBaseFunction, NiceBuff, NiceBuffType
 from app.schemas.raw import (
@@ -72,6 +72,7 @@ from ..utils.helper import (
 )
 from ..utils.stopwatch import Stopwatch
 from ..wiki.wiki_tool import KnownTimeZone
+from . import svt_release_time
 from .core.aa_export import update_exported_files
 from .core.const_data import get_const_data
 from .core.dump import DataEncoder
@@ -89,7 +90,6 @@ from .core.ticket import parse_exchange_tickets
 from .domus_aurea import run_drop_rate_update
 from .helper import get_all_func_val
 from .update_mapping import run_mapping_update
-from . import svt_release_time
 
 
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
@@ -661,9 +661,9 @@ class MainParser:
                     values = list(obj.values())
                 _normal_dump(values, key, f"{base_fn}.{i + 2}.json", encoder)
             else:
-                assert not obj, (
-                    f"There are still {len(obj)} values not saved: {list(obj.keys())}"
-                )
+                assert (
+                    not obj
+                ), f"There are still {len(obj)} values not saved: {list(obj.keys())}"
 
         def _dump_file(fp: Path, key: str, fn: str | None = None):
             if fn is None:

@@ -30,6 +30,7 @@ from app.schemas.gameenums import (
 )
 from pydantic import BaseModel
 
+from ..utils.helper import sort_dict
 from .common import (
     CEObtain,
     CustomMissionType,
@@ -40,7 +41,6 @@ from .common import (
     SummonType,
     SvtObtain,
 )
-from ..utils.helper import sort_dict
 
 
 class EventTrait(MappingStr):
