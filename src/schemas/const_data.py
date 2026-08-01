@@ -120,6 +120,7 @@ class ConstGameData(BaseModel):
     svtFaceLimits: dict[int, list[int]]
     extraWarEventMapping: dict[int, int]
     sameQuestRemap: dict[int, int]
+    subEvents: dict[int, list[int]]
     routeSelects: dict[str, list[str]]
     config: ConstDataConfig
     deprecatedEnums: dict[str, dict[str, int]]
