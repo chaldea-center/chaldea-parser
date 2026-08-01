@@ -31,7 +31,7 @@ def update_exported_files(regions: list[Region], force_update: bool):
         OpenApiInfo, openapi_remote["info"]
     ) != parse_json_obj_as(OpenApiInfo, openapi_local["info"])
     if api_changed:
-        logger.info(f'API changed:\n{dict(openapi_remote["info"], description="")}')
+        logger.info(f"API changed:\n{dict(openapi_remote['info'], description='')}")
 
     for region in Region.__members__.values():
         worker = Worker(f"exported_file_{region}", fake_mode=False)

@@ -3,9 +3,10 @@ import asyncio
 import functools
 import re
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import timedelta
-from typing import Generator, Type, TypeVar
+from typing import TypeVar
 
 import orjson
 import requests
@@ -22,14 +23,11 @@ from requests_cache.models.response import CachedResponse
 
 from .helper import parse_json_obj_as
 
-
 __all__ = ["HttpApiUtil"]
 
 from requests_cache.session import FILTER_FN
 
-from .helper import Model
 from .log import logger
-
 
 _T = TypeVar("_T")
 
@@ -102,7 +100,7 @@ class HttpApiUtil(abc.ABC):
                         retry_after = float(match.group(1)) + 1
                     else:
                         retry_after = 6
-                except:
+                except:  # noqa: E722
                     retry_after = 6
                 retry_at = max(retry_at, time.time() + retry_after)
                 logger.debug(f"retry after {int(retry_after)} seconds")
@@ -127,9 +125,7 @@ class HttpApiUtil(abc.ABC):
         :return:
         """
         url = self.full_url(url)
-        key = self.cache_storage.create_key(
-            url=url, method="GET"
-        )  # pyright: ignore[reportArgumentType]
+        key = self.cache_storage.create_key(url=url, method="GET")  # pyright: ignore[reportArgumentType]
         resp = self.cache_storage.get_response(key)
         should_delete = False
         if resp and resp.is_expired:
@@ -140,15 +136,15 @@ class HttpApiUtil(abc.ABC):
             and resp
             and isinstance(expire_after, int)
             and expire_after >= 0
+            and time.time() > resp.created_at.timestamp() + expire_after
         ):
-            if time.time() > resp.created_at.timestamp() + expire_after:
-                should_delete = True
+            should_delete = True
         if not should_delete and resp and filter_fn is not None:
             try:
                 should_delete = (
                     filter_fn if isinstance(filter_fn, bool) else filter_fn(resp)
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"error in filter_fn: {e}")
                 should_delete = True
         if should_delete and self.cache_storage.has_url(url):
@@ -174,7 +170,7 @@ class HttpApiUtil(abc.ABC):
     def api_model(
         self,
         url,
-        model: Type[_T],
+        model: type[_T],
         expire_after: ExpirationTime = None,
         filter_fn: FILTER_FN2 = None,
         **kwargs,
@@ -246,7 +242,7 @@ class HttpApiUtil(abc.ABC):
 
     def remove(self, filter_fn: FILTER_FN):
         keys = []
-        for key in self.cache_storage.responses.keys():
+        for key in self.cache_storage.responses:
             resp = self.cache_storage.get_response(key)
             if resp and filter_fn(resp):
                 keys.append(key)

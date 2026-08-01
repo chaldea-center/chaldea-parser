@@ -204,7 +204,6 @@ def trim(s: str, chars=None):
 
 def parse_template(template: Wikitext, matches: str | None = None) -> Params:
     if not isinstance(template, Template):
-
         templates = mwparse(template).filter_templates(matches=matches)
         if len(templates) == 0:
             return Params()

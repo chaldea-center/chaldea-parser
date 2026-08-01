@@ -3,7 +3,6 @@ import re
 from ..schemas.common import Region
 from ..schemas.const_data import SvtAllowedExtraPassive, SvtLimitHide
 
-
 MIN_APP = "2.5.22"
 
 
@@ -57,20 +56,11 @@ SVT_LIMIT_HIDES: dict[int, list[SvtLimitHide]] = {
     -1: [
         SvtLimitHide(
             limits=[-1],
-            addPassives=[
-                # fmt:off
-                # Valentine 2023 NP300, Fate 20th
-                940274, 940321,
-                # 巡霊の祝祭
-                940284, 940285, 940289, 940298, 940302, 940308,
-                #  終局特異点
-                960502, 960503, 960504, 960505, 960506, 960507,
-                #  終章
-                940420, 940421, 940422, 940423, 940424, 940425,
-                # 夢火の導き Bond 15
-                970663,
-                # fmt:on
-            ],
+            addPassives=[940274, 940321]  # Valentine 2023 NP300, Fate 20th
+            + [940284, 940285, 940289, 940298, 940302, 940308]  # 巡霊の祝祭
+            + [960502, 960503, 960504, 960505, 960506, 960507]  #  終局特異点
+            + [940420, 940421, 940422, 940423, 940424, 940425]  #  終章
+            + [970663],  # 夢火の導き Bond 15
         )
     ],
     800100: [

@@ -25,7 +25,7 @@ def guess_mission_type(mm_id: int) -> NiceMissionType:
 
 
 def load_mm_with_gifts(
-    mms_cache: dict[int, MstMasterMissionWithGift]
+    mms_cache: dict[int, MstMasterMissionWithGift],
 ) -> dict[int, MstMasterMissionWithGift]:
     mms: dict[int, MstMasterMissionWithGift] = dict(mms_cache)
 

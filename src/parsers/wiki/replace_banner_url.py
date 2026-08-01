@@ -1,8 +1,9 @@
 # %%
 import re
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 from urllib.parse import urljoin
 
 import requests
@@ -13,7 +14,6 @@ from ...schemas.wiki_data import EventWBase, LimitedSummonBase, WarW
 from ...utils.helper import dump_json_beautify, load_json, parse_json_obj_as
 from ...utils.http_cache import HttpApiUtil
 from ...utils.log import logger
-
 
 api = HttpApiUtil(
     api_server="",
@@ -41,7 +41,7 @@ def main(
                 official_new = parser(url)
                 if official_new:
                     return official_new
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.exception(e)
                 return official
         return official
@@ -140,7 +140,14 @@ def parse_cn_top_banner(notice_id: str):
     time.sleep(0.2)
     url = f"https://api.biligame.com/news/{notice_id}.action"
     logger.debug(f"parse CN top banner: {url}")
-    resp = api.call_api(url)
+    resp = api.call_api(
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+            "Referer": "https://www.biligame.com/",
+        },
+    )
     resp.raise_for_status()
     response = resp.json()
 

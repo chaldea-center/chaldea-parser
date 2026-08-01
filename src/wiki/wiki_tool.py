@@ -1,12 +1,13 @@
 import contextlib
 import re
 import time
+from collections.abc import Callable
 from datetime import datetime
 from enum import StrEnum
 from functools import cached_property
 from hashlib import md5
 from pathlib import Path
-from typing import Any, Callable, Literal, cast
+from typing import Any, Literal, cast
 from urllib.parse import unquote
 
 import mwclient
@@ -20,7 +21,12 @@ from ratelimit import limits, sleep_and_retry
 from ..config import settings
 from ..schemas.wiki_cache import WikiCache, WikiImageInfo, WikiPageInfo
 from ..utils import dump_json, logger
-from ..utils.helper import load_json, parse_json_obj_as, retry_decorator
+from ..utils.helper import (
+    load_json,
+    parse_json_obj_as,
+    retry_decorator,
+    timestamp2datetime,
+)
 
 
 class KnownTimeZone(StrEnum):
@@ -73,12 +79,12 @@ class WikiTool:
                     if not img.info or img.info.get("ns") != 6:
                         self.cache.images.pop(key)
                 self.cache.host = self.host
-                updated = datetime.fromtimestamp(self.cache.updated).isoformat()
+                updated = timestamp2datetime(self.cache.updated).isoformat()
                 logger.debug(
                     f"wiki {self.host}: loaded {len(self.cache.pages)} pages, "
                     f"{len(self.cache.images)} images, last updated: {updated}"
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.error(f"[{self.host}] failed to load wiki cache: {e}")
 
     def clear(self):
@@ -377,12 +383,12 @@ class WikiTool:
         self,
         start=None,
         end=None,
-        dir="older",  # noqa
+        dir="older",
         namespace="0|10",
         prop=None,
         show=None,
         limit=None,
-        type=None,  # noqa
+        type=None,
         toponly=None,
     ):
         return self.query_listing(
@@ -520,7 +526,7 @@ class WikiTool:
     def remove_recent_changed(self, days: float | None = None):
         last_timestamp = self._get_expire_time(2 / 24, days)
         changes = self.recent_changes(
-            start=datetime.fromtimestamp(last_timestamp).isoformat(),
+            start=timestamp2datetime(last_timestamp).isoformat(),
             dir="newer",
             limit="max",
             type="new|edit",
@@ -530,7 +536,7 @@ class WikiTool:
         dropped = 0
         logger.info(
             f"[{self.host}] remove recent changes, last changed:"
-            f" {datetime.fromtimestamp(self.cache.updated).isoformat()}"
+            f" {timestamp2datetime(self.cache.updated).isoformat()}"
         )
         for record in changes:
             title = self.norm_key(record.get("title"))
@@ -550,7 +556,7 @@ class WikiTool:
                 "format": "json",
                 "list": "logevents",
                 "utf8": 1,
-                "leend": datetime.fromtimestamp(last_timestamp).isoformat(),
+                "leend": timestamp2datetime(last_timestamp).isoformat(),
                 "letype": letype,
                 "ledir": "older",
                 "lenamespace": str(ns),

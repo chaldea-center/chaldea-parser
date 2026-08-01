@@ -7,7 +7,6 @@ from .log import logger
 from .url import DownUrl
 from .worker import Worker
 
-
 SECS_PER_DAY = 24 * 3600
 
 

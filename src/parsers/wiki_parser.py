@@ -1396,9 +1396,7 @@ class WikiParser:
         ]:
             costume_page = FANDOM.get_page_text(page_name)
             for row in (
-                wikitextparser.parse(
-                    costume_page
-                )  # pyright: ignore[reportArgumentType]
+                wikitextparser.parse(costume_page)  # pyright: ignore[reportArgumentType]
                 .tables[0]
                 .data()[1:]  # pyright: ignore[reportArgumentType]
             ):

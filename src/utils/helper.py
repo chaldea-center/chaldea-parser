@@ -5,11 +5,12 @@ import re
 import subprocess
 import threading
 import time
+from collections.abc import Callable, Iterable, Sequence
 from decimal import Decimal
 from enum import Enum
 from operator import itemgetter
 from pathlib import Path
-from typing import Any, Callable, Generic, Iterable, Sequence, Type, TypeVar
+from typing import Any, Generic, TypeVar
 
 import orjson
 import pydantic.networks
@@ -20,7 +21,6 @@ from pydantic import BaseModel, TypeAdapter
 from pydantic.main import TupleGenerator
 
 from .log import logger
-
 
 Model = TypeVar("Model", bound=BaseModel)
 
@@ -68,7 +68,7 @@ def isoformat(o: datetime.date | datetime.time) -> str:
     return o.isoformat()
 
 
-ENCODERS_BY_TYPE: dict[Type[Any], Callable[[Any], Any]] = {
+ENCODERS_BY_TYPE: dict[type[Any], Callable[[Any], Any]] = {
     bytes: lambda o: o.decode(),
     # Color: str,
     datetime.date: isoformat,
@@ -116,7 +116,7 @@ def pydantic_encoder(obj):
         except KeyError:
             continue
         return encoder(obj)
-    else:  # We have exited the for loop without finding a suitable encoder
+    else:  # We have exited the for loop without finding a suitable encoder  # noqa: PLW0120
         raise TypeError(
             f"Object of type '{obj.__class__.__name__}' is not JSON serializable"
         )
@@ -199,7 +199,7 @@ def dump_json_beautify(
 
 
 def beautify_file(fp: str | Path):
-    result = subprocess.run(["js-beautify", "-r", "-s=2", "-n", str(fp)])
+    result = subprocess.run(["js-beautify", "-r", "-s=2", "-n", str(fp)], check=False)
     if result.returncode != 0:
         logger.error(
             f"beautify run failed, exit={result.returncode}\n"
@@ -228,11 +228,11 @@ def deepcopy_model_list(items: list[Model]) -> list[Model]:
     return [x.model_copy(deep=True) for x in items]
 
 
-def parse_model_list(objs: list, base_cls: Type[Model]) -> list[Model]:
+def parse_model_list(objs: list, base_cls: type[Model]) -> list[Model]:
     return [parse_json_obj_as(base_cls, obj) for obj in objs]
 
 
-FULL2HALF = dict((i + 0xFEE0, i) for i in range(0x20, 0x7F))
+FULL2HALF = {i + 0xFEE0: i for i in range(0x20, 0x7F)}
 
 
 def full2half(s: str):
@@ -257,9 +257,9 @@ def catch_exception(func):
         except:  # noqa: E722
             s = f"=== Error in {threading.current_thread()}, {func} ===\n"
             if args:
-                s += f"args={str(args):.200s}\n"
+                s += f"args={args!s:.200s}\n"
             if kwargs:
-                s += f"kwargs={str(kwargs):.200s}\n"
+                s += f"kwargs={kwargs!s:.200s}\n"
             logger.exception(s)
 
     return catch_exception_wrapper
@@ -368,3 +368,9 @@ def describe_regions(regions: list[Region]) -> str:
 
 def mean(xs: Iterable[int | float]):
     return sum(xs) / len(list(xs))
+
+
+def timestamp2datetime(t: int | None, tz=datetime.UTC) -> datetime.datetime:
+    if t is None:
+        return datetime.datetime.now(tz)
+    return datetime.datetime.fromtimestamp(t, tz)

@@ -3,9 +3,10 @@ import re
 import shutil
 import time
 from collections import defaultdict
+from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 import orjson
 import pytz
@@ -69,6 +70,7 @@ from ..utils.helper import (
     parse_json_file_as,
     parse_json_obj_as,
     pydantic_encoder,
+    timestamp2datetime,
 )
 from ..utils.stopwatch import Stopwatch
 from ..wiki.wiki_tool import KnownTimeZone
@@ -91,7 +93,6 @@ from .domus_aurea import run_drop_rate_update
 from .helper import get_all_func_val
 from .update_mapping import run_mapping_update
 
-
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
 
@@ -102,7 +103,7 @@ class MainParser:
         self.payload: PayloadSetting = PayloadSetting()
         logger.info(f"Payload: {self.payload}")
         self.stopwatch = Stopwatch("MainParser")
-        self.now = datetime.now()
+        self.now = timestamp2datetime(None)
         self.encoder = DataEncoder(self.jp_data)
 
     @count_time
@@ -457,7 +458,7 @@ class MainParser:
         )
 
         if region != Region.JP:
-            jp_item_ids = set(item.id for item in self.jp_data.nice_item)
+            jp_item_ids = {item.id for item in self.jp_data.nice_item}
             for item in master_data.nice_item:
                 if (
                     item.type in (NiceItemType.friendshipUpItem,)
@@ -661,9 +662,9 @@ class MainParser:
                     values = list(obj.values())
                 _normal_dump(values, key, f"{base_fn}.{i + 2}.json", encoder)
             else:
-                assert (
-                    not obj
-                ), f"There are still {len(obj)} values not saved: {list(obj.keys())}"
+                assert not obj, (
+                    f"There are still {len(obj)} values not saved: {list(obj.keys())}"
+                )
 
         def _dump_file(fp: Path, key: str, fn: str | None = None):
             if fn is None:
@@ -734,7 +735,7 @@ class MainParser:
         _dump_by_ranges(
             data.war_dict,
             ranges=[
-                list(range(0, 2000))
+                list(range(2000))
                 + list(range(40000, 41000))
                 + list(range(9999, 19000)),
                 range(8000, 9000),
@@ -806,7 +807,7 @@ class MainParser:
         settings.commit_msg.write_text(msg)
         try:
             self.gametop()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.exception("update gametop failed")
             discord.text(f"Update gametop failed: {e}")
 
@@ -940,24 +941,24 @@ class MainParser:
 
     def _post_mappings(self):
         mappings = self.jp_data.mappingData
-        for key in mappings.war_names.keys():
+        for key in mappings.war_names:
             name = mappings.event_names.pop(key, None)
             if name:
                 name.update_from(mappings.war_names[key])
                 mappings.war_names[key].update_from(name)
             mappings.spot_names.pop(key, None)
-        for key in mappings.svt_names.keys():
+        for key in mappings.svt_names:
             entity = mappings.entity_names.pop(key, None)
             if entity:
                 mappings.svt_names[key].update_from(entity)
-        for key in mappings.ce_names.keys():
+        for key in mappings.ce_names:
             mappings.entity_names.pop(key, None)
             mappings.skill_names.pop(key, None)
-        for key in mappings.cc_names.keys():
+        for key in mappings.cc_names:
             mappings.skill_names.pop(key, None)
-        for key in mappings.event_trait.keys():
+        for key in mappings.event_trait:
             mappings.trait.pop(key, None)
-        for key in mappings.field_trait.keys():
+        for key in mappings.field_trait:
             mappings.trait.pop(key, None)
 
     def _add_enum_mappings(self):

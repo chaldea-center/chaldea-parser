@@ -10,7 +10,7 @@ from .log import logger
 def _execute(webhook: DiscordWebhook, **kwargs):
     logger.info(f"Discord webhook: {webhook.json}")
     if not webhook.url:
-        logger.warning(f"Discord webhook url not set")
+        logger.warning("Discord webhook url not set")
         return
     with LocalProxy():
         resp = webhook.execute(**kwargs)
