@@ -427,6 +427,7 @@ class MainParser:
                 NiceBuffType.multiDeadFunction,
                 NiceBuffType.multiGutsFunction,
                 NiceBuffType.multiGutsBeforeFunction,
+                NiceBuffType.lastSelfturnprogressFunction,
             } or buff.type.name.endswith("Function"):
                 worker.add_default(buff, get_all_func_val(func, "Value"))
         skillIds = set()
