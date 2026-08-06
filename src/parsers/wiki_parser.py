@@ -9,7 +9,6 @@ import binascii
 import re
 from collections import defaultdict
 from datetime import datetime
-from typing import Type
 from urllib.parse import urlparse
 
 import requests
@@ -60,7 +59,6 @@ from ..wiki.template import (
 from ..wiki.wiki_tool import KnownTimeZone
 from .core.aa_export import update_exported_files
 from .wiki import replace_banner_url
-
 
 ENEMY_COLLECTION_IDS = (83, 149, 151, 152, 168, 240, 333, 411, 412, 436, 443, 460)
 
@@ -243,7 +241,7 @@ class WikiParser:
     def get_svt_obtains(self, methods: str, detail_method: str) -> list[SvtObtain]: ...
 
     @staticmethod
-    def _load_list_from_dist(key: str, _type: Type[_KT]) -> list[_KT]:
+    def _load_list_from_dist(key: str, _type: type[_KT]) -> list[_KT]:
         out: list[_KT] = []
         versions = parse_json_file_as(
             DataVersion, settings.output_dist / "version.json"
@@ -313,7 +311,7 @@ class WikiParser:
             nicknames.update(re.split(r"[,，&]", params.get2("昵称") or ""))
             if svt_add.nicknames.CN:
                 nicknames.update(svt_add.nicknames.CN)
-            nicknames = set([s for s in nicknames if s])
+            nicknames = {s for s in nicknames if s}
             if nicknames:
                 svt_add.nicknames.CN = sorted(nicknames)
             else:
@@ -528,7 +526,7 @@ class WikiParser:
         ]
         if no_index_ids:
             logger.info(f"ce not in index: {no_index_ids}")
-        region_campaign_ces = set(k for v in ADD_CES.values() for k in v.keys())
+        region_campaign_ces = {k for v in ADD_CES.values() for k in v}
 
         def _parse_one(ce_id: int):
             ce_add = self.wiki_data.get_ce(ce_id)
@@ -693,7 +691,7 @@ class WikiParser:
                 if match:
                     chara = match.group(2) or match.group(1)
                 else:
-                    raise Exception(f"chara not match template format: '{chara}'")
+                    raise ValueError(f"chara not match template format: '{chara}'")
             chara = chara.strip()
             if not chara:
                 continue
@@ -734,6 +732,8 @@ class WikiParser:
                 else:
                     param_svt = parse_template(page_text, r"^{{概念礼装")
                     _card_id = param_svt.get_cast("礼装id", cast=int)
+            if _card_id is None and "･" in _chara:
+                _card_id = _get_id(_chara.replace("･", "・"))
             return _card_id
 
         for chara in charas.split(","):
@@ -742,7 +742,7 @@ class WikiParser:
                 if match:
                     chara = match.group(2) or match.group(1)
                 else:
-                    raise Exception(f"chara not match template format: '{chara}'")
+                    raise ValueError(f"chara not match template format: '{chara}'")
             chara = chara.strip()
             if not chara:
                 continue
@@ -1154,7 +1154,7 @@ class WikiParser:
             ), table[0]
             for row in table[1:]:
                 if row[0] != "svt" and row[0] != "ce":
-                    raise Exception(f"invalid type: {row[0]}")
+                    raise ValueError(f"invalid type: {row[0]}")
                 instance.probs.append(
                     ProbGroup(
                         isSvt=row[0] == "svt",
@@ -1290,7 +1290,7 @@ class WikiParser:
         dup_names = [
             f"`- {name}`: " + ",".join([discord.mc_link(link) for link in links])
             for name, links in name_jp_counts.items()
-            if len(links) > 1
+            if len(links) > 1 and "デスティニーオーダー" not in name
         ]
         if dup_names:
             discord.mc("Duplicated Summon JP name", "\n".join(dup_names))
