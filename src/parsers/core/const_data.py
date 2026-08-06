@@ -3,9 +3,9 @@ from collections import defaultdict
 from pathlib import Path
 
 from app.core.utils import get_traits_list
-from app.schemas.gameenums import BUFF_TYPE_NAME, FUNC_TYPE_NAME
+from app.schemas.gameenums import BUFF_TYPE_NAME, FUNC_TYPE_NAME, ShopType
 from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail
-from app.schemas.raw import MstBuffTypeDetail, MstFuncTypeDetail, MstSvtExp
+from app.schemas.raw import MstBuffTypeDetail, MstFuncTypeDetail, MstShop, MstSvtExp
 
 from ...schemas.common import MstConstantStr
 from ...schemas.const_data import ConstDataConfig, ConstGameData, SvtExpCurve
@@ -60,6 +60,13 @@ def get_const_data(data: MasterData):
     mst_buff_type_details = parse_json_obj_as(
         list[MstBuffTypeDetail], DownUrl.git_jp("mstBuffTypeDetail")
     )
+    mst_shops = parse_json_obj_as(list[MstShop], DownUrl.git_jp("mstShop"))
+    shopDailyTargets = {
+        shop.id: shop.targetIds[0]
+        for shop in mst_shops
+        if shop.shopType == ShopType.EX_ROOM_SHOP_DAILY
+    }
+    shopDailyTargets = sort_dict(shopDailyTargets)
 
     return ConstGameData(
         cnReplace=dict(CN_REPLACE),
@@ -95,6 +102,7 @@ def get_const_data(data: MasterData):
         sameQuestRemap=SAME_QUEST_REMAP,
         subEvents=SUB_EVENTS,
         routeSelects=get_route_selects(),
+        shopDailyTargets=shopDailyTargets,
         config=ConstDataConfig(),
         deprecatedEnums={"BuffType": {}, "BuffAction": {}, "FuncType": {}},
     )
@@ -182,7 +190,7 @@ def get_route_selects() -> dict[str, list[str]]:
             result[script_id] = route_ids
     result = sort_dict(result)
     if not result:
-        raise Exception("no route select found")
+        raise RuntimeError("no route select found")
 
     route_count = sum(len(v) for v in result.values())
     logger.info(f"Found {route_count} routes in {len(result)} script files")

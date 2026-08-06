@@ -122,5 +122,6 @@ class ConstGameData(BaseModel):
     sameQuestRemap: dict[int, int]
     subEvents: dict[int, list[int]]
     routeSelects: dict[str, list[str]]
+    shopDailyTargets: dict[int, int]
     config: ConstDataConfig
     deprecatedEnums: dict[str, dict[str, int]]
