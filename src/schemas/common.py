@@ -6,8 +6,7 @@ from app.schemas.nice import NiceGift
 from app.schemas.raw import MstMasterMission
 from pydantic import BaseModel, ConfigDict, Field
 
-
-_KT = TypeVar("_KT")
+# _KT = TypeVar("_KT")
 _KV = TypeVar("_KV")
 
 NEVER_CLOSED_TIMESTAMP = 1800000000  # 1893423600
@@ -237,6 +236,7 @@ class AtlasExportFile(StrEnum):
     nice_class_board = "nice_class_board"
     nice_grand_graph = "nice_grand_graph"
     nice_gacha = "nice_gacha"
+    nice_battle_point = "nice_battle_point"
     # shared constants
     nice_enums = "nice_enums"  # hard code
     nice_trait = "nice_trait"  # hard code, +unknown
@@ -394,7 +394,7 @@ class MstQuestPhaseBasic(BaseModel):
     bond: int = 0
     giftId: int = 0
     gifts: list[NiceGift] = []
-    #
+    # from detail
     spotId: int | None = None
     consumeType: int | None = None
     actConsume: int | None = None

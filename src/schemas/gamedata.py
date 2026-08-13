@@ -7,6 +7,7 @@ from app.schemas.enums import Attribute, NiceSkillType, Trait
 from app.schemas.gameenums import NiceBuffAction
 from app.schemas.nice import (
     NiceBaseFunction,
+    NiceBattlePoint,
     NiceBgmEntity,
     NiceBuff,
     NiceClassBoard,
@@ -128,6 +129,7 @@ class MasterData(BaseModelORJson):
     nice_class_board: list[NiceClassBoard] = []
     nice_grand_graph: list[NiceGrandGraph] = []
     nice_gacha: list[NiceGacha] = []
+    nice_battle_point: list[NiceBattlePoint] = []
     nice_trait: dict[int, Trait] = {}
     NiceAttributeRelation: dict[Attribute, dict[Attribute, int]] = {}
     NiceBuffList_ActionList: dict[NiceBuffAction, BuffActionInfo] = {}
@@ -299,8 +301,7 @@ class MasterData(BaseModelORJson):
     def td_list_no_cache(self):
         tds: list[NiceTd] = []
         for svt in self.nice_servant_lore:
-            for td in svt.noblePhantasms:
-                tds.append(td)
+            tds.extend(svt.noblePhantasms)
         tds.extend(self.base_tds.values())
         return tds
 

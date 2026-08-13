@@ -101,6 +101,7 @@ def get_const_data(data: MasterData):
         subEvents=SUB_EVENTS,
         routeSelects=get_route_selects(),
         shopDailyTargets=shopDailyTargets,
+        battlePoints=sort_dict({bp.id: bp for bp in data.nice_battle_point}),
         config=ConstDataConfig(),
         deprecatedEnums={"BuffType": {}, "BuffAction": {}, "FuncType": {}},
     )

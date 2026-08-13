@@ -8,7 +8,12 @@ from app.schemas.gameenums import (
     NiceBuffType,
     NiceSvtFrameType,
 )
-from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail, NiceGift
+from app.schemas.nice import (
+    NiceBattlePoint,
+    NiceBuffTypeDetail,
+    NiceFuncTypeDetail,
+    NiceGift,
+)
 from pydantic import BaseModel
 
 from .common import MstClass
@@ -122,5 +127,6 @@ class ConstGameData(BaseModel):
     subEvents: dict[int, list[int]]
     routeSelects: dict[str, list[str]]
     shopDailyTargets: dict[int, int]
+    battlePoints: dict[int, NiceBattlePoint]
     config: ConstDataConfig
     deprecatedEnums: dict[str, dict[str, int]]
