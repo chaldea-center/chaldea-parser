@@ -50,7 +50,7 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
         m.setdefault(_key, MappingBase())
         if value == _key:
             return
-        if region in (Region.CN, Region.TW) and isinstance(value, str):
+        if region in (Region.CN, Region.TW) and isinstance(value, str):  # noqa: SIM102
             if jp_chars.search(value):
                 return
         return update_key_mapping(
@@ -329,6 +329,13 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
         if costume and costume.detail and costume.detail != costume_jp.detail:
             cos_w.update(region, costume.detail)
 
+    bp_names = mappings.misc.setdefault("BattlePointName", {})
+    bps = {bp.id: bp for bp in data.nice_battle_point}
+    for bp_jp in jp_data.nice_battle_point:
+        bp = bps.get(bp_jp.id)
+        if bp_jp.name:
+            _update_mapping(bp_names, bp_jp.name, bp.name if bp else None)
+
     def _get_comment(comments: list[NiceLoreComment]) -> NiceLoreComment:
         comment = comments[0]
         for c in comments:
@@ -603,10 +610,10 @@ def fix_cn_transl_svt_class(data: dict, patterns: list[str]):
         if isinstance(v, str):
             for a, b in CN_REPLACE.items():
                 v = v.replace(a, b)
-            for cls_cn in cls_replace.keys():
+            for cls_cn in cls_replace:
                 v = replace_cls(v, cls_cn)
             obj["CN"] = v
-        for k, v in obj.items():
+        for v in obj.values():
             _iter(v)
 
     _iter(data)
