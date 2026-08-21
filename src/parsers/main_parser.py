@@ -286,8 +286,8 @@ class MainParser:
                     assert ce and ce.profile
                     if illustrator:
                         ce.profile.illustrator = illustrator
-                    # ce.sortId = sort_id
                     ce.sortId = -ce.collectionNo
+                    ce.region = add_region
                     master_data.nice_equip_lore.append(ce)
                     if ce.id not in entity_ids:
                         entity = AtlasApi.api_model(

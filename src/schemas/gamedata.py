@@ -84,6 +84,7 @@ class NiceBaseSkill(NiceSkill): ...
 
 class NiceEquipSort(NiceEquip):
     sortId: float | None = None
+    region: Region | None = None
 
 
 class NewAddedData(BaseModelORJson):
