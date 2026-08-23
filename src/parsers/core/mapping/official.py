@@ -345,6 +345,8 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
 
     ce_ids = {x.collectionNo for x in data.nice_equip_lore}
     ce_ids = ce_ids.difference({x.collectionNo for x in jp_data.nice_equip_lore})
+    if data.region == Region.KR:
+        ce_ids.discard(23970)
     if ce_ids:
         rows = [
             f"- [{ce_id}-{data.ce_dict[ce_id].name}](https://apps.atlasacademy.io/db/{region}/craft-essence/{ce_id})"
