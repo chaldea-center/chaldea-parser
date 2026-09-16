@@ -3,7 +3,12 @@ from collections import defaultdict
 from pathlib import Path
 
 from app.core.utils import get_traits_list
-from app.schemas.gameenums import BUFF_TYPE_NAME, FUNC_TYPE_NAME, ShopType
+from app.schemas.gameenums import (
+    BUFF_TYPE_NAME,
+    FUNC_TYPE_NAME,
+    NiceBattlePointFlag,
+    ShopType,
+)
 from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail
 from app.schemas.raw import MstBuffTypeDetail, MstFuncTypeDetail, MstShop, MstSvtExp
 
@@ -66,6 +71,10 @@ def get_const_data(data: MasterData):
         if shop.shopType == ShopType.EX_ROOM_SHOP_DAILY
     }
     shopDailyTargets = sort_dict(shopDailyTargets)
+    battle_points = sort_dict({bp.id: bp for bp in data.nice_battle_point})
+    for bp in battle_points.values():
+        if NiceBattlePointFlag.resetValueOnContinue in bp.flags:
+            bp.flags.remove(NiceBattlePointFlag.resetValueOnContinue)
 
     return ConstGameData(
         cnReplace=dict(CN_REPLACE),
@@ -101,9 +110,18 @@ def get_const_data(data: MasterData):
         subEvents=SUB_EVENTS,
         routeSelects=get_route_selects(),
         shopDailyTargets=shopDailyTargets,
-        battlePoints=sort_dict({bp.id: bp for bp in data.nice_battle_point}),
+        battlePoints=battle_points,
         config=ConstDataConfig(),
-        deprecatedEnums={"BuffType": {}, "BuffAction": {}, "FuncType": {}},
+        deprecatedEnums={
+            "BuffType": {},
+            "BuffAction": {},
+            "FuncType": {
+                "addStateFuncType169": 169,
+                "addStateFuncType170": 170,
+                "addStateUserEquipSkillAvailable": 169,
+                "addStateShortUserEquipSkillAvailable": 170,
+            },
+        },
     )
 
 
