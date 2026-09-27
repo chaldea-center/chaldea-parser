@@ -11,7 +11,12 @@ from app.schemas.gameenums import (
     NiceSpotOverwriteType,
     NiceWarOverwriteType,
 )
-from app.schemas.nice import AscensionAddEntryStr, NiceLoreComment, NiceServant
+from app.schemas.nice import (
+    AscensionAddEntryListOverwriteValue,
+    AscensionAddEntryStr,
+    NiceLoreComment,
+    NiceServant,
+)
 
 from ....schemas.common import NEVER_CLOSED_TIMESTAMP, MappingBase, MappingStr
 from ....schemas.data import (
@@ -229,6 +234,33 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
                 skip_exists=True,
             )
 
+    def __update_ascension_add_list_value(
+        m: dict[str, MappingStr],
+        jp_entry: AscensionAddEntryListOverwriteValue,
+        entry: AscensionAddEntryListOverwriteValue | None,
+    ):
+        jp_entries = {
+            k: {vv.id: vv.value for vv in v}
+            for k, v in (jp_entry.ascension | jp_entry.costume).items()
+        }
+        entries = (
+            {
+                k: {vv.id: vv.value for vv in v}
+                for k, v in (entry.ascension | entry.costume).items()
+            }
+            if entry
+            else {}
+        )
+
+        for ascension, names in jp_entries.items():
+            for _id, name in names.items():
+                _update_mapping(
+                    m,
+                    name,
+                    entries.get(ascension, {}).get(_id),
+                    skip_exists=True,
+                )
+
     for svt_jp in jp_data.nice_servant_lore:
         svt = data.svt_id_dict.get(svt_jp.id)
         if svt_jp.collectionNo > 0:
@@ -249,6 +281,16 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
             mappings.svt_names,
             svt_jp.ascensionAdd.overWriteServantName,
             svt.ascensionAdd.overWriteServantName if svt else None,
+        )
+        __update_ascension_add(
+            mappings.svt_names,
+            svt_jp.ascensionAdd.overwriteSvtDetailName,
+            svt.ascensionAdd.overwriteSvtDetailName if svt else None,
+        )
+        __update_ascension_add_list_value(
+            mappings.svt_names,
+            svt_jp.ascensionAdd.overwriteSkillName,
+            svt.ascensionAdd.overwriteSkillName if svt else None,
         )
         __update_ascension_add(
             mappings.svt_names,
