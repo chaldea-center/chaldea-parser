@@ -27,6 +27,7 @@ def autofill_mapping(mappings: dict[str, Mapping], mc_transl: WikiTranslation):
     skill_names: Mapping = mappings["skill_names"]
     skill_detail: Mapping = mappings["skill_detail"]
     cv_names: Mapping = mappings["cv_names"]
+    costume_names: Mapping = mappings["costume_names"]
     event_war: Mapping = event_names | war_names
 
     def _repl_svt(name_jp: str):
@@ -310,6 +311,7 @@ def autofill_mapping(mappings: dict[str, Mapping], mc_transl: WikiTranslation):
     )
 
     _update_cvs(cv_names)
+    _update_simple_costumes(costume_names)
 
     return mappings
 
@@ -394,6 +396,34 @@ def _update_cvs(cv_names: Mapping):
             sep = seps.get(region)
             if sep:
                 names[region] = sep.join(persons2)
+
+
+def _update_simple_costumes(costume_names: Mapping):
+    jp_prefix = "簡易霊衣："
+    prefixes: dict[_Region, str] = {
+        "JP": "簡易霊衣：",
+        "CN": "简易灵衣：",
+        "TW": "簡易靈衣：",
+        "NA": "Simple Spiritron Dress: ",
+        "KR": "간이영의: ",
+    }
+    for name_jp in list(costume_names.keys()):
+        if name_jp.startswith(jp_prefix):
+            continue
+        names = costume_names[name_jp]
+        prefixed = costume_names.get(jp_prefix + name_jp)
+        if prefixed is None:
+            continue
+        for region in list(names.keys()):
+            if names[region] is not None:
+                continue
+            value = prefixed.get(region)
+            if not value:
+                continue
+            prefix = prefixes.get(region)
+            if prefix and value.startswith(prefix):
+                value = value[len(prefix) :]
+            names[region] = value
 
 
 def main(folder: Path):
