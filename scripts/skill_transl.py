@@ -231,7 +231,7 @@ def _get_item_transl(
         if not v:
             return None
         names.append(v)
-    if region == "CN" or region == "TW":
+    if region in {"CN", "TW"}:
         return "、".join(names)
     elif region == "NA":
         return ", ".join(names)
@@ -285,13 +285,13 @@ def _update_skill_detail(
             item_jp: str = match[item_index]
             item = _get_item_transl(item_jp, region, items)
             if item:
-                replaces[f"{{item{index+1}}}"] = item
+                replaces[f"{{item{index + 1}}}"] = item
                 if index == 0:
                     replaces["{item}"] = item
 
         for index, count_index in enumerate(detail.get_counts()):
             count = match[count_index]
-            replaces[f"{{count{index+1}}}"] = count
+            replaces[f"{{count{index + 1}}}"] = count
             if index == 0:
                 replaces["{count}"] = count
 
@@ -323,7 +323,10 @@ def main():
     event_names |= load_json(mapping_dir / "war_names.json")
     skill_names: Mapping = load_json(mapping_dir / "skill_names.json")
     skill_details: Mapping = load_json(mapping_dir / "skill_detail.json")
-    assert item_names and skill_names and skill_details and event_names
+    assert item_names
+    assert skill_names
+    assert skill_details
+    assert event_names
 
     # short name for some events
     for event_jp in list(event_names.keys()):

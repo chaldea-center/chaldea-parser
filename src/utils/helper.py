@@ -6,6 +6,7 @@ import subprocess
 import threading
 import time
 from collections.abc import Callable, Iterable, Sequence
+from dataclasses import asdict, is_dataclass
 from decimal import Decimal
 from enum import Enum
 from operator import itemgetter
@@ -20,7 +21,9 @@ from lxml import etree  # type: ignore
 from pydantic import BaseModel, TypeAdapter
 from pydantic.main import TupleGenerator
 
+from ..config import settings
 from .log import logger
+
 
 Model = TypeVar("Model", bound=BaseModel)
 
@@ -100,10 +103,6 @@ ENCODERS_BY_TYPE: dict[type[Any], Callable[[Any], Any]] = {
 
 
 def pydantic_encoder(obj):
-    from dataclasses import asdict, is_dataclass
-
-    from pydantic import BaseModel
-
     if isinstance(obj, BaseModel):
         return obj.model_dump()
     elif is_dataclass(obj):
@@ -116,7 +115,7 @@ def pydantic_encoder(obj):
         except KeyError:
             continue
         return encoder(obj)
-    else:  # We have exited the for loop without finding a suitable encoder  # noqa: PLW0120
+    else:  # We have exited the for loop without finding a suitable encoder
         raise TypeError(
             f"Object of type '{obj.__class__.__name__}' is not JSON serializable"
         )
@@ -343,8 +342,6 @@ class LocalProxy:
             os.environ[key] = value
 
     def __enter__(self):
-        from ..config import settings
-
         self._cache()
         if self._enabled:
             self._set(self._HTTP_PROXY, settings.x_http_proxy)

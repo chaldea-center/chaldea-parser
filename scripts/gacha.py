@@ -5,7 +5,6 @@ Generate Mooncell gacha prob table from html
 """
 
 import argparse
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -13,7 +12,6 @@ import requests
 from app.schemas.basic import BasicServant
 from app.schemas.raw import MstSvtChange
 
-from src.parsers.core.aa_export import update_exported_files
 from src.utils.helper import parse_html_xpath, parse_json_file_as
 
 
@@ -55,7 +53,7 @@ def get_prob_table(text: str, table_index: int, col_num: int):
     columns: list[list[str]] = []
     for col_index in range(col_num):
         col = parse_html_xpath(
-            text, f"//table[{table_index}]/tbody/tr/td[{col_index+1}]/text()"
+            text, f"//table[{table_index}]/tbody/tr/td[{col_index + 1}]/text()"
         )
         col = [str(x).strip() for x in col]
         columns.append(col)
@@ -97,9 +95,9 @@ def parse_gacha(gacha_id: int) -> str:
             ):
                 targets[svt.id] = svt
         if not targets:
-            svt_change_ids = set(
+            svt_change_ids = {
                 change.svtId for change in mstSvtChange if change.name == name
-            )
+            }
             for svt in mstSvt:
                 if (
                     svt.id in svt_change_ids
@@ -110,7 +108,7 @@ def parse_gacha(gacha_id: int) -> str:
                     targets[svt.id] = svt
 
         if len(targets) == 1:
-            return list(targets.values())[0]
+            return next(iter(targets.values()))
         if not targets:
             raise Exception(f"NotFound: {name}-R{rarity}-{class_id}")
         raise Exception(f"Multiple Found: {name}-R{rarity}-{class_id}: ", targets)

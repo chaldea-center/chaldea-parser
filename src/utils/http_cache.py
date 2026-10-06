@@ -7,6 +7,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import timedelta
 from typing import TypeVar
+from urllib.parse import urljoin
 
 import orjson
 import requests
@@ -23,11 +24,13 @@ from requests_cache.models.response import CachedResponse
 
 from .helper import parse_json_obj_as
 
+
 __all__ = ["HttpApiUtil"]
 
 from requests_cache.session import FILTER_FN
 
 from .log import logger
+
 
 _T = TypeVar("_T")
 
@@ -60,7 +63,7 @@ def http_cache_enabled(**kwargs) -> Generator[CachedSession, None, None]:
         requests_cache.uninstall_cache()
 
 
-class HttpApiUtil(abc.ABC):
+class HttpApiUtil(abc.ABC):  # noqa: B024 - instantiated directly as a base without abstract methods
     def __init__(
         self,
         api_server: str,
@@ -236,8 +239,6 @@ class HttpApiUtil(abc.ABC):
     def full_url(self, _path: str):
         if _path.startswith(self.api_server):
             return _path
-        from urllib.parse import urljoin
-
         return urljoin(self.api_server, _path)
 
     def remove(self, filter_fn: FILTER_FN):

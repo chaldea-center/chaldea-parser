@@ -38,7 +38,7 @@ def get_commits_for_file(repo: Repo) -> list:
     return list(repo.iter_commits(paths=SVT_FILE, reverse=True))
 
 
-def get_file_at_commit(repo: Repo, commit) -> list[MstSvt]:
+def get_file_at_commit(_repo: Repo, commit) -> list[MstSvt]:
     try:
         blob = commit.tree / SVT_FILE
     except KeyError:

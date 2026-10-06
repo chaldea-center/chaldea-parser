@@ -4,6 +4,14 @@ from .update_mapping import run_mapping_update
 from .wiki_parser import WikiParser
 
 
+__all__ = [
+    "MainParser",
+    "WikiParser",
+    "run_drop_rate_update",
+    "run_mapping_update",
+]
+
+
 def run_main_parser():
     MainParser().start()
 

@@ -30,7 +30,8 @@ def should_run_wiki_parser(payload: PayloadSetting):
     )
     print("Last Authors:", authors, flush=True)
     print("Commit Files:", changed_files, flush=True)
-    assert authors and changed_files, "No info in authors or changed_files"
+    assert authors, "No info in authors or changed_files"
+    assert changed_files, "No info in authors or changed_files"
     if payload.run_wiki_parser is not None:
         print(f"Forced run_wiki_parser={payload.run_wiki_parser}", flush=True)
         return payload.run_wiki_parser
@@ -61,7 +62,7 @@ if __name__ == "__main__":
     payload = PayloadSetting()
 
     if task == "atlas":
-        if payload.run_atlas_parser == False:
+        if payload.run_atlas_parser is False:
             print("skip atlas parser")
         else:
             main_parser = MainParser()

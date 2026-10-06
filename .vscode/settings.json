@@ -1,6 +1,10 @@
 {
-  "python.formatting.provider": "black",
   "editor.formatOnSave": false,
+  "python.languageServer": "None",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "python.linting.enabled": true,
-  "python.analysis.diagnosticMode": "workspace"
+  "python.analysis.diagnosticMode": "workspace",
+  "python-envs.defaultPackageManager": "ms-python.python:pip",
+  "ruff.path": ["ruff"],
+  "ruff.importStrategy": "fromEnvironment"
 }

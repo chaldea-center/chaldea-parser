@@ -93,6 +93,7 @@ from .domus_aurea import run_drop_rate_update
 from .helper import get_all_func_val
 from .update_mapping import run_mapping_update
 
+
 # print(f'{__name__} version: {datetime.datetime.now().isoformat()}')
 
 
@@ -283,7 +284,8 @@ class MainParser:
                         NiceEquipSort,
                         expire_after=(7 if region == Region.JP else 31) * 24 * 3600,
                     )
-                    assert ce and ce.profile
+                    assert ce
+                    assert ce.profile
                     if illustrator:
                         ce.profile.illustrator = illustrator
                     ce.sortId = -ce.collectionNo
@@ -1121,6 +1123,8 @@ class MainParser:
                 )[0]
                 data.verCode = ""
 
-            assert data.timestamp and data.dataVer and data.appVer, data
+            assert data.timestamp, data
+            assert data.dataVer, data
+            assert data.appVer, data
 
         dump_json({data.region: data for data in region_data}, fp)

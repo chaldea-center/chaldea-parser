@@ -140,12 +140,7 @@ def _add_enemy_td_trans():
             if not td_r:
                 continue
             ruby_r = td_r.ruby
-            if (
-                not ruby_r
-                or ruby_r == ruby_jp
-                or ruby_r == "-"
-                or jp_chars.search(ruby_r)
-            ):
+            if not ruby_r or ruby_r in (ruby_jp, "-") or jp_chars.search(ruby_r):
                 continue
             trans.update(region, ruby_r, False)
     dump_json(sort_dict(_fix_cn(td_names)), folder / "td_names.json")

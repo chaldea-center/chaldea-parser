@@ -13,12 +13,10 @@ from typing import Any, Callable, TypeVar
 
 import orjson
 
-from scripts._dir import MAPPINGS_DIR, PROJECT_ROOT, WIKI_DIR
+from scripts._dir import MAPPINGS_DIR, PROJECT_ROOT
 from scripts._gs import get_worksheet
-from src.schemas.mappings import EnumMapping
 from src.utils.helper import (
     dump_json,
-    dump_json_beautify,
     parse_json_file_as,
     parse_json_obj_as,
 )
@@ -28,7 +26,8 @@ from src.utils.helper import (
 
 ARB_DIR = PROJECT_ROOT / "chaldea/lib/l10n"
 
-assert ARB_DIR.exists() and MAPPINGS_DIR.exists()
+assert ARB_DIR.exists()
+assert MAPPINGS_DIR.exists()
 
 
 _KT = TypeVar("_KT")
@@ -144,7 +143,7 @@ def sheet2json(table: list[list], column: Callable[[str], _KT]) -> Mapping[_KT]:
             try:
                 if col_str:
                     col = column(col_str)
-            except:
+            except Exception:  # noqa: BLE001 - skip unknown column
                 ...
             if col is None or not key:
                 continue
@@ -246,7 +245,8 @@ def dump_enums(data: Mapping[str], fp: str | Path):
     enums: dict[str, Mapping[str]] = {}
     for k, v in data.items():
         a, b = k.split(".")
-        assert a and b, k
+        assert a, k
+        assert b, k
         enums.setdefault(a, {})[b] = v
     dump_json(enums, fp)
     # dump_json(parse_json_obj_as(EnumMapping, enums), fp)

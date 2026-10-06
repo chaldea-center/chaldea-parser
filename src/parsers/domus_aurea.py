@@ -192,12 +192,12 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
         if name.strip() in ITEM_NAME_MAPPING
     }
 
-    item_not_found = set(v[0] for v in ITEM_NAME_MAPPING.values()).difference(
+    item_not_found = {v[0] for v in ITEM_NAME_MAPPING.values()}.difference(
         item_id_col_map.keys()
     )
     assert not item_not_found, f"items not found: {item_id_col_map}"
 
-    for add_quest_id in [
+    for _ in [
         94086601,
         94093201,
         94095301,
@@ -230,7 +230,7 @@ def _parse_sheet_data(csv_url: str, mst_data: _MasterData) -> DropRateSheet:
         bond = quest_phase.friendshipExp
         exp = quest_phase.playerExp
         run_str = table[row][RUN_COL].replace(",", "").strip()
-        if run_str == "" or run_str == "0":
+        if run_str in {"", "0"}:
             if "冠位研鑽戦" in quest.name and "Ⅶ" not in quest.name:
                 continue
             print("skip 0 run quest:", quest_id, mst_data.quests[quest_id].name)
@@ -305,7 +305,7 @@ def get_quest_id(mst_data: _MasterData, war_name: str, spot_name: str) -> int | 
         if spot_name == spot.name and len(frees) == 1:
             return frees[0].id
         for quest in frees:
-            if spot_name == quest.name or spot_name == f"{spot.name}（{quest.name}）":
+            if spot_name in (quest.name, f"{spot.name}（{quest.name}）"):
                 return quest.id
             war = mst_data.wars[quest.warId]
             if war.parentWarId == GRAND_BOARD_WAR_ID:
@@ -336,4 +336,3 @@ def run_drop_rate_update():
 if __name__ == "__main__":
     update_exported_files([], False)
     run_drop_rate_update()
-    pass

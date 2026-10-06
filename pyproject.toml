@@ -6,7 +6,7 @@ authors = ["narumi <narumi@chaldea.center>"]
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.13"
 mwclient = "^0.10.1"
 mwparserfromhell = "^0.6.4"
 ratelimit = "^2.2.1"
@@ -17,73 +17,78 @@ pydantic = "^2.7.3"
 pydantic-settings = "^2.3.1"
 orjson = "^3.10.3"
 python-dotenv = "^1.0.0"
-lxml = "^4.9.1"
+lxml = "^5.3"
 discord-webhook = "^1.0.0"
 msgpack = "^1.0.8"
 pytz = "^2024.1"
 gitpython = "^3.1.50"
 
 [tool.poetry.group.dev.dependencies]
-fgo-game-data-api = { git = "https://github.com/chaldea-center/fgo-game-data-api.git" }
+# Local dev: run scripts/use_local_api.sh to overlay the venv copy with the sibling checkout
+# fgo-game-data-api = { git = "https://github.com/chaldea-center/fgo-game-data-api.git" }
+fgo-game-data-api = { path =  "../fgo-game-data-api-c", develop = true }
 iPython = "^8.0.1"
 ipykernel = "^6.29.4"
-isort = "^5.13.2"
 pyperclip = "^1.8.2"
 gspread = "^6.1.2"
-mypy = "^1.10.0"
-black = "^24.4.2"
+ruff = "^0.14.13"
+basedpyright = "^1.40"
 
 [[tool.poetry.source]]
 name = "tsinghua"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 priority = "primary"
 
-[tool.isort]
-line_length = 88
-known_third_party = "orjson"
-multi_line_output = 3
-force_grid_wrap = 0
-lines_after_imports = 2
-combine_as_imports = true
-include_trailing_comma = true
-
-[tool.black]
-# line-length = 88
-target-version = ['py311']
-
-[tool.mypy]
-plugins = "pydantic.mypy, sqlalchemy.ext.mypy.plugin"
-
-follow_imports = "normal"
-show_column_numbers = true
-
-# mypy strict options
-warn_unused_configs = true
-disallow_any_generics = true
-disallow_subclassing_any = true
-disallow_untyped_calls = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_return_any = true
-no_implicit_reexport = true
-strict_equality = true
-
-[[tool.mypy.overrides]]
-module = ["fastapi_cache.*"]
-no_implicit_reexport = false
-ignore_missing_imports = true
-
-[tool.pylint.MASTER]
-extension-pkg-whitelist = "orjson,pydantic"
-
-[tool.pylint.'MESSAGES CONTROL']
-disable = "duplicate-code,invalid-name,line-too-long,logging-fstring-interpolation,missing-docstring,no-else-return,raise-missing-from,too-few-public-methods,too-many-arguments,too-many-branches,too-many-instance-attributes,too-many-lines,too-many-locals,too-many-nested-blocks,too-many-statements,wrong-import-order"
-
 [build-system]
 requires = ["poetry-core>=1.1.0"]
 build-backend = "poetry.masonry.api"
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+extend-exclude = ["main_test.py", "test.py"]
+
+[tool.ruff.lint]
+select = [
+    "F",
+    "E",
+    "W",
+    "BLE",
+    "ARG",
+    "B",
+    "C4",
+    "PT",
+    "PIE",
+    "PLC",
+    "PLE",
+    "PLR",
+    "RUF",
+    "I",
+]
+ignore = [
+    "E501",
+    "B008",
+    "PT023",
+    "PT006",
+    "PLC1901",
+    "PLR2004",
+    "PLR0912",
+    "PLR0913",
+    "PLR0915",
+    "PLR5501",
+    "RUF001",
+    "RUF003",
+    "RUF012",
+]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+lines-after-imports = 2
+
+[tool.basedpyright]
+typeCheckingMode = "standard"
+reportDeprecated = "warning"
+venvPath = "."
+venv = ".venv"
+# Notebook experiments and local test scripts are not part of the checked codebase
+exclude = ["dev.ipynb", "tmp", "main_test.py", "test.py"]

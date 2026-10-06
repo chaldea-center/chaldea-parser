@@ -15,6 +15,7 @@ from ...utils.helper import dump_json_beautify, load_json, parse_json_obj_as
 from ...utils.http_cache import HttpApiUtil
 from ...utils.log import logger
 
+
 api = HttpApiUtil(
     api_server="",
     rate_calls=5,

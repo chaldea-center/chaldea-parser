@@ -35,9 +35,9 @@ def main():
             openedAt=int(row[7]),
             closedAt=int(row[8]),
         )
-        assert (
-            gacha.id > 0 and gacha.type in (1, 7) and gacha.closedAt > gacha.openedAt
-        ), gacha
+        assert gacha.id > 0, gacha
+        assert gacha.type in (1, 7), gacha
+        assert gacha.closedAt > gacha.openedAt, gacha
         gacha_list.append(gacha)
     dump_json(gacha_list, STATIC_DIR / "mstGachaCNExtra.json")
     print(f"dump {len(gacha_list)} CN gachas")

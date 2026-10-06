@@ -231,7 +231,7 @@ def _exclude_skill(skill: NiceSkill | NiceTd) -> set[str]:
         "condLv",
         "condLimitCount",
     ]
-    excludes = set(key for key in keys if getattr(skill, key, None) in (0, -1))
+    excludes = {key for key in keys if getattr(skill, key, None) in (0, -1)}
     conds = getattr(skill, "releaseConditions", None)
     if conds is not None and not conds:
         excludes.add("releaseConditions")
@@ -250,7 +250,7 @@ def _trim_func_vals(data: dict[str, Any]):
             if key1 == "svals" and index == 0:
                 continue
             val = svals[index]
-            new_val = dict()
+            new_val = {}
             for key2 in first.keys():
                 v = val.get(key2)
                 if first[key2] != v:
@@ -266,7 +266,7 @@ def _clean_dict_empty(d: dict):
         v = d[k]
         if isinstance(v, dict):
             _clean_dict_empty(v)
-        if v is None or v == [] or v == {}:
+        if v is None or v in ([], {}):
             d.pop(k)
 
 
@@ -417,7 +417,8 @@ class DataEncoder:
                 excludes.discard(key)
 
     def _trim_nice_svt(self, svt: NiceServant):
-        assert svt.profile and svt.profile.stats
+        assert svt.profile
+        assert svt.profile.stats
         stats = svt.profile.stats
         for limit in svt.limits:
             if limit.rarity == svt.rarity:

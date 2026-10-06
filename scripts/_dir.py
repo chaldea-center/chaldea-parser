@@ -3,7 +3,7 @@ from pathlib import Path
 
 try:
     PARSER_OOT = Path(__file__).resolve().parents[1]
-except:
+except Exception:  # noqa: BLE001 - fall back to cwd-based path
     PARSER_OOT = Path(".").absolute()
 PROJECT_ROOT = PARSER_OOT.parent.resolve()
 print("Parser  root:", PARSER_OOT)

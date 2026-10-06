@@ -72,10 +72,10 @@ class Params(dict[Any, str]):
         if v:
             try:
                 # remove ","
-                if cast == int:
+                if cast is int:
                     v = str(v).replace(",", "")
                 return cast(v)
-            except:  # noqas
+            except Exception:  # noqa: BLE001 - fall back to default on cast failure
                 return default
 
     def get2s(self, *kargs, default=None):

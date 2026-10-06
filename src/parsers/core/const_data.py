@@ -12,6 +12,7 @@ from app.schemas.gameenums import (
 from app.schemas.nice import NiceBuffTypeDetail, NiceFuncTypeDetail
 from app.schemas.raw import MstBuffTypeDetail, MstFuncTypeDetail, MstShop, MstSvtExp
 
+from ...config import settings
 from ...schemas.common import MstConstantStr
 from ...schemas.const_data import ConstDataConfig, ConstGameData, SvtExpCurve
 from ...schemas.data import (
@@ -30,6 +31,7 @@ from ...schemas.data import (
     SVT_LIMIT_HIDES,
 )
 from ...schemas.gamedata import MasterData
+from ...utils import logger
 from ...utils.helper import parse_json_obj_as, sort_dict
 from ...utils.url import DownUrl
 
@@ -187,9 +189,6 @@ def get_constant_str():
 
 
 def get_route_selects() -> dict[str, list[str]]:
-    from ...config import settings
-    from ...utils import logger
-
     folder = Path(settings.game_data_jp_dir) / "ScriptActionEncrypt"
     result: dict[str, list[str]] = {}
     for fp in folder.glob("**/*.txt"):

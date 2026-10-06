@@ -55,7 +55,7 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
         m.setdefault(_key, MappingBase())
         if value == _key:
             return
-        if region in (Region.CN, Region.TW) and isinstance(value, str):  # noqa: SIM102
+        if region in (Region.CN, Region.TW) and isinstance(value, str):
             if jp_chars.search(value):
                 return
         return update_key_mapping(

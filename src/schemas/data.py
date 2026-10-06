@@ -3,6 +3,7 @@ import re
 from ..schemas.common import Region
 from ..schemas.const_data import SvtAllowedExtraPassive, SvtLimitHide
 
+
 MIN_APP = "2.5.22"
 
 
@@ -57,11 +58,13 @@ SVT_LIMIT_HIDES: dict[int, list[SvtLimitHide]] = {
     -1: [
         SvtLimitHide(
             limits=[-1],
-            addPassives=[940274, 940321]  # Valentine 2023 NP300, Fate 20th
-            + [940284, 940285, 940289, 940298, 940302, 940308]  # 巡霊の祝祭
-            + [960502, 960503, 960504, 960505, 960506, 960507]  #  終局特異点
-            + [940420, 940421, 940422, 940423, 940424, 940425]  #  終章
-            + [970663],  # 夢火の導き Bond 15
+            addPassives=[
+                *[940274, 940321],  # Valentine 2023 NP300, Fate 20th
+                *[940284, 940285, 940289, 940298, 940302, 940308],  # 巡霊の祝祭
+                *[960502, 960503, 960504, 960505, 960506, 960507],  # 終局特異点
+                *[940420, 940421, 940422, 940423, 940424, 940425],  # 終章
+                *[970663],  # 夢火の導き Bond 15
+            ],
         )
     ],
     800100: [
@@ -262,47 +265,43 @@ _GRAND_DUEL_QUEST_REMAP: dict[int, int] = (
 SAME_QUEST_REMAP: dict[int, int] = _GRAND_DUEL_QUEST_REMAP | {}
 
 # Update api worker too
-LAPLACE_UPLOAD_ALLOW_AI_QUESTS: list[int] = (
-    [
-        *range(94065101, 94065129 + 1),  # Tunguska
-        *range(94090301, 94090330 + 1),  # Gudaguda2023
-    ]
-    + list(_GRAND_DUEL_QUEST_REMAP.keys())
-    + list(_GRAND_DUEL_QUEST_REMAP.values())
-    + list(range(94148302, 94148306 + 1))  # Noah's ark raid
-)
+LAPLACE_UPLOAD_ALLOW_AI_QUESTS: list[int] = [
+    *range(94065101, 94065129 + 1),  # Tunguska
+    *range(94090301, 94090330 + 1),  # Gudaguda2023
+    *_GRAND_DUEL_QUEST_REMAP.keys(),
+    *_GRAND_DUEL_QUEST_REMAP.values(),
+    *range(94148302, 94148306 + 1),  # Noah's ark raid
+]
 
-EXCLUDE_REWARD_QUESTS = (
-    [
-        1000825,  # 终局特异点 section 12
-        3000540,  # Atlantis section 18
-        94040905,  # Battle In NewYork 2019
-        94067707,  # Battle In NewYork 2022 > 2019 rerun story
-        94077706,  # カルデア妖精騎士杯
-        94087053,
-        94087054,
-        94087055,
-        94087056,
-        94087057,
-        94087058,
-        94087059,  # 【聖杯戦線 ～白天の城、黒夜の城～】night war bard
-        94086956,
-        94086957,
-        94086959,
-        94086960,
-        94086961,
-        94086964,
-        94086965,
-        94086966,
-        94086969,
-        94086970,  # 【聖杯戦線 ～白天の城、黒夜の城～】night main story
-        94143891,  #  復刻:昭和キ神計画 留めおかまし大和魂
-    ]
-    + list(SAME_QUEST_REMAP.values())
-    + list(range(94148911, 94148911 + 8))  # Grand Extra I 火&地 share
-    + list(range(94149011, 94149011 + 8))  # Grand Extra II 星&水 share
-    + list(range(94150811, 94150811 + 8))  # Grand Archer unknown duplicate share
-)
+EXCLUDE_REWARD_QUESTS = [
+    1000825,  # 终局特异点 section 12
+    3000540,  # Atlantis section 18
+    94040905,  # Battle In NewYork 2019
+    94067707,  # Battle In NewYork 2022 > 2019 rerun story
+    94077706,  # カルデア妖精騎士杯
+    94087053,
+    94087054,
+    94087055,
+    94087056,
+    94087057,
+    94087058,
+    94087059,  # 【聖杯戦線 ～白天の城、黒夜の城～】night war bard
+    94086956,
+    94086957,
+    94086959,
+    94086960,
+    94086961,
+    94086964,
+    94086965,
+    94086966,
+    94086969,
+    94086970,  # 【聖杯戦線 ～白天の城、黒夜の城～】night main story
+    94143891,  #  復刻:昭和キ神計画 留めおかまし大和魂
+    *SAME_QUEST_REMAP.values(),
+    *range(94148911, 94148911 + 8),  # Grand Extra I 火&地 share
+    *range(94149011, 94149011 + 8),  # Grand Extra II 星&水 share
+    *range(94150811, 94150811 + 8),  # Grand Archer unknown duplicate share
+]
 
 
 FREE_EXCHANGE_SVT_EVENTS = [

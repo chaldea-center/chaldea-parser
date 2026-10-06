@@ -3,7 +3,7 @@ import os
 import re
 import sys
 import time
-from concurrent.futures import ThreadPoolExecutor, wait
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
 
@@ -103,7 +103,7 @@ def _iter_dir(data: _Data, path: str, recursive: int = 2, depth=1):
                     )
         # wait(futures)
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - continue on per-item failure
         print(type(e), e)
         data.failed.append(path)
 
@@ -122,12 +122,11 @@ def main(root: str | None = None):
     folder = Path(_fp_data)
     t = datetime.now()
     date = f"{t.month:0>2}-{t.day:0>2}-{t.hour:0>2}-{t.minute:0>2}"
-    fp_data = folder / f"data.json"
+    fp_data = folder / "data.json"
     data = parse_json_file_as(_Data, fp_data)
     data.success.clear()
     data.files.clear()
     _iter_dir(data, root, 10, 1)
-    pool._work_queue
     while True:
         a = page_count
         # ??? use async instead

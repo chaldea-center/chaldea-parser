@@ -1,0 +1,4 @@
+system-git-client = true
+
+[virtualenvs]
+in-project = true

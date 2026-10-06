@@ -4,6 +4,7 @@ from pathlib import Path
 import requests
 from app.schemas.common import Region
 
+from ..config import settings
 from .helper import load_json, retry_decorator
 
 
@@ -45,7 +46,5 @@ class DownUrl:
 
     @classmethod
     def git_jp(cls, name: str, folder: str = "master/"):
-        from ..config import settings
-
         fp = Path(settings.game_data_jp_dir) / folder / cls._json_fn(name)
         return load_json(fp)

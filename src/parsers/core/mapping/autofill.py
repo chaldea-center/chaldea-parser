@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Callable, Literal
 
 from ....schemas.wiki_data import WikiTranslation
+from ....utils.helper import parse_json_file_as
 
 
 _Region = Literal["JP", "CN", "TW", "NA", "KR"]
@@ -39,9 +40,9 @@ def autofill_mapping(mappings: dict[str, Mapping], mc_transl: WikiTranslation):
             _names2 = [x for x in _names if x]
             if len(_names) != len(_names2):
                 continue
-            if r == "CN" or r == "TW":
+            if r in {"CN", "TW"}:
                 names[r] = "、".join(_names2)
-            elif r == "NA" or r == "KR":
+            elif r in {"NA", "KR"}:
                 names[r] = ", ".join(_names2)
         return names
 
@@ -240,7 +241,7 @@ def autofill_mapping(mappings: dict[str, Mapping], mc_transl: WikiTranslation):
     update_k(
         skill_names,
         pattern=re.compile(r"^(.+) ((?:A|B|C|D|E|EX)[\-+]*)$"),
-        templates={r: "{0} {1}" for r in Regions},
+        templates=dict.fromkeys(Regions, "{0} {1}"),
         krepls=[_repl_simple(base_skill_names), _repl0],
     )
 
@@ -357,7 +358,7 @@ def update_kw(
         }
 
         for region in list(transl.keys()):
-            if transl[region] is not None or not region in templates:
+            if transl[region] is not None or region not in templates:
                 continue
             tmpl = templates[region]
             kwargs = {key: r.get(region) if r else None for key, r in repls.items()}
@@ -396,8 +397,6 @@ def _update_cvs(cv_names: Mapping):
 
 
 def main(folder: Path):
-    from src.utils.helper import dump_json, parse_json_file_as
-
     mappings: dict[str, Mapping] = {}
     for fp in folder.iterdir():
         if not fp.is_file() or not fp.name.endswith(".json"):
@@ -405,9 +404,8 @@ def main(folder: Path):
         name = fp.name[:-5]
         try:
             mappings[name] = parse_json_file_as(Mapping, fp)
-        except:
+        except Exception:  # noqa: BLE001 - skip unmatched mapping
             print(f"unmatched mapping format, skip {fp.name}")
-            pass
     raise Exception("don't use")
     # autofill_mapping(mappings)
     # for k, v in mappings.items():

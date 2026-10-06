@@ -283,7 +283,7 @@ class WikiTool:
         # if result:
         #     print(f'{key}: use cached')
         if result is None:
-            result: WikiPageInfo | None = self._call_request_page(name)
+            result = self._call_request_page(name)
         if result:
             result = self.get_page_cache(result.name) or result
         return result

@@ -129,7 +129,7 @@ def merge_atlas_na_mapping(mappings: MappingData):
         if _m.NA:
             _m.NA = _m.NA.replace("\n", " ")
 
-    import app as app_lib
+    import app as app_lib  # noqa: PLC0415 - deferred import of app package
 
     na_folder = Path(app_lib.__file__).resolve().parent.joinpath("data/mappings/")
     logger.debug(f"AA mappings path: {na_folder}")

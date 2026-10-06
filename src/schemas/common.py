@@ -6,6 +6,9 @@ from app.schemas.nice import NiceGift
 from app.schemas.raw import MstMasterMission
 from pydantic import BaseModel, ConfigDict, Field
 
+from ..config import settings
+
+
 # _KT = TypeVar("_KT")
 _KV = TypeVar("_KV")
 
@@ -174,7 +177,7 @@ class CEObtain(StrEnum):
 
 class CCObtain(StrEnum):
     @staticmethod
-    def from_name(s: str):
+    def from_name(_s: str):
         return
 
 
@@ -259,8 +262,6 @@ class AtlasExportFile(StrEnum):
         return f"https://api.atlasacademy.io/export/{region}/{fn}.json"
 
     def cache_path(self, region: str | Region = Region.JP):
-        from ..config import settings
-
         return settings.atlas_export_dir / f"{region}" / f"{self.value}.json"
 
 

@@ -68,7 +68,7 @@ class Worker:
     #     return _executor.map(fn, *iterables)
 
     def map_add(self, fn, *iterables):
-        for args in zip(*iterables):
+        for args in zip(*iterables, strict=False):
             self.add(fn, *args)  # type: ignore
 
     @staticmethod
@@ -79,6 +79,6 @@ class Worker:
 
     @staticmethod
     def fake(fn, *iterables):
-        for args in zip(*iterables):
+        for args in zip(*iterables, strict=False):
             fn(*args)
         return Worker()

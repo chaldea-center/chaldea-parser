@@ -60,6 +60,7 @@ from ..wiki.wiki_tool import KnownTimeZone
 from .core.aa_export import update_exported_files
 from .wiki import replace_banner_url
 
+
 ENEMY_COLLECTION_IDS = (83, 149, 151, 152, 168, 240, 333, 411, 412, 436, 443, 460)
 
 
@@ -214,7 +215,8 @@ class WikiParser:
             return False
         svt = servants[collectionNo]
         svt_jp = self._jp.released_svts[collectionNo]
-        assert svt.profile and svt_jp.profile
+        assert svt.profile
+        assert svt_jp.profile
 
         def _get_dict(_comments: list[NiceLoreComment]):
             tmp = defaultdict(dict)
@@ -757,11 +759,9 @@ class WikiParser:
                     ...
                 else:
                     for name_jp, name_cn in self.mc_transl.ce_names.items():
-                        if (
-                            name_cn == chara
-                            or name_jp == chara
-                            or name_jp.replace("・", "·") == chara.replace("・", "·")
-                        ):
+                        if chara in (name_cn, name_jp) or name_jp.replace(
+                            "・", "·"
+                        ) == chara.replace("・", "·"):
                             card_id = _get_id(name_jp)
                             break
                     if not card_id:
@@ -913,7 +913,8 @@ class WikiParser:
                 assert page_link.startswith(prefix), page_link
                 fa_link = FANDOM.norm_key(page_link[len(prefix) :])
                 wikitext = mwparse(FANDOM.get_page_text(fa_link))
-                assert fa_link and wikitext, fa_link
+                assert fa_link, fa_link
+                assert wikitext, wikitext
                 if not fa_link or not wikitext:
                     continue
                 infoboxcc = parse_template(wikitext, r"^{{Infoboxcc")
