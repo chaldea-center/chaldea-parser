@@ -190,6 +190,7 @@ class WikiParser:
             list(self.wiki_data.events.values()),
             list(self.wiki_data.summons.values()),
             False,
+            jp_events=self._jp.events,
         )
 
         logger.info("Saving data...")
