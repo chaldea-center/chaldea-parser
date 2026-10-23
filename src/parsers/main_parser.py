@@ -746,7 +746,7 @@ class MainParser:
                 range(9050, 9100),
                 range(9100, 9999),
             ],
-            save_remained=False,
+            save_remained=True,
             key="wars",
         )
         # sometimes disabled quest parser when debugging
