@@ -287,15 +287,15 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
             svt_jp.ascensionAdd.overwriteSvtDetailName,
             svt.ascensionAdd.overwriteSvtDetailName if svt else None,
         )
-        __update_ascension_add_list_value(
-            mappings.svt_names,
-            svt_jp.ascensionAdd.overwriteSkillName,
-            svt.ascensionAdd.overwriteSkillName if svt else None,
-        )
         __update_ascension_add(
             mappings.svt_names,
             svt_jp.ascensionAdd.overWriteServantBattleName,
             svt.ascensionAdd.overWriteServantBattleName if svt else None,
+        )
+        __update_ascension_add_list_value(
+            mappings.skill_names,
+            svt_jp.ascensionAdd.overwriteSkillName,
+            svt.ascensionAdd.overwriteSkillName if svt else None,
         )
         __update_ascension_add(
             mappings.td_names,
