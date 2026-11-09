@@ -23,6 +23,7 @@ from app.schemas.nice import (
     NiceItem,
     NiceMasterMission,
     NiceMysticCode,
+    NiceOpeningMovie,
     NiceQuest,
     NiceQuestPhase,
     NiceServant,
@@ -129,6 +130,7 @@ class MasterData(BaseModelORJson):
     nice_enemy_master: list[NiceEnemyMaster] = []
     nice_class_board: list[NiceClassBoard] = []
     nice_grand_graph: list[NiceGrandGraph] = []
+    nice_opening_movie: list[NiceOpeningMovie] = []
     nice_gacha: list[NiceGacha] = []
     nice_battle_point: list[NiceBattlePoint] = []
     nice_trait: dict[int, Trait] = {}

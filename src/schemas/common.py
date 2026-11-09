@@ -235,6 +235,7 @@ class AtlasExportFile(StrEnum):
     nice_bgm = "nice_bgm"
     nice_war = "nice_war"
     nice_event = "nice_event"
+    nice_opening_movie = "nice_opening_movie"
     nice_enemy_master = "nice_enemy_master"
     nice_class_board = "nice_class_board"
     nice_grand_graph = "nice_grand_graph"

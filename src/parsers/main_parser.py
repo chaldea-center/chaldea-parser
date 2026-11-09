@@ -704,6 +704,7 @@ class MainParser:
         _normal_dump(data.nice_enemy_master, "enemyMasters")
         _normal_dump(data.nice_class_board, "classBoards")
         _normal_dump(data.nice_grand_graph, "grandGraphs")
+        _normal_dump(data.nice_opening_movie, "openingMovies")
         _normal_dump(list(wiki_data.mms.values()), "masterMissions")
 
         logger.info("Updating mappings")
