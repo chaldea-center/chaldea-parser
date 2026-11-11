@@ -41,6 +41,9 @@ def merge_official_mappings(jp_data: MasterData, data: MasterData, wiki_data: Wi
     mappings.entity_release.update(region, sorted([svt.id for svt in data.basic_svt]))
     mappings.cc_release.update(region, sorted(data.cc_dict.keys()))
     mappings.mc_release.update(region, sorted(data.mc_dict.keys()))
+    mappings.costume_release.update(
+        region, sorted(costume.battleCharaId for costume in data.costume_dict.values())
+    )
     update_svt_trait_release(mappings, data)
 
     def _update_mapping(

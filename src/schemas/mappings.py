@@ -205,6 +205,7 @@ class MappingData(BaseModel):
             "entity_release",
             "cc_release",
             "mc_release",
+            "costume_release",
             "war_release",
             "quest_release",
             "svt_trait_release",
@@ -217,6 +218,7 @@ class MappingData(BaseModel):
     entity_release: MappingBase[list[int]] = MappingBase()
     cc_release: MappingBase[list[int]] = MappingBase()
     mc_release: MappingBase[list[int]] = MappingBase()
+    costume_release: MappingBase[list[int]] = MappingBase()  # battleCharaId
     war_release: MappingBase[list[int]] = MappingBase()
     quest_release: dict[int, MappingInt] = {}
     svt_trait_release: dict[int, MappingBase[list[int]]] = {}
