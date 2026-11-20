@@ -15,6 +15,7 @@ ADD_CES: dict[Region, dict[int, tuple[str | None,]]] = {
         202024: (None,),  # 7th 90082003
         202025: (None,),  # 8th 90082004
         # 23970: ("田",),  # Fate/Grand Order 藤丸立香はわからない 9310560, No.2402 for other regions
+        202026: ("ダンミル",),  # 9th 90082005
     },
     # 2017.06
     Region.NA: {

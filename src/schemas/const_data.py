@@ -130,3 +130,4 @@ class ConstGameData(BaseModel):
     battlePoints: dict[int, NiceBattlePoint]
     config: ConstDataConfig
     deprecatedEnums: dict[str, dict[str, int]]
+    shopGroups: dict[int, list[int]]

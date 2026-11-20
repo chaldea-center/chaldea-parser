@@ -78,6 +78,13 @@ def get_const_data(data: MasterData):
         if NiceBattlePointFlag.resetValueOnContinue in bp.flags:
             bp.flags.remove(NiceBattlePointFlag.resetValueOnContinue)
 
+    mst_shop_groups = parse_json_obj_as(
+        list[dict[str, int]], DownUrl.git_jp("mstShopGroup")
+    )
+    shop_groups = defaultdict(list)
+    for group in mst_shop_groups:
+        shop_groups[group["groupId"]].append(group["shopId"])
+
     return ConstGameData(
         cnReplace=dict(CN_REPLACE),
         attributeRelation=data.NiceAttributeRelation,
@@ -124,6 +131,7 @@ def get_const_data(data: MasterData):
                 "addStateShortUserEquipSkillAvailable": 170,
             },
         },
+        shopGroups=shop_groups,
     )
 
 
